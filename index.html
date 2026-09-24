@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rezultate Financiare · Iulie 2026 · Dr. Ardeleanu</title>
+<meta name="description" content="Raport de grup — Vânzări, P&amp;L și Cashflow. Vânzări 4,55M RON (+60,8% YoY) · EBITDA 1,45M RON · Cash 458K RON. Rezultate Iulie 2026."/>
+<!-- Open Graph / WhatsApp -->
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Dr. Ardeleanu Dental Clinics"/>
+<meta property="og:locale" content="ro_RO"/>
+<meta property="og:url" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/"/>
+<meta property="og:title" content="Rezultate Financiare Iulie 2026 · Dr. Ardeleanu"/>
+<meta property="og:description" content="Raport de grup — Vânzări, P&amp;L și Cashflow. Vânzări 4,55M RON (+60,8% YoY) · EBITDA 1,45M RON · Cash 458K RON."/>
+<meta property="og:image" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_Main_Jul2026.jpg"/>
+<meta property="og:image:secure_url" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_Main_Jul2026.jpg"/>
+<meta property="og:image:type" content="image/jpeg"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="Rezultate Financiare Iulie 2026 — Dr. Ardeleanu Dental Clinics"/>
+<link rel="image_src" href="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_Main_Jul2026.jpg"/>
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Rezultate Financiare Iulie 2026 · Dr. Ardeleanu"/>
+<meta name="twitter:description" content="Vânzări 4,55M RON (+60,8% YoY) · EBITDA 1,45M RON · Cash 458K RON."/>
+<meta name="twitter:image" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_Main_Jul2026.jpg"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --burg:#7B1C16; --wheat:#F2DAB7; --cream:#F5EDE3;
+  --gold:#C9A227; --yellow:#FBE483; --olive:#B5BD5C;
+  --text:#222222; --white:#FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Poppins',system-ui,-apple-system,sans-serif;
+  background:var(--cream);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  -webkit-font-smoothing:antialiased;
+}
+.hero{
+  width:100%;
+  background:var(--burg);
+  color:#fff;
+  padding:40px 24px 44px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;top:-80px;right:-60px;
+  width:260px;height:260px;border-radius:50%;
+  background:rgba(242,218,183,0.06);pointer-events:none;
+}
+.brandmark{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:15px;font-weight:700;color:#fff;letter-spacing:0.01em;
+}
+.brandmark .sub{
+  display:block;font-family:'Poppins',sans-serif;font-weight:500;
+  font-size:9px;letter-spacing:0.18em;text-transform:uppercase;
+  color:rgba(242,218,183,0.82);margin-top:3px;
+}
+.hero h1{
+  font-family:'Playfair Display',Georgia,serif;
+  font-weight:700;font-size:30px;line-height:1.15;letter-spacing:-0.01em;margin-top:22px;
+}
+.hero .sub-line{
+  color:var(--gold);font-weight:500;font-size:14px;margin-top:8px;letter-spacing:0.02em;
+}
+.pill{
+  display:inline-block;margin-top:16px;
+  background:var(--yellow);color:#5c3800;
+  font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;
+  padding:5px 14px;border-radius:20px;
+}
+
+/* month-at-a-glance strip */
+.glance-wrap{width:100%;max-width:1180px;padding:0 22px;margin-top:-26px;position:relative;z-index:2;}
+.glance{display:grid;grid-template-columns:1fr;gap:14px;}
+@media(min-width:681px){.glance{grid-template-columns:repeat(3,1fr);}}
+.glance-card{
+  background:var(--white);border:1px solid #e7ddd2;border-radius:14px;
+  padding:16px 18px;box-shadow:0 8px 24px rgba(60,20,14,0.10);
+  border-top:3px solid var(--burg);
+}
+.glance-card.gold{border-top-color:var(--gold);}
+.glance-card.olive{border-top-color:var(--olive);}
+.glance-lbl{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#a08b7a;margin-bottom:6px;}
+.glance-val{font-family:'Playfair Display',Georgia,serif;font-size:25px;font-weight:700;color:var(--burg);line-height:1;}
+.glance-val .unit{font-size:12px;font-weight:600;color:#a08b7a;margin-left:3px;}
+.glance-sub{font-size:11px;color:#a08b7a;margin-top:5px;}
+.glance-delta{display:inline-block;font-size:11px;font-weight:700;margin-top:7px;}
+.glance-delta.pos{color:#3a7d2e;}
+.glance-delta.neg{color:#b33030;}
+
+/* reports grid */
+.pillars{
+  width:100%;max-width:1180px;
+  padding:30px 22px 8px;
+  display:grid;grid-template-columns:1fr;gap:20px;
+  align-items:stretch;
+}
+@media(min-width:760px){.pillars{grid-template-columns:repeat(3,1fr);}}
+
+.card{
+  background:var(--white);
+  border:1px solid #e7ddd2;
+  border-radius:18px;
+  padding:26px 24px 20px;
+  color:inherit;
+  display:flex;flex-direction:column;
+  box-shadow:0 8px 28px rgba(60,20,14,0.08);
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  position:relative;
+}
+.card:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(60,20,14,0.16);border-color:rgba(123,28,22,0.45);}
+.card .kicker{
+  font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--gold);
+}
+.card h2{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:22px;font-weight:700;color:var(--burg);line-height:1.2;margin-top:8px;
+}
+.card .tag{
+  font-size:11px;font-weight:600;color:#a08b7a;margin-top:5px;letter-spacing:0.02em;
+}
+.card p{font-size:12.5px;color:#5a4035;line-height:1.55;margin-top:14px;flex:1;}
+.card .rule{height:1px;background:#efe5d9;margin:18px 0 14px;}
+
+.btn-main{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--burg);color:#fff;text-decoration:none;
+  font-size:13px;font-weight:700;letter-spacing:0.01em;
+  padding:12px 16px;border-radius:11px;
+  transition:background .16s ease;
+}
+.btn-main:hover{background:#651511;}
+.btn-main .arrow{transition:transform .16s ease;}
+.btn-main:hover .arrow{transform:translateX(4px);}
+
+.btn-mobile{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  margin-top:9px;text-decoration:none;
+  background:transparent;color:#5c6a1f;
+  border:1px solid rgba(181,189,92,0.65);
+  font-size:11.5px;font-weight:600;letter-spacing:0.03em;
+  padding:9px 14px;border-radius:11px;
+  transition:background .16s ease,border-color .16s ease;
+}
+.btn-mobile:hover{background:rgba(181,189,92,0.15);border-color:var(--olive);}
+
+/* on phones the mobile version is the recommended one → invert emphasis */
+@media(max-width:759px){
+  .btn-main{background:transparent;color:var(--burg);border:1px solid rgba(123,28,22,0.35);}
+  .btn-main:hover{background:rgba(123,28,22,0.06);}
+  .btn-mobile{
+    order:-1;margin-top:0;margin-bottom:9px;
+    background:var(--olive);color:#2f3608;border-color:var(--olive);
+    font-size:13px;font-weight:700;padding:12px 16px;
+  }
+  .card{padding:22px 20px 18px;}
+  .card .rule{margin:14px 0 12px;}
+}
+.actions{display:flex;flex-direction:column;}
+
+/* de la 760px în sus, desktop + mobil stau pe același rând → etichetă scurtă */
+.btn-main .lbl-short{display:none;}
+@media(min-width:760px){
+  .actions-row{display:flex;flex-direction:row;gap:10px;}
+  .actions-row .btn-main{flex:1;margin-top:0;padding:12px 14px;}
+  .actions-row .btn-main .lbl-full{display:none;}
+  .actions-row .btn-main .lbl-short{display:inline;}
+  .actions-row .btn-mobile{flex:1;margin-top:0;}
+}
+
+.share-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:9px;background:transparent;color:#8a6249;
+  border:1px dashed rgba(138,98,73,0.4);cursor:pointer;
+  font-family:inherit;font-size:11px;font-weight:600;letter-spacing:0.02em;
+  padding:8px 14px;border-radius:11px;
+  transition:background .16s ease,border-color .16s ease;
+}
+.share-btn:hover{background:#f7f1ea;border-color:#8a6249;}
+.share-btn svg{flex:none;}
+
+.pwchip{
+  display:inline-flex;align-items:center;gap:6px;margin-top:10px;align-self:flex-start;
+  background:rgba(201,162,39,0.13);border:1px solid rgba(201,162,39,0.42);
+  color:#8a6800;font-size:11px;font-weight:600;letter-spacing:0.02em;
+  padding:5px 11px;border-radius:20px;
+}
+.pwchip code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:700;font-size:11px;}
+
+/* ── POARTA DE ACCES (parola) ── */
+#homeGate{
+  position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
+  padding:24px;overflow:hidden;
+  background:radial-gradient(1100px 620px at 22% 12%, #96261D 0%, #7B1C16 42%, #5B1310 100%);
+}
+#homeGate::before,#homeGate::after{content:'';position:absolute;border-radius:50%;pointer-events:none;}
+#homeGate::before{width:620px;height:620px;top:-230px;right:-180px;background:rgba(242,218,183,0.07);}
+#homeGate::after{width:420px;height:420px;bottom:-190px;left:-140px;background:rgba(201,162,39,0.09);}
+.gate-wrap{position:relative;width:100%;max-width:412px;text-align:center;}
+.gate-brand{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:22px;}
+.gate-brand img{
+  width:64px;height:64px;border-radius:17px;object-fit:cover;display:block;
+  border:1px solid rgba(201,162,39,0.45);box-shadow:0 10px 28px rgba(0,0,0,0.32);
+}
+.gate-brand .bn{
+  font-family:'Playfair Display',Georgia,serif;font-size:19px;font-weight:700;color:#fff;line-height:1.15;
+}
+.gate-brand .bn span{color:var(--wheat);}
+.gate-brand .bs{
+  font-size:9px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;
+  color:rgba(242,218,183,0.72);margin-top:3px;
+}
+.modal{
+  background:rgba(255,255,255,0.97);border:1px solid rgba(242,218,183,0.55);
+  border-radius:20px;padding:28px 26px 24px;text-align:left;
+  box-shadow:0 26px 70px rgba(0,0,0,0.42);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  animation:gateIn .38s cubic-bezier(.22,.85,.3,1) both;
+}
+@keyframes gateIn{from{opacity:0;transform:translateY(14px) scale(.98);}to{opacity:1;transform:none;}}
+.modal .chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(201,162,39,0.15);border:1px solid rgba(201,162,39,0.42);color:#8a6800;
+  font-size:9.5px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;
+  padding:5px 11px;border-radius:999px;margin-bottom:13px;
+}
+.modal h3{
+  font-family:'Playfair Display',Georgia,serif;font-size:21px;font-weight:700;
+  color:var(--burg);line-height:1.25;
+}
+.modal p{font-size:12.5px;color:#6a4c40;margin-top:7px;line-height:1.5;}
+.gate-field{position:relative;margin-top:18px;}
+.gate-field .ico{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  font-size:13px;opacity:.5;pointer-events:none;
+}
+.modal input{
+  width:100%;padding:13px 14px 13px 38px;border:1px solid #dccfc3;border-radius:12px;
+  font-family:'Poppins',sans-serif;font-size:14.5px;color:var(--text);
+  background:#fffdfb;outline:none;transition:border-color .15s ease, box-shadow .15s ease;
+  letter-spacing:0.06em;
+}
+.modal input::placeholder{letter-spacing:normal;color:#b3a094;}
+.modal input:focus{border-color:var(--burg);box-shadow:0 0 0 3px rgba(123,28,22,0.13);}
+.modal .err{
+  display:none;align-items:center;gap:6px;color:#b33030;font-size:12px;font-weight:600;margin-top:9px;
+}
+.modal .err.show{display:flex;animation:shake .3s ease;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+.modal button{
+  width:100%;margin-top:16px;padding:13px;border:none;border-radius:12px;cursor:pointer;
+  font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:700;letter-spacing:0.02em;
+  background:var(--burg);color:#fff;transition:background .15s ease, transform .12s ease;
+}
+.modal button:hover{background:#651511;}
+.modal button:active{transform:translateY(1px);}
+.gate-note{
+  margin-top:16px;font-size:10px;color:rgba(242,218,183,0.62);letter-spacing:0.04em;
+}
+/* footerul se lipeste de baza ecranului cand pagina e scurta */
+body{min-height:100vh;}
+.drFoot{margin-top:auto !important;}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="brandmark">Dr. Ardeleanu<span class="sub">Dental Clinics · Din 2017</span></div>
+    <h1>Rezultate Financiare Iulie 2026</h1>
+    <div class="sub-line">Vânzări · P&amp;L · Cashflow</div>
+    <div class="pill">Rezultate Iulie 2026</div>
+  </div>
+
+  <div class="glance-wrap">
+    <div class="glance">
+      <div class="glance-card">
+        <div class="glance-lbl">Vânzări Rețea · Iunie</div>
+        <div class="glance-val">4,55M <span class="unit">RON</span></div>
+        <div class="glance-sub">Buget 3,72M</div>
+        <div class="glance-delta pos">▲ +11,7% vs buget · +56,1% YoY</div>
+      </div>
+      <div class="glance-card gold">
+        <div class="glance-lbl">GOURP EBITDA · Iunie</div>
+        <div class="glance-val">1,45M <span class="unit">RON</span></div>
+        <div class="glance-sub">Buget 966K · +130K peste plan</div>
+        <div class="glance-delta pos">▲ +13,5% vs buget · +51,8% YoY</div>
+      </div>
+      <div class="glance-card olive">
+        <div class="glance-lbl">Cash on Hand · 30 Iunie</div>
+        <div class="glance-val">458K <span class="unit">RON</span></div>
+        <div class="glance-sub">Overdraft 53,5% tras · rezervă 465K</div>
+        <div class="glance-delta pos">▲ +1,1% MoM</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pillars">
+
+    <div class="card">
+      <div class="kicker">Vânzări · Iulie 2026</div>
+      <h2>SALES Analysis</h2>
+      <div class="tag">Iulie 2026 · Desktop</div>
+      <p>Evoluție lunară 2022–2026 vs buget, mix pe categorii de tratament, comparativ pe clinici, Cluster 1 &amp; 2, fiecare clinică individual, ramp-up &amp; concurență.</p>
+      <div class="rule"></div>
+      <div class="actions">
+        <div class="actions-row">
+          <a class="btn-main" href="sales-desktop.html"><span class="lbl-full">🖥️ Deschide raportul desktop</span><span class="lbl-short">🖥️ Desktop</span><span class="arrow">→</span></a>
+          <a class="btn-mobile" href="sales-mobile.html">📱 Versiune mobil</a>
+        </div>
+        <button class="share-btn" type="button" data-share="sales" title="Copiază un link de acces doar la acest raport"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Partajează doar acest raport</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="kicker">Profit &amp; Loss · Iulie 2026</div>
+      <h2>EBITDA Analysis</h2>
+      <div class="tag">Iulie 2026 · Desktop</div>
+      <p>Full P&amp;L grup, analiză cost HQ și clinici, clustere și fiecare clinică, cu toggle Lună/YTD, grafice și tabele de variație.</p>
+      <div class="rule"></div>
+      <div class="actions">
+        <div class="actions-row">
+          <a class="btn-main" href="pl-desktop.html"><span class="lbl-full">🖥️ Deschide raportul desktop</span><span class="lbl-short">🖥️ Desktop</span><span class="arrow">→</span></a>
+          <a class="btn-mobile" href="pl-mobile.html">📱 Versiune mobil</a>
+        </div>
+        <button class="share-btn" type="button" data-share="ebitda" title="Copiază un link de acces doar la acest raport"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Partajează doar acest raport</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="kicker">Cashflow · Iulie 2026</div>
+      <h2>CASHFLOW Analysis</h2>
+      <div class="tag">Iulie 2026 · Desktop</div>
+      <p>Cash bridge, traiectorie 15 luni, payables, structură de capital, overdraft, împrumuturi intra-grup și distribuții către acționari, OPCO + PROPCO.</p>
+      <div class="rule"></div>
+      <div class="actions">
+        <div class="actions-row">
+          <a class="btn-main" href="cashflow-report.html"><span class="lbl-full">🖥️ Deschide raportul desktop</span><span class="lbl-short">🖥️ Desktop</span><span class="arrow">→</span></a>
+          <a class="btn-mobile" href="cashflow-summary.html">📱 Versiune mobil</a>
+        </div>
+        <button class="share-btn" type="button" data-share="cashflow" title="Copiază un link de acces doar la acest raport"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Partajează doar acest raport</button>
+      </div>
+    </div>
+
+  </div>
+
+<!-- ── FOOTER STANDARD (model: raportul Sales) ── -->
+<style id="drFootCss">
+.drFoot{width:100%;margin-top:30px;font-family:'Poppins',system-ui,-apple-system,sans-serif;}
+.drFoot .rule{height:2px;background:linear-gradient(90deg,rgba(201,162,39,0) 0%,#C9A227 18%,#F2DAB7 50%,#C9A227 82%,rgba(201,162,39,0) 100%);}
+.drFoot .body{background:linear-gradient(135deg,#7B1C16 0%,#5F1410 100%);padding:26px 32px;position:relative;overflow:hidden;}
+.drFoot .glow{position:absolute;bottom:-160px;right:-60px;width:420px;height:300px;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(242,218,183,0.08) 0%,rgba(242,218,183,0) 70%);}
+.drFoot .inner{position:relative;max-width:1280px;margin:0 auto;}
+.drFoot .cols{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:28px;}
+.drFoot .brand{display:flex;align-items:center;gap:14px;}
+.drFoot .brand img{width:46px;height:46px;border-radius:12px;object-fit:cover;display:block;flex-shrink:0;
+  border:1px solid rgba(201,162,39,0.35);}
+.drFoot .name{font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#fff;line-height:1.15;}
+.drFoot .name span{color:#F2DAB7;}
+.drFoot .tag{font-size:10.5px;font-weight:300;color:rgba(255,255,255,0.58);margin-top:4px;}
+.drFoot .lbl{font-size:8.5px;font-weight:600;color:#C9A227;letter-spacing:1.8px;text-transform:uppercase;margin-bottom:7px;}
+.drFoot .net{max-width:430px;}
+.drFoot .txt{font-size:10.5px;font-weight:300;color:rgba(255,255,255,0.60);line-height:1.75;}
+.drFoot .contact{text-align:right;}
+.drFoot .phone{font-size:14px;font-weight:700;color:#fff;letter-spacing:0.4px;line-height:1.2;}
+.drFoot .lnk{font-size:10.5px;font-weight:300;margin-top:4px;}
+.drFoot .lnk a{color:rgba(242,218,183,0.85);text-decoration:none;border-bottom:1px solid rgba(242,218,183,0.28);}
+.drFoot .lnk a:hover{color:#fff;border-bottom-color:rgba(255,255,255,0.6);}
+.drFoot .hr{height:1px;background:rgba(242,218,183,0.18);margin:20px 0 12px;}
+.drFoot .bottom{display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding-right:200px;}
+.drFoot .since{font-size:11px;font-weight:700;color:#F2DAB7;letter-spacing:2px;}
+.drFoot .sep{width:1px;height:12px;background:rgba(242,218,183,0.30);}
+.drFoot .copy{font-size:9.5px;font-weight:300;color:rgba(255,255,255,0.45);letter-spacing:0.2px;}
+@media(max-width:700px){
+  .drFoot .body{padding:22px 18px;}
+  .drFoot .cols{gap:20px;}
+  .drFoot .contact{text-align:left;}
+  .drFoot .bottom{padding-right:120px;}
+}
+</style>
+<div class="drFoot">
+
+  <div class="rule"></div>
+  <div class="body">
+    <div class="glow"></div>
+    <div class="inner">
+      <div class="cols">
+        <div class="brand">
+          <img src="logo_adc.jpg" alt="Dr. Ardeleanu Dental Clinics"/>
+          <div>
+            <div class="name">Dr. Ardeleanu <span>Dental Clinics</span></div>
+            <div class="tag">Excelența la prețuri accesibile · Clinica familiei tale</div>
+          </div>
+        </div>
+        <div class="net">
+          <div class="lbl">Rețeaua</div>
+          <div class="txt">București Dorobanți · București Cotroceni · Oltenița · Slobozia · Călărași · Giurgiu · Târgoviște · Focșani · Brăila</div>
+        </div>
+        <div class="contact">
+          <div class="lbl">Contact</div>
+          <div class="phone">031 99 63</div>
+          <div class="lnk"><a href="https://clinicileardeleanu.ro" target="_blank" rel="noreferrer">clinicileardeleanu.ro</a></div>
+          <div class="lnk"><a href="mailto:clinici@ardeleanu.ro">clinici@ardeleanu.ro</a></div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="bottom">
+        <div class="since">DIN 2017</div>
+        <span class="sep"></span>
+        <div class="copy">© 2026 Dr. Ardeleanu Dental Clinics · Raport intern · Date confidențiale · Reconciliat cu PL IULIE 2026 V1.8.1</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- POARTA DE ACCES — o singură parolă pentru toate rapoartele -->
+  <div id="homeGate">
+    <div class="gate-wrap">
+      <div class="gate-brand">
+        <img src="logo_adc.jpg" alt="Dr. Ardeleanu Dental Clinics"/>
+        <div>
+          <div class="bn">Dr. Ardeleanu <span>Dental Clinics</span></div>
+          <div class="bs">Rezultate financiare · Din 2017</div>
+        </div>
+      </div>
+      <div class="modal">
+        <div class="chip">🔒 Acces protejat</div>
+        <h3>Rezultate Financiare Iulie 2026</h3>
+        <p>Introduceți parola pentru a continua.</p>
+        <div class="gate-field">
+          <span class="ico">🔑</span>
+          <input type="password" id="gateInput" placeholder="Parolă" autocomplete="off" onkeydown="if(event.key==='Enter')gateCheck()"/>
+        </div>
+        <div class="err" id="gateErr">⚠ Parolă incorectă. Încercați din nou.</div>
+        <button onclick="gateCheck()">Deblochează raportul</button>
+      </div>
+      <div class="gate-note">Document intern · Date confidențiale</div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var HOME_PW = "ArdeleanuIulie";
+  var ALLOWED = ["sales-mobile.html","sales-desktop.html","pl-mobile.html","pl-desktop.html","cashflow-summary.html","cashflow-report.html","cashflow-report-mar-2026.html","cashflow-report-apr-2026.html","cashflow-report-may-2026.html","cashflow-report-jun-2026.html","cashflow-summary-jun-2026.html","pl-desktop-jan-2026.html","pl-desktop-feb-2026.html","pl-desktop-mar-2026.html","pl-desktop-apr-2026.html","pl-desktop-may-2026.html","pl-desktop-jun-2026.html"];
+  // destinatia ceruta prin link (?next=raport.html) — doar fisiere din lista alba
+  var next = null;
+  try{
+    var m = /[?&]next=([^&]+)/.exec(location.search);
+    if(m){ var c = decodeURIComponent(m[1]).split('/').pop(); if(ALLOWED.indexOf(c)>-1) next = c; }
+  }catch(e){}
+
+  var gate = document.getElementById('homeGate');
+  function go(){
+    if(next){ location.replace(next); return true; }
+    return false;
+  }
+  try{
+    if(sessionStorage.getItem('reportsAuth')==='1'){
+      if(go()) return;
+      gate.parentNode.removeChild(gate); return;
+    }
+  }catch(e){}
+
+  // mesaj contextual cand linkul duce catre un raport anume
+  if(next){
+    var TITLES = {
+      "sales-mobile.html":"Vânzări · Iulie 2026 (mobil)",
+      "sales-desktop.html":"Vânzări · Iulie 2026 (desktop)",
+      "pl-mobile.html":"P&L / EBITDA · Iulie 2026 (mobil)",
+      "pl-desktop.html":"P&L / EBITDA · Iulie 2026 (desktop)",
+      "pl-desktop-jan-2026.html":"P&L / EBITDA · Ianuarie 2026 (desktop, arhivă)",
+      "pl-desktop-feb-2026.html":"P&L / EBITDA · Februarie 2026 (desktop, arhivă)",
+      "pl-desktop-mar-2026.html":"P&L / EBITDA · Martie 2026 (desktop, arhivă)",
+      "pl-desktop-apr-2026.html":"P&L / EBITDA · Aprilie 2026 (desktop, arhivă)",
+      "pl-desktop-may-2026.html":"P&L / EBITDA · Mai 2026 (desktop, arhivă)",
+      "pl-desktop-jun-2026.html":"P&L / EBITDA · Iunie 2026 (desktop, arhivă)",
+      "cashflow-summary.html":"Cashflow · Iulie 2026 (mobil)",
+      "cashflow-report.html":"Cashflow · Iulie 2026 (desktop)",
+      "cashflow-report-mar-2026.html":"Cashflow · Martie 2026 (desktop, arhivă)",
+      "cashflow-report-apr-2026.html":"Cashflow · Aprilie 2026 (desktop, arhivă)",
+      "cashflow-report-may-2026.html":"Cashflow · Mai 2026 (desktop, arhivă)",
+      "cashflow-report-jun-2026.html":"Cashflow · Iunie 2026 (desktop, arhivă)",
+      "cashflow-summary-jun-2026.html":"Cashflow · Iunie 2026 (mobil, arhivă)"
+    };
+    var h = gate.querySelector('h3'), pp = gate.querySelector('p');
+    if(h) h.textContent = TITLES[next] || 'Rezultate Financiare Iulie 2026';
+    if(pp) pp.textContent = 'Introduceți parola pentru a deschide raportul.';
+  }
+
+  document.documentElement.style.overflow='hidden';
+  window.gateCheck = function(){
+    var inp = document.getElementById('gateInput');
+    if(inp.value===HOME_PW){
+      try{ sessionStorage.setItem('reportsAuth','1'); }catch(e){}
+      if(go()) return;
+      document.documentElement.style.overflow='';
+      gate.parentNode.removeChild(gate);
+    } else {
+      document.getElementById('gateErr').classList.add('show');
+    }
+  };
+  setTimeout(function(){ var i=document.getElementById('gateInput'); if(i) i.focus(); },80);
+})();
+</script>
+
+<script>
+/* Partajare per-raport: linkul copiat conține cheia raportului (#k=...), care
+   deschide DOAR raportul respectiv (desktop + mobil), fără parola generală.
+   Revocare: schimbă cheia raportului (hash-ul de aici + gate-ul din fișierele raportului). */
+(function(){
+  var SHARE={
+    sales:{ url:'sales-desktop.html', key:'sales-b5d403' },
+    ebitda:{ url:'pl-desktop.html', key:'ebitda-2530ec' },
+    cashflow:{ url:'cashflow-report.html', key:'cashflow-3d1ee8' }
+  };
+  document.querySelectorAll('.share-btn').forEach(function(b){
+    b.addEventListener('click',function(e){
+      e.preventDefault(); e.stopPropagation();
+      var s=SHARE[b.dataset.share]; if(!s) return;
+      var link=new URL(s.url, location.href).href+'#k='+encodeURIComponent(s.key);
+      function done(){
+        var t=b.innerHTML; b.innerHTML='✓ Link copiat — trimite-l destinatarului';
+        setTimeout(function(){ b.innerHTML=t; },2200);
+      }
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(link).then(done,function(){ window.prompt('Copiază linkul:', link); });
+      } else { window.prompt('Copiază linkul:', link); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

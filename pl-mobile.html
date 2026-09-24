@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<script>
+(function(){
+  var O="39a3f764451ba7f211f3e42851339d86fa332607dc45a6b85c23b48610417023"; var LK="adcAuthEbitda";
+  function deny(){ var _f=(location.pathname.split("/").pop()||""); location.replace("index.html?next="+encodeURIComponent(_f)); }
+  try{
+    if(sessionStorage.getItem("reportsAuth")==="1") return;
+    if(localStorage.getItem(LK)===O) return;
+    var m=/[#&]k=([^&]+)/.exec(location.hash);
+    if(m && window.crypto && crypto.subtle){
+      document.documentElement.style.visibility='hidden';
+      crypto.subtle.digest('SHA-256', new TextEncoder().encode(decodeURIComponent(m[1]).trim())).then(function(b){
+        var h=Array.prototype.map.call(new Uint8Array(b),function(x){return('0'+x.toString(16)).slice(-2);}).join('');
+        if(h!==O){ deny(); return; }
+        try{ localStorage.setItem(LK,O); }catch(e){}
+        try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+        document.documentElement.style.visibility='';
+      }).catch(deny);
+      return;
+    }
+    deny();
+  }catch(e){ deny(); }
+})();
+</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Executive Summary · Iul 2026 · Dr. Ardeleanu</title>
+<link rel="canonical" href="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/pl-mobile.html"/>
+<meta name="theme-color" content="#7B1C16"/>
+<meta name="description" content="EBITDA Grup Iulie 2026: 1,45M RON (+23,7% vs buget · +85,9% YoY). Revenue 4.546K, EBITDAR 1.773K (marjă 39,0%)."/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Dr. Ardeleanu Dental Clinics"/>
+<meta property="og:locale" content="ro_RO"/>
+<meta property="og:title" content="EBITDA Analysis · Iulie 2026 · Dr. Ardeleanu"/>
+<meta property="og:description" content="EBITDA Grup Iulie 2026: 1,45M RON (+23,7% vs buget · +85,9% YoY). Revenue 4.546K, EBITDAR 1.773K (marjă 39,0%)."/>
+<meta property="og:url" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/pl-mobile.html"/>
+<meta property="og:image" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_PL_Jul2026.png"/>
+<meta property="og:image:secure_url" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_PL_Jul2026.png"/>
+<meta property="og:image:type" content="image/png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="Dr. Ardeleanu Dental Clinics — Executive Summary, Raport Financiar Iulie 2026"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="EBITDA Analysis · Iulie 2026 · Dr. Ardeleanu"/>
+<meta name="twitter:description" content="EBITDA Grup Iulie 2026: 1,45M RON (+23,7% vs buget · +85,9% YoY). Revenue 4.546K, EBITDAR 1.773K (marjă 39,0%)."/>
+<meta name="twitter:image" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_PL_Jul2026.png"/>
+<meta name="twitter:image:alt" content="Dr. Ardeleanu Dental Clinics — Executive Summary, Raport Financiar Iulie 2026"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Poppins',system-ui,sans-serif;
+  background:#E8DDD4;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  padding:20px 14px 40px;
+  -webkit-font-smoothing:antialiased;
+}
+.card{
+  width:100%;
+  max-width:390px;
+  background:#FAF6F2;
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 12px 48px rgba(60,20,14,0.16),0 2px 8px rgba(60,20,14,0.08);
+}
+
+/* ── HEADER ── */
+.hdr{
+  background:#7B1C16;
+  padding:20px 18px 16px;
+  position:relative;
+  overflow:hidden;
+}
+.hdr::after{
+  content:'';
+  position:absolute;
+  top:-40px;right:-40px;
+  width:160px;height:160px;
+  border-radius:50%;
+  background:rgba(242,218,183,0.07);
+  pointer-events:none;
+}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.brand-name{
+  font-family:'Playfair Display',serif;
+  font-size:16px;
+  font-weight:700;
+  color:#fff;
+  line-height:1.2;
+  letter-spacing:-0.01em;
+}
+.brand-sub{
+  font-size:9px;
+  font-weight:500;
+  color:rgba(242,218,183,0.80);
+  letter-spacing:0.13em;
+  text-transform:uppercase;
+  margin-top:2px;
+}
+.hdr-pill{
+  background:#FBE483;
+  color:#5c3800;
+  font-size:9px;
+  font-weight:700;
+  padding:4px 10px;
+  border-radius:20px;
+  letter-spacing:0.07em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.hdr-title{
+  font-size:22px;
+  font-weight:700;
+  color:#fff;
+  line-height:1.15;
+  letter-spacing:-0.02em;
+  margin-bottom:3px;
+}
+.hdr-meta{
+  font-size:11px;
+  font-weight:400;
+  color:rgba(242,218,183,0.78);
+}
+
+/* ── TOGGLE ── */
+.toggle-wrap{
+  background:#5c1510;
+  padding:8px 16px;
+  display:flex;
+  gap:5px;
+}
+.toggle-btn{
+  flex:1;
+  padding:7px 6px;
+  border:none;
+  border-radius:9px;
+  font-family:'Poppins',sans-serif;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.07em;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all 0.16s ease;
+}
+.toggle-btn.on{background:#fff;color:#7B1C16;}
+.toggle-btn.off{background:rgba(255,255,255,0.10);color:rgba(255,255,255,0.60);}
+
+/* ── CONTENT ── */
+.body{padding:0 0 4px;}
+
+/* ── SECTION LABEL ── */
+.slabel{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 16px 7px;
+}
+.slabel span{
+  font-size:9px;font-weight:700;
+  letter-spacing:0.14em;text-transform:uppercase;
+  color:#a08070;white-space:nowrap;
+}
+.slabel::after{content:'';flex:1;height:1px;background:#e0d4cc;}
+
+/* ── KPI GRID ── */
+.kpi-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  padding:0 12px 4px;
+}
+.kpi{
+  background:#fff;
+  border:1px solid #ecddd4;
+  border-radius:14px;
+  padding:13px 13px 11px;
+  position:relative;
+  overflow:hidden;
+}
+.kpi-bar{
+  position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0;
+}
+.kpi-bar.burg{background:#7B1C16;}
+.kpi-bar.grn{background:#4a7c3f;}
+.kpi-bar.ora{background:#c06040;}
+.kpi-bar.blu{background:#4a8fb5;}
+.kpi-bar.tea{background:#2a8a7a;}
+
+.kpi-lbl{
+  font-size:9.5px;font-weight:600;
+  color:#a08070;letter-spacing:0.06em;text-transform:uppercase;
+  margin-bottom:5px;
+}
+.kpi-val{
+  font-family:'Playfair Display',serif;
+  font-size:21px;font-weight:700;line-height:1;
+  margin-bottom:4px;
+}
+.kpi-val.burg{color:#7B1C16;}
+.kpi-val.grn{color:#4a7c3f;}
+.kpi-val.ora{color:#c06040;}
+.kpi-val.blu{color:#4a8fb5;}
+.kpi-val.tea{color:#2a8a7a;}
+
+.kpi-bgt{font-size:10px;color:#a08070;margin-bottom:3px;}
+.kpi-pct{font-size:9.5px;color:#8a6050;margin-bottom:2px;}
+.kpi-delta{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:10.5px;font-weight:600;
+  padding:2px 7px;border-radius:20px;
+  margin-top:2px;
+}
+.kpi-delta.pos{background:rgba(74,124,63,0.10);color:#4a7c3f;}
+.kpi-delta.neg{background:rgba(192,60,30,0.09);color:#b33030;}
+.kpi-delta.warn{background:rgba(201,162,39,0.13);color:#8a6800;}
+
+/* ── GROUP HIGHLIGHT BAR ── */
+.highlight-bar{
+  margin:4px 12px 0;
+  background:#7B1C16;
+  border-radius:12px;
+  padding:12px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.hl-left .hl-label{font-size:9px;font-weight:600;color:rgba(242,218,183,0.75);letter-spacing:0.10em;text-transform:uppercase;}
+.hl-left .hl-val{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#fff;line-height:1;margin-top:1px;}
+.hl-left .hl-margin{font-size:10px;color:#F2DAB7;margin-top:2px;}
+.hl-right{text-align:right;}
+.hl-right .hl-budg{font-size:10px;color:rgba(242,218,183,0.65);margin-bottom:3px;}
+.hl-right .hl-badge{
+  background:rgba(251,228,131,0.20);border:1px solid rgba(251,228,131,0.40);
+  color:#FBE483;font-size:11px;font-weight:700;
+  padding:4px 10px;border-radius:20px;
+}
+
+/* ── ALERTS ── */
+.alerts{padding:0 12px;}
+.alert{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:11px 13px;
+  border-radius:12px;
+  margin-bottom:7px;
+}
+.alert.red{background:#fff2f2;border:1px solid #f0c0c0;}
+.alert.amber{background:#fffdf0;border:1px solid #f0e0a0;}
+.alert.green{background:#f2faf4;border:1px solid #b4dfc0;}
+
+.alert-icon{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:11px;margin-top:1px;
+  font-weight:700;
+}
+.alert.red .alert-icon{background:#b33030;color:#fff;}
+.alert.amber .alert-icon{background:#C9A227;color:#fff;}
+.alert.green .alert-icon{background:#4a7c3f;color:#fff;}
+
+.alert-content{}
+.alert-title{font-size:11.5px;font-weight:700;color:#1e0e0b;margin-bottom:2px;line-height:1.3;}
+.alert-body{font-size:10.5px;color:#5a4035;line-height:1.45;}
+
+/* ── CLINICS TABLE ── */
+.clinics{padding:0 12px;}
+.clinic-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fff;
+  border:1px solid #ecddd4;
+  border-radius:11px;
+  padding:9px 12px;
+  margin-bottom:6px;
+}
+.clinic-row.dim{background:#FAF6F2;border-color:#e8ddd4;}
+
+.cl-left{}
+.cl-code{
+  font-size:9px;font-weight:700;letter-spacing:0.10em;
+  text-transform:uppercase;color:#a08070;margin-bottom:1px;
+}
+.cl-name{font-size:12px;font-weight:600;color:#1e0e0b;line-height:1.2;}
+.cl-rev{font-size:10px;color:#a08070;margin-top:1px;}
+
+.cl-right{text-align:right;flex-shrink:0;}
+.cl-ebitdar{font-size:14px;font-weight:700;line-height:1;}
+.cl-ebitdar.pos{color:#4a7c3f;}
+.cl-ebitdar.neg{color:#b33030;}
+.cl-ebitdar.dim{color:#a08070;}
+.cl-pct{
+  display:inline-block;
+  font-size:9.5px;font-weight:600;
+  padding:2px 7px;border-radius:20px;
+  margin-top:3px;
+}
+.cl-pct.hi{background:rgba(74,124,63,0.10);color:#4a7c3f;}
+.cl-pct.mid{background:rgba(192,96,64,0.10);color:#c06040;}
+.cl-pct.lo{background:rgba(179,48,48,0.09);color:#b33030;}
+.cl-pct.dim{background:rgba(160,128,112,0.10);color:#a08070;}
+.cl-bvs{font-size:9px;font-weight:600;margin-top:3px;display:inline-block;padding:1px 6px;border-radius:10px;}
+.cl-bvs.pos{background:rgba(74,124,63,0.09);color:#4a7c3f;}
+.cl-bvs.neg{background:rgba(179,48,48,0.09);color:#b33030;}
+.cl-bvs.dim{background:rgba(160,128,112,0.08);color:#a08070;}
+.ct-bvs{font-size:10px;font-weight:700;margin-top:4px;display:inline-block;padding:2px 9px;border-radius:20px;border:1px solid;}
+.ct-bvs.pos{color:#4a7c3f;background:rgba(74,124,63,0.10);border-color:rgba(74,124,63,0.30);}
+.ct-bvs.neg{color:#b33030;background:rgba(179,48,48,0.09);border-color:rgba(179,48,48,0.30);}
+
+.cluster-sep{
+  display:flex;align-items:center;gap:7px;
+  padding:7px 2px 4px;
+}
+.cluster-sep span{
+  font-size:9px;font-weight:700;letter-spacing:0.11em;
+  text-transform:uppercase;color:#c06040;white-space:nowrap;
+}
+.cluster-sep::after{content:'';flex:1;height:1px;background:#e0d4cc;}
+
+.cluster-total{
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,#f8f0e8,#fff8f2);
+  border:1px solid #d4a882;
+  border-radius:10px;
+  padding:8px 12px;
+  margin-bottom:10px;
+  margin-top:2px;
+}
+.ct-label{font-size:9px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#7B1C16;margin-bottom:1px;}
+.ct-rev{font-size:11px;color:#7B1C16;font-weight:600;}
+.ct-right{text-align:right;flex-shrink:0;}
+.ct-ebitdar{font-size:15px;font-weight:700;color:#4a7c3f;line-height:1;}
+.ct-pct{display:inline-block;font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:20px;margin-top:3px;background:rgba(74,124,63,0.12);color:#4a7c3f;}
+
+/* ── FOOTER ── */
+.footer{
+  text-align:center;
+  padding:14px 16px 18px;
+  border-top:1px solid #e0d4cc;
+  margin-top:8px;
+}
+.footer-main{font-size:11px;font-weight:600;color:#7B1C16;}
+.footer-sub{font-size:9.5px;color:#b09080;margin-top:3px;letter-spacing:0.04em;}
+
+/* ── SHARE ── */
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0;}
+.share-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(242,218,183,0.14);
+  border:1px solid rgba(242,218,183,0.42);
+  color:#F2DAB7;
+  font-family:'Poppins',sans-serif;
+  font-size:9.5px;font-weight:600;
+  letter-spacing:0.08em;text-transform:uppercase;
+  padding:6px 12px;border-radius:20px;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:background 0.15s ease,transform 0.1s ease;
+}
+.share-btn:active{transform:scale(0.95);background:rgba(242,218,183,0.28);}
+.share-btn svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.toast{
+  position:fixed;left:50%;bottom:24px;
+  transform:translateX(-50%) translateY(10px);
+  background:#2b0f0c;color:#F2DAB7;
+  font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:500;
+  padding:10px 18px;border-radius:22px;
+  box-shadow:0 6px 22px rgba(43,15,12,0.32);
+  opacity:0;pointer-events:none;
+  transition:opacity 0.22s ease,transform 0.22s ease;
+  z-index:99;max-width:calc(100% - 32px);text-align:center;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── VIEW SWITCHING ── */
+.view{display:none;}
+.view.active{display:block;}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-top">
+      <div>
+        <div class="brand-name">Dr. Ardeleanu</div>
+        <div class="brand-sub">Dental Clinics · Din 2017</div>
+      </div>
+      <div class="hdr-right">
+        <div class="hdr-pill" id="period-pill">YTD Ian–Iul</div>
+        <button class="share-btn" id="shareBtn" type="button" aria-label="Trimite raportul de mobil">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>
+          Trimite
+        </button>
+      </div>
+    </div>
+    <div class="hdr-title">Executive Summary</div>
+    <div class="hdr-meta">Raport Financiar · Iulie 2026</div>
+  </div>
+
+  <!-- TOGGLE -->
+  <div class="toggle-wrap">
+    <button class="toggle-btn off" onclick="setView('month')">Lună · Iul</button>
+    <button class="toggle-btn on"  onclick="setView('ytd')">YTD · Ian–Iul</button>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- ════ YTD VIEW ════ -->
+    <div class="view active" id="view-ytd">
+
+      <div class="slabel"><span>KPI Grup — YTD Ian–Iul 2026</span></div>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-bar burg"></div>
+          <div class="kpi-lbl">Revenue</div>
+          <div class="kpi-val burg">27.060K</div>
+          <div class="kpi-bgt">Buget: 25.599K</div>
+          <div class="kpi-delta pos">+1.461K (+5,7%)</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar grn"></div>
+          <div class="kpi-lbl">EBITDA</div>
+          <div class="kpi-val grn">7.310K</div>
+          <div class="kpi-pct">Marjă 27,0% · bgt 25,5%</div>
+          <div class="kpi-bgt">Buget: 6.528K*</div>
+          <div class="kpi-delta pos">+782K (+12,0%)</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar ora"></div>
+          <div class="kpi-lbl">Cost of Sales</div>
+          <div class="kpi-val ora">4.425K</div>
+          <div class="kpi-pct">16,4% rev · bgt 18,6%</div>
+          <div class="kpi-bgt">Buget: 4.761K</div>
+          <div class="kpi-delta pos">−2,25 pp vs buget</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar blu"></div>
+          <div class="kpi-lbl">Cost Doctori</div>
+          <div class="kpi-val blu">8.172K</div>
+          <div class="kpi-pct">30,2% rev · bgt 30,5%</div>
+          <div class="kpi-bgt">Buget: 7.804K</div>
+          <div class="kpi-delta pos">−0,28 pp vs buget</div>
+        </div>
+        <div class="kpi" style="grid-column:1/-1;">
+          <div class="kpi-bar tea"></div>
+          <div class="kpi-lbl">SG&amp;A Clinici</div>
+          <div class="kpi-val tea">2.433K</div>
+          <div class="kpi-bgt">Buget: 2.349K*</div>
+          <div class="kpi-delta pos">−0,18 pp vs buget</div>
+          <div class="kpi-pct" style="margin-top:6px;">Sub buget ca pondere în venituri. Abateri locale: Slobozia (IT &amp; birotică, element diverse) și Oltenița (IT &amp; birotică); Focșani compensează cu −8,8 pp.</div>
+        </div>
+      </div>
+
+      <div class="highlight-bar">
+        <div class="hl-left">
+          <div class="hl-label">EBITDAR YTD Ian–Iul</div>
+          <div class="hl-val">9.365K</div>
+          <div class="hl-margin">Marjă 34,6% din Revenue · bgt 32,9%</div>
+        </div>
+        <div class="hl-right">
+          <div class="hl-budg">Buget: 8.421K*</div>
+          <div class="hl-badge">+944K vs bgt</div>
+        </div>
+      </div>
+
+      <div class="slabel"><span>Puncte de atenție</span></div>
+      <div class="alerts">
+        <div class="alert green">
+          <div class="alert-icon">✓</div>
+          <div class="alert-content">
+            <div class="alert-title">EBITDAR rețea 9.365K, +944K vs buget (+11,3%)</div>
+            <div class="alert-body">Marjă 34,6% din venituri vs 32,9% bugetat. Revenue +1.461K, iar toate cele trei linii mari de cost sunt sub buget ca pondere: Cost of Sales −2,25 pp, Cost Doctori −0,28 pp, SG&amp;A −0,18 pp.</div>
+          </div>
+        </div>
+        <div class="alert red">
+          <div class="alert-icon">!</div>
+          <div class="alert-content">
+            <div class="alert-title">Cotroceni — EBITDAR cumulat 86K, marjă 8,4%</div>
+            <div class="alert-body">−54K față de buget, singura clinică matură sub plan. Veniturile cumulate sunt sub buget cu 52K, iar chiria externă (125K Ian–Iul) nu se recuperează în EBITDAR.</div>
+          </div>
+        </div>
+        <div class="alert amber">
+          <div class="alert-icon">▲</div>
+          <div class="alert-content">
+            <div class="alert-title">HQ Cost cumulat 2.055K, +161K peste buget</div>
+            <div class="alert-body">7,6% din venituri vs 7,4% bugetat — costul central crește mai repede decât veniturile. SG&amp;A HQ 538K vs 483K buget: transport 105K vs 64K, IT &amp; birotică 108K vs 72K, consultanță juridică &amp; contabilă 39K vs 18K; parțial compensat de Education 54K vs 135K.</div>
+          </div>
+        </div>
+        <div class="alert green">
+          <div class="alert-icon">✓</div>
+          <div class="alert-content">
+            <div class="alert-title">Focșani a trecut pe profit — EBITDAR cumulat +296K</div>
+            <div class="alert-body">Buget: −117K. Venituri cumulate 2.219K vs 1.620K buget (+598K), cu SG&amp;A la 15,7% din venituri vs 24,5% bugetat. Ramp-up încheiat mult mai rapid decât planificat.</div>
+          </div>
+        </div>
+        <div style="font-size:9px;color:#a08070;line-height:1.5;padding:2px 4px 6px;">* Brăila pe hold — buget SG&amp;A plafonat la actual; economia din neoperare nu este creditată.</div>
+      </div>
+
+      <div class="slabel"><span>Clinici — Performanță YTD Ian–Iul</span></div>
+      <div class="clinics">
+        <div class="cluster-sep"><span>① Cluster Sud</span></div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">OLT</div>
+            <div class="cl-name">Oltenița</div>
+            <div class="cl-rev">Rev YTD: 3.446K</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">1.245K</div>
+            <div class="cl-pct hi">EBITDAR 36,1%</div>
+            <div class="cl-bvs neg">−55K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">GRG</div>
+            <div class="cl-name">Giurgiu</div>
+            <div class="cl-rev">Rev YTD: 5.632K</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">2.297K</div>
+            <div class="cl-pct hi">EBITDAR 40,8%</div>
+            <div class="cl-bvs pos">+179K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">SLB</div>
+            <div class="cl-name">Slobozia</div>
+            <div class="cl-rev">Rev YTD: 4.443K</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">1.662K</div>
+            <div class="cl-pct hi">EBITDAR 37,4%</div>
+            <div class="cl-bvs pos">+217K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">CLR</div>
+            <div class="cl-name">Călărași</div>
+            <div class="cl-rev">Rev YTD: 5.960K</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">2.484K</div>
+            <div class="cl-pct hi">EBITDAR 41,7%</div>
+            <div class="cl-bvs neg">−9K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row dim">
+          <div class="cl-left">
+            <div class="cl-code">BRL</div>
+            <div class="cl-name" style="color:#a08070;">Brăila</div>
+            <div class="cl-rev">Pre-revenue · pe hold</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar dim">−3K</div>
+            <div class="cl-pct dim">Hold</div>
+            <div class="cl-bvs dim">buget plafonat</div>
+          </div>
+        </div>
+        <div class="cluster-total">
+          <div class="cl-left">
+            <div class="ct-label">① Total Cluster Sud</div>
+            <div class="ct-rev">Rev YTD: 19.481K</div>
+          </div>
+          <div class="ct-right">
+            <div class="ct-ebitdar">7.684K</div>
+            <div class="ct-pct">EBITDAR 39,4%</div>
+            <div class="ct-bvs pos">+333K vs bgt</div>
+          </div>
+        </div>
+        <div class="cluster-sep"><span>② Cluster Central &amp; BUC</span></div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">DRB</div>
+            <div class="cl-name">Dorobanți</div>
+            <div class="cl-rev">Rev YTD: 945K</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">134K</div>
+            <div class="cl-pct lo">EBITDAR 14,1%</div>
+            <div class="cl-bvs pos">+33K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">CTR</div>
+            <div class="cl-name">Cotroceni</div>
+            <div class="cl-rev">Rev YTD: 1.021K</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">86K</div>
+            <div class="cl-pct lo">EBITDAR 8,4%</div>
+            <div class="cl-bvs neg">−54K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">TGV</div>
+            <div class="cl-name">Târgoviște</div>
+            <div class="cl-rev">Rev YTD: 3.371K</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">1.165K</div>
+            <div class="cl-pct mid">EBITDAR 34,6%</div>
+            <div class="cl-bvs pos">+219K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">FCS</div>
+            <div class="cl-name">Focșani</div>
+            <div class="cl-rev">Rev YTD: 2.219K</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">296K</div>
+            <div class="cl-pct lo">EBITDAR 13,4%</div>
+            <div class="cl-bvs pos">+413K vs bgt</div>
+          </div>
+        </div>
+        <div class="cluster-total">
+          <div class="cl-left">
+            <div class="ct-label">② Total Cluster Central &amp; BUC</div>
+            <div class="ct-rev">Rev YTD: 7.556K</div>
+          </div>
+          <div class="ct-right">
+            <div class="ct-ebitdar" style="color:#c06040;">1.680K</div>
+            <div class="ct-pct" style="background:rgba(192,96,64,0.10);color:#c06040;">EBITDAR 22,2%</div>
+            <div class="ct-bvs pos">+611K vs bgt</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /ytd -->
+
+    <!-- ════ MONTH VIEW ════ -->
+    <div class="view" id="view-month">
+
+      <div class="slabel"><span>KPI Grup — Iulie 2026</span></div>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-bar burg"></div>
+          <div class="kpi-lbl">Revenue</div>
+          <div class="kpi-val burg">4.546K</div>
+          <div class="kpi-bgt">Buget: 4.142K</div>
+          <div class="kpi-delta pos">+404K (+9,8%)</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar grn"></div>
+          <div class="kpi-lbl">EBITDA</div>
+          <div class="kpi-val grn">1.450K</div>
+          <div class="kpi-pct">Marjă 31,9% · bgt 28,6%</div>
+          <div class="kpi-bgt">Buget: 1.184K*</div>
+          <div class="kpi-delta pos">+265K (+22,4%)</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar ora"></div>
+          <div class="kpi-lbl">Cost of Sales</div>
+          <div class="kpi-val ora">637K</div>
+          <div class="kpi-pct">14,0% rev · bgt 17,7%</div>
+          <div class="kpi-bgt">Buget: 731K</div>
+          <div class="kpi-delta pos">−3,65 pp vs buget</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-bar blu"></div>
+          <div class="kpi-lbl">Cost Doctori</div>
+          <div class="kpi-val blu">1.371K</div>
+          <div class="kpi-pct">30,1% rev · bgt 30,5%</div>
+          <div class="kpi-bgt">Buget: 1.264K</div>
+          <div class="kpi-delta pos">−0,37 pp vs buget</div>
+        </div>
+        <div class="kpi" style="grid-column:1/-1;">
+          <div class="kpi-bar tea"></div>
+          <div class="kpi-lbl">SG&amp;A Clinici</div>
+          <div class="kpi-val tea">378K</div>
+          <div class="kpi-bgt">Buget: 340K*</div>
+          <div class="kpi-delta warn">+0,11 pp vs buget</div>
+          <div class="kpi-pct" style="margin-top:6px;">Abaterea vine din Slobozia (+6,8 pp): IT, Comm &amp; Office 26K vs 4K buget, autorizări &amp; pază 8K vs 1K, plus un element diverse de 9K.</div>
+        </div>
+      </div>
+
+      <div class="highlight-bar">
+        <div class="hl-left">
+          <div class="hl-label">EBITDAR Iulie</div>
+          <div class="hl-val">1.773K</div>
+          <div class="hl-margin">Marjă 39,0% din Revenue · bgt 35,3%</div>
+        </div>
+        <div class="hl-right">
+          <div class="hl-budg">Buget: 1.461K*</div>
+          <div class="hl-badge" style="color:#86efac;border-color:rgba(134,239,172,0.4);">+312K vs bgt</div>
+        </div>
+      </div>
+
+      <div class="slabel"><span>Puncte de atenție</span></div>
+      <div class="alerts">
+        <div class="alert green">
+          <div class="alert-icon">✓</div>
+          <div class="alert-content">
+            <div class="alert-title">Lună record — Revenue 4.546K (+9,8% vs buget)</div>
+            <div class="alert-body">EBITDAR 1.773K la o marjă de 39,0% (buget 35,3%), +312K vs buget. Cele patru clinici mature din Cluster Sud trec toate de 33% marjă EBITDAR, iar Focșani ajunge la 653K venituri și 248K EBITDAR (38,0%).</div>
+          </div>
+        </div>
+        <div class="alert green">
+          <div class="alert-icon">✓</div>
+          <div class="alert-content">
+            <div class="alert-title">Cost of Sales 14,0% din venituri vs 17,7% buget</div>
+            <div class="alert-body">Cu 3,65 pp sub buget — 94K economie în lună: laborator 267K vs 342K buget și consumabile 356K vs 379K. Cea mai bună structură de cost direct din 2026.</div>
+          </div>
+        </div>
+        <div class="alert red">
+          <div class="alert-icon">!</div>
+          <div class="alert-content">
+            <div class="alert-title">Slobozia — SG&amp;A 13,3% din venituri (+6,8 pp vs buget)</div>
+            <div class="alert-body">IT, Comm &amp; Office 26K vs 4K buget, autorizări &amp; pază 8K vs 1K și un element diverse de 9K neprevăzut. EBITDAR 223K — singura clinică matură sub buget în iulie (−7K).</div>
+          </div>
+        </div>
+        <div class="alert amber">
+          <div class="alert-icon">▲</div>
+          <div class="alert-content">
+            <div class="alert-title">HQ Cost 323K vs buget 276K (+47K)</div>
+            <div class="alert-body">7,1% din venituri vs 6,7% bugetat. SG&amp;A HQ 103K vs 65K buget: IT &amp; birotică 25K, transport 17K, consultanță juridică &amp; contabilă 10K.</div>
+          </div>
+        </div>
+        <div style="font-size:9px;color:#a08070;line-height:1.5;padding:2px 4px 6px;">* Brăila pe hold — buget SG&amp;A plafonat la actual; economia din neoperare nu este creditată.</div>
+      </div>
+
+      <div class="slabel"><span>Clinici — Performanță Iul 2026</span></div>
+      <div class="clinics">
+        <div class="cluster-sep"><span>① Cluster Sud</span></div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">OLT</div>
+            <div class="cl-name">Oltenița</div>
+            <div class="cl-rev">607K revenue</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">273K</div>
+            <div class="cl-pct hi">EBITDAR 45,0%</div>
+            <div class="cl-bvs pos">+65K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">GRG</div>
+            <div class="cl-name">Giurgiu</div>
+            <div class="cl-rev">795K revenue</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">326K</div>
+            <div class="cl-pct hi">EBITDAR 41,0%</div>
+            <div class="cl-bvs pos">+3K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">SLB</div>
+            <div class="cl-name">Slobozia</div>
+            <div class="cl-rev">659K revenue</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">223K</div>
+            <div class="cl-pct mid">EBITDAR 33,8%</div>
+            <div class="cl-bvs neg">−7K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">CLR</div>
+            <div class="cl-name">Călărași</div>
+            <div class="cl-rev">925K revenue</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">414K</div>
+            <div class="cl-pct hi">EBITDAR 44,8%</div>
+            <div class="cl-bvs pos">+35K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row dim">
+          <div class="cl-left">
+            <div class="cl-code">BRL</div>
+            <div class="cl-name" style="color:#a08070;">Brăila</div>
+            <div class="cl-rev">Pre-revenue · pe hold</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar dim">−0K</div>
+            <div class="cl-pct dim">Hold</div>
+            <div class="cl-bvs dim">buget plafonat</div>
+          </div>
+        </div>
+        <div class="cluster-total">
+          <div class="cl-left">
+            <div class="ct-label">① Total Cluster Sud</div>
+            <div class="ct-rev">Rev Iul: 2.986K</div>
+          </div>
+          <div class="ct-right">
+            <div class="ct-ebitdar">1.236K</div>
+            <div class="ct-pct">EBITDAR 41,4%</div>
+            <div class="ct-bvs pos">+97K vs bgt</div>
+          </div>
+        </div>
+        <div class="cluster-sep"><span>② Cluster Central &amp; BUC</span></div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">DRB</div>
+            <div class="cl-name">Dorobanți</div>
+            <div class="cl-rev">146K revenue</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">21K</div>
+            <div class="cl-pct lo">EBITDAR 14,7%</div>
+            <div class="cl-bvs pos">+7K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">CTR</div>
+            <div class="cl-name">Cotroceni</div>
+            <div class="cl-rev">201K revenue</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">55K</div>
+            <div class="cl-pct mid">EBITDAR 27,5%</div>
+            <div class="cl-bvs pos">+30K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">TGV</div>
+            <div class="cl-name">Târgoviște</div>
+            <div class="cl-rev">557K revenue</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">212K</div>
+            <div class="cl-pct hi">EBITDAR 38,1%</div>
+            <div class="cl-bvs pos">+39K vs bgt</div>
+          </div>
+        </div>
+        <div class="clinic-row">
+          <div class="cl-left">
+            <div class="cl-code">FCS</div>
+            <div class="cl-name">Focșani</div>
+            <div class="cl-rev">653K revenue</div>
+          </div>
+          <div class="cl-right">
+            <div class="cl-ebitdar pos">248K</div>
+            <div class="cl-pct hi">EBITDAR 38,0%</div>
+            <div class="cl-bvs pos">+139K vs bgt</div>
+          </div>
+        </div>
+        <div class="cluster-total">
+          <div class="cl-left">
+            <div class="ct-label">② Total Cluster Central &amp; BUC</div>
+            <div class="ct-rev">Rev Iul: 1.557K</div>
+          </div>
+          <div class="ct-right">
+            <div class="ct-ebitdar" style="color:#c06040;">537K</div>
+            <div class="ct-pct" style="background:rgba(192,96,64,0.10);color:#c06040;">EBITDAR 34,5%</div>
+            <div class="ct-bvs pos">+215K vs bgt</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /month -->
+
+  </div><!-- /body -->
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-main">Dr. Ardeleanu Dental Clinics</div>
+    <div class="footer-sub">Ședință Board · 15 Septembrie 2026 · 15:00 &nbsp;·&nbsp; Din 2017</div>
+  </div>
+
+</div><!-- /card -->
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/* Share — always shares THIS page (the mobile Executive Summary), never the desktop dashboard. */
+var MOBILE_URL = 'https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/pl-mobile.html';
+function mobileLink(){
+  /* Served over http(s): use the live address, so the link is right whatever the file is named.
+     Opened from disk (file://): fall back to the canonical published URL. */
+  if (location.protocol === 'https:' || location.protocol === 'http:') {
+    return location.href.split('#')[0].split('?')[0];
+  }
+  return MOBILE_URL;
+}
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove('on'); }, 2600);
+}
+function legacyCopy(url){
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = url; ta.setAttribute('readonly','');
+    ta.style.position = 'fixed'; ta.style.top = '-1000px';
+    document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, url.length);
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast(ok ? 'Link copiat — Executive Summary Iulie 2026' : url);
+  } catch(e){ toast(url); }
+}
+function copyLink(url){
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(url).then(
+      function(){ toast('Link copiat — Executive Summary Iulie 2026'); },
+      function(){ legacyCopy(url); }
+    );
+  } else { legacyCopy(url); }
+}
+document.getElementById('shareBtn').addEventListener('click', function(){
+  var url = mobileLink();
+  if (navigator.share) {
+    navigator.share({
+      title: 'Executive Summary · Iulie 2026 · Dr. Ardeleanu',
+      text:  'Raport financiar Iulie 2026 — Dr. Ardeleanu Dental Clinics',
+      url:   url
+    }).catch(function(err){
+      if (err && err.name !== 'AbortError') copyLink(url);
+    });
+  } else {
+    copyLink(url);
+  }
+});
+
+function setView(v){
+  document.getElementById('view-ytd').classList.toggle('active', v==='ytd');
+  document.getElementById('view-month').classList.toggle('active', v==='month');
+  document.getElementById('period-pill').textContent = v==='ytd' ? 'YTD Ian–Iul' : 'Lună · Iul 26';
+  document.querySelectorAll('.toggle-btn').forEach((b,i)=>{
+    b.classList.toggle('on',  (i===0 && v==='month') || (i===1 && v==='ytd'));
+    b.classList.toggle('off', (i===0 && v==='ytd')   || (i===1 && v==='month'));
+  });
+}
+</script>
+</body>
+</html>

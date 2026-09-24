@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<script>
+(function(){
+  var O="1f7cb40894af761a43de1cb2e02a8637a90bfd049157fa0b43fdb7b1f740a0cd"; var LK="adcAuthCashflow";
+  function deny(){ var _f=(location.pathname.split("/").pop()||""); location.replace("index.html?next="+encodeURIComponent(_f)); }
+  try{
+    if(sessionStorage.getItem("reportsAuth")==="1") return;
+    if(localStorage.getItem(LK)===O) return;
+    var m=/[#&]k=([^&]+)/.exec(location.hash);
+    if(m && window.crypto && crypto.subtle){
+      document.documentElement.style.visibility='hidden';
+      crypto.subtle.digest('SHA-256', new TextEncoder().encode(decodeURIComponent(m[1]).trim())).then(function(b){
+        var h=Array.prototype.map.call(new Uint8Array(b),function(x){return('0'+x.toString(16)).slice(-2);}).join('');
+        if(h!==O){ deny(); return; }
+        try{ localStorage.setItem(LK,O); }catch(e){}
+        try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+        document.documentElement.style.visibility='';
+      }).catch(deny);
+      return;
+    }
+    deny();
+  }catch(e){ deny(); }
+})();
+</script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>CASHFLOW Analysis · Iulie 2026 · Dr. Ardeleanu</title>
+<!-- Open Graph / link preview -->
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Dr. Ardeleanu Dental Clinics"/>
+<meta property="og:locale" content="ro_RO"/>
+<meta property="og:url" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/cashflow-summary.html"/>
+<meta property="og:title" content="CASHFLOW Analysis · Iulie 2026 · Dr. Ardeleanu"/>
+<meta property="og:description" content="Cash on hand 457.854 RON (-9,0% MoM). EBITDA record 1,45M RON, lună de investiții maximă — fitout 1,88M finanțat bancar."/>
+<meta property="og:image" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_Cashflow_Jul2026.jpg"/>
+<meta property="og:image:secure_url" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_Cashflow_Jul2026.jpg"/>
+<meta property="og:image:type" content="image/jpeg"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="Cashflow Dr. Ardeleanu — Iulie 2026, 457.854 RON"/>
+<link rel="image_src" href="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_Cashflow_Jul2026.jpg"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="CASHFLOW Analysis · Iulie 2026 · Dr. Ardeleanu"/>
+<meta name="twitter:description" content="Cash on hand 457.854 RON (-9,0% MoM). EBITDA record 1,45M RON, lună de investiții maximă — fitout 1,88M finanțat bancar."/>
+<meta name="twitter:image" content="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/OG_Cashflow_Jul2026.jpg"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Poppins',system-ui,sans-serif;
+  background:#E8DDD4;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  padding:20px 14px 40px;
+  -webkit-font-smoothing:antialiased;
+}
+.card{
+  width:100%;
+  max-width:390px;
+  background:#FAF6F2;
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 12px 48px rgba(60,20,14,0.16),0 2px 8px rgba(60,20,14,0.08);
+}
+
+/* ── HEADER ── */
+.hdr{ background:#7B1C16; padding:20px 18px 18px; position:relative; overflow:hidden; }
+.hdr::after{ content:''; position:absolute; top:-40px; right:-40px; width:160px; height:160px; border-radius:50%; background:rgba(242,218,183,0.07); pointer-events:none; }
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.brand-name{ font-family:'Playfair Display',serif; font-size:16px; font-weight:700; color:#fff; line-height:1.2; letter-spacing:-0.01em; }
+.brand-sub{ font-size:9px; font-weight:500; color:rgba(242,218,183,0.80); letter-spacing:0.13em; text-transform:uppercase; margin-top:2px; }
+.hdr-pill{ background:#FBE483; color:#5c3800; font-size:9px; font-weight:700; padding:4px 10px; border-radius:20px; letter-spacing:0.07em; text-transform:uppercase; white-space:nowrap; flex-shrink:0; }
+.hdr-title{ font-size:22px; font-weight:700; color:#fff; line-height:1.15; letter-spacing:-0.02em; margin-bottom:3px; }
+.hdr-meta{ font-size:11px; font-weight:400; color:rgba(242,218,183,0.78); }
+
+/* ── HERO CASH ── */
+.hero{ background:#5c1510; padding:16px 18px 17px; display:flex;align-items:flex-end;justify-content:space-between; }
+.hero-lbl{font-size:9px;font-weight:600;color:rgba(242,218,183,0.72);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px;}
+.hero-val{font-family:'Playfair Display',serif;font-size:30px;font-weight:700;color:#fff;line-height:1;}
+.hero-unit{font-size:12px;font-weight:600;color:rgba(242,218,183,0.80);margin-left:4px;}
+.hero-sub{font-size:10px;color:rgba(242,218,183,0.65);margin-top:4px;}
+.hero-delta{ display:inline-flex;align-items:center;gap:3px; font-size:11px;font-weight:700; padding:4px 9px;border-radius:20px; background:rgba(255,3,0,0.16);color:#ffb3ab; }
+
+/* ── SECTION LABEL ── */
+.slabel{ display:flex;align-items:center;gap:8px; padding:15px 16px 7px; }
+.slabel span{ font-size:9px;font-weight:700; letter-spacing:0.14em;text-transform:uppercase; color:#a08070;white-space:nowrap; }
+.slabel::after{content:'';flex:1;height:1px;background:#e0d4cc;}
+
+/* ── KPI GRID ── */
+.kpi-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px 4px; }
+.kpi{ background:#fff; border:1px solid #ecddd4; border-radius:14px; padding:12px 13px 11px; position:relative; overflow:hidden; }
+.kpi-bar{ position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0; }
+.kpi-bar.burg{background:#7B1C16;} .kpi-bar.gold{background:#C9A227;} .kpi-bar.ter{background:#dd7e6b;} .kpi-bar.oli{background:#B5BD5C;}
+.kpi-lbl{ font-size:9px;font-weight:600; color:#a08070;letter-spacing:0.06em;text-transform:uppercase; margin-bottom:5px; }
+.kpi-val{ font-family:'Playfair Display',serif; font-size:20px;font-weight:700;line-height:1; margin-bottom:5px; }
+.kpi-val.burg{color:#7B1C16;} .kpi-val.gold{color:#9a7d1f;} .kpi-val.ter{color:#c06040;} .kpi-val.text{color:#2a1c18;}
+.kpi-sub{font-size:9.5px;color:#a08070;margin-bottom:4px;line-height:1.3;}
+.kpi-delta{ display:inline-flex;align-items:center;gap:3px; font-size:10px;font-weight:700; padding:2px 7px;border-radius:20px; }
+.kpi-delta.pos{background:rgba(74,124,63,0.11);color:#4a7c3f;}
+.kpi-delta.neg{background:rgba(179,48,48,0.09);color:#b33030;}
+.kpi-delta.warn{background:rgba(201,162,39,0.14);color:#8a6800;}
+
+/* ── EXEC READ ── */
+.read{ margin:6px 12px 2px; background:#F2DAB7; border-left:3px solid #7B1C16; border-radius:8px; padding:12px 14px; }
+.read-k{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#7B1C16;margin-bottom:5px;}
+.read-b{font-size:11px;line-height:1.5;color:#3a241d;}
+.read-b strong{color:#7B1C16;font-weight:700;}
+
+/* ── CASH BRIDGE ── */
+.bridge{padding:2px 12px 4px;}
+.brow{ display:flex;align-items:center;gap:10px; padding:9px 4px; border-bottom:1px solid #efe4db; }
+.brow:last-child{border-bottom:none;}
+.b-ic{ width:24px;height:24px;border-radius:7px;flex-shrink:0; display:flex;align-items:center;justify-content:center; font-size:13px;font-weight:700;color:#fff; }
+.b-ic.open{background:#7B1C16;} .b-ic.close{background:#7B1C16;}
+.b-ic.in{background:#4a7c3f;} .b-ic.out{background:#c06040;}
+.b-mid{flex:1;min-width:0;}
+.b-name{font-size:11.5px;font-weight:600;color:#2a1c18;line-height:1.2;}
+.b-note{font-size:9px;color:#a08070;margin-top:1px;}
+.b-right{text-align:right;flex-shrink:0;}
+.b-step{font-size:13px;font-weight:700;line-height:1;}
+.b-step.in{color:#4a7c3f;} .b-step.out{color:#c06040;} .b-step.bal{color:#7B1C16;}
+.b-run{font-size:9px;color:#b09080;margin-top:2px;}
+
+/* ── MINI TRAJECTORY ── */
+.spark{ padding:6px 16px 14px; }
+.spark-bars{ display:flex;align-items:flex-end;gap:6px;height:64px;margin-top:6px; }
+.sb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.sb-fill{width:100%;border-radius:4px 4px 0 0;background:#d8c3b3;}
+.sb-fill.hi{background:#7B1C16;}
+.sb-m{font-size:7.5px;color:#b09080;margin-top:4px;letter-spacing:0.02em;}
+
+/* ── STAT ROWS ── */
+.stats{padding:0 12px 4px;}
+.srow{ display:flex;align-items:center;justify-content:space-between; background:#fff;border:1px solid #ecddd4;border-radius:11px; padding:10px 13px;margin-bottom:6px; }
+.s-l{min-width:0;}
+.s-name{font-size:11.5px;font-weight:600;color:#2a1c18;line-height:1.2;}
+.s-note{font-size:9.5px;color:#a08070;margin-top:2px;}
+.s-r{text-align:right;flex-shrink:0;}
+.s-val{font-size:14px;font-weight:700;color:#2a1c18;line-height:1;}
+.s-tag{display:inline-block;font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:4px;}
+.s-tag.warn{background:rgba(201,162,39,0.14);color:#8a6800;}
+.s-tag.pos{background:rgba(74,124,63,0.11);color:#4a7c3f;}
+.s-tag.neg{background:rgba(179,48,48,0.09);color:#b33030;}
+.s-tag.dim{background:rgba(160,128,112,0.10);color:#a08070;}
+
+/* ── FOOTER ── */
+.footer{ text-align:center; padding:14px 16px 20px; border-top:1px solid #e0d4cc; margin-top:10px; }
+.footer-main{font-size:11px;font-weight:600;color:#7B1C16;}
+.footer-sub{font-size:9.5px;color:#b09080;margin-top:3px;letter-spacing:0.04em;}
+</style>
+
+<style id="navbarCss">
+#drNav{position:fixed;top:0;left:0;right:0;z-index:9997;display:flex;align-items:center;gap:8px;
+  padding:8px 12px;background:rgba(245,237,227,0.95);border-bottom:1px solid #e2d5c6;
+  -webkit-backdrop-filter:saturate(140%) blur(8px);backdrop-filter:saturate(140%) blur(8px);
+  font-family:'Poppins',system-ui,-apple-system,sans-serif;}
+#drNav a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+  font-size:12px;font-weight:600;letter-spacing:0.01em;padding:8px 13px;border-radius:999px;
+  -webkit-tap-highlight-color:transparent;white-space:nowrap;}
+#drNav a.home{background:#7B1C16;color:#fff;}
+#drNav a.home:hover{background:#651511;}
+#drNav a.alt{background:transparent;color:#7B1C16;border:1px solid rgba(123,28,22,0.35);}
+#drNav a.alt:hover{background:rgba(123,28,22,0.07);}
+body{padding-top:52px !important;}
+@media print{#drNav{display:none;}body{padding-top:0 !important;}}
+</style>
+</head>
+<body>
+<div id="drNav">
+  <a class="home" href="index.html">← Pagina principală</a>
+  <a class="alt" href="cashflow-report.html">🖥️ Versiune desktop</a>
+</div>
+<div class="card">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-top">
+      <div>
+        <div class="brand-name">Dr. Ardeleanu</div>
+        <div class="brand-sub">Dental Clinics · Din 2017</div>
+      </div>
+      <div class="hdr-pill">Actual Jul 2026</div>
+    </div>
+    <div class="hdr-title">CASHFLOW Analysis</div>
+    <div class="hdr-meta">Raport Cashflow · Iulie 2026 · OPCO + PROPCO</div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-lbl">Cash on hand · 31 Iulie</div>
+      <div><span class="hero-val">457.854</span><span class="hero-unit">RON</span></div>
+      <div class="hero-sub">vs 503.301 RON prior month</div>
+    </div>
+    <div class="hero-delta">▼ -9,0%</div>
+  </div>
+
+  <!-- KPI GRID -->
+  <div class="slabel"><span>Key Position</span></div>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-bar gold"></div>
+      <div class="kpi-lbl">GOURP EBITDA</div>
+      <div class="kpi-val gold">1.449.857</div>
+      <div class="kpi-sub">RON · vs avg 855k</div>
+      <span class="kpi-delta pos">▲ +32,2% MoM</span>
+    </div>
+    <div class="kpi">
+      <div class="kpi-bar ter"></div>
+      <div class="kpi-lbl">Days of Payables</div>
+      <div class="kpi-val ter">16 zile</div>
+      <div class="kpi-sub">12 comerc. · 5 imob. · avg 36d</div>
+      <span class="kpi-delta pos">▼ -18d MoM · minimul ferestrei</span>
+    </div>
+    <div class="kpi">
+      <div class="kpi-bar burg"></div>
+      <div class="kpi-lbl">Total Debt</div>
+      <div class="kpi-val text">€2.120.066</div>
+      <div class="kpi-sub">0,93× ND / TTM EBITDA</div>
+      <span class="kpi-delta warn">▲ +23,1% MoM</span>
+    </div>
+    <div class="kpi">
+      <div class="kpi-bar gold"></div>
+      <div class="kpi-lbl">Overdraft</div>
+      <div class="kpi-val gold">24,4%</div>
+      <div class="kpi-sub">244k din 1,0M tras</div>
+      <span class="kpi-delta pos">▼ -29,1pp MoM</span>
+    </div>
+  </div>
+
+  <!-- EXEC READ -->
+  <div class="slabel"><span>Executive Read</span></div>
+  <div class="read">
+    <div class="read-k">Iulie 2026</div>
+    <div class="read-b"><strong>EBITDA record și cea mai mare lună de investiții din fereastră</strong> — EBITDA urcă la <strong>1,45M RON</strong> (+32,2% MoM, +85,9% față de iulie 2025), cel mai bun rezultat al perioadei, cu 1,32M RON convertiți în cash operațional. Investițiile sar la <strong>2,13M RON</strong>, din care 1,88M fitout de clinici — finanțate printr-o tragere bancară nouă de 1,68M RON, care duce datoria bancară netă la <strong>9,95M RON</strong> (+19,6% MoM). Plata furnizorilor accelerează la <strong>16 zile</strong> (12 comercial · 5 imobiliar), minimul ferestrei, iar overdraftul este rambursat la 24,4% din facilitate (de la 53,5%). Numerarul închide la <strong>458k RON</strong> (-9,0% MoM), cu o generare netă de -45k — costul unei luni de expansiune acoperite din datorie, nu din trezorerie.</div>
+  </div>
+
+  <!-- CASH BRIDGE -->
+  <div class="slabel"><span>July Cash Bridge</span></div>
+  <div class="bridge">
+    <div class="brow">
+      <div class="b-ic open">=</div>
+      <div class="b-mid"><div class="b-name">Opening cash · 1 July</div><div class="b-note">Sold de deschidere</div></div>
+      <div class="b-right"><div class="b-step bal">503.301</div><div class="b-run">RON</div></div>
+    </div>
+    <div class="brow">
+      <div class="b-ic in">+</div>
+      <div class="b-mid"><div class="b-name">Operating activities</div><div class="b-note">EBITDA record 1,45M</div></div>
+      <div class="b-right"><div class="b-step in">+1.315.626</div><div class="b-run">→ 1.818.927</div></div>
+    </div>
+    <div class="brow">
+      <div class="b-ic out">−</div>
+      <div class="b-mid"><div class="b-name">Investing activities</div><div class="b-note">Fitout 1,88M + imobiliar 157k</div></div>
+      <div class="b-right"><div class="b-step out">−2.125.279</div><div class="b-run">→ −306.352</div></div>
+    </div>
+    <div class="brow">
+      <div class="b-ic in">+</div>
+      <div class="b-mid"><div class="b-name">Financing activities</div><div class="b-note">Tragere bancară 1,68M · overdraft rambursat</div></div>
+      <div class="b-right"><div class="b-step in">+707.702</div><div class="b-run">→ 401.350</div></div>
+    </div>
+    <div class="brow">
+      <div class="b-ic in">+</div>
+      <div class="b-mid"><div class="b-name">Working capital</div><div class="b-note">Sold furnizori în creștere ușoară</div></div>
+      <div class="b-right"><div class="b-step in">+56.504</div><div class="b-run">→ 457.854</div></div>
+    </div>
+    <div class="brow">
+      <div class="b-ic close">=</div>
+      <div class="b-mid"><div class="b-name">Closing cash · 31 July</div><div class="b-note">Generare netă −45.447 RON</div></div>
+      <div class="b-right"><div class="b-step bal">457.854</div><div class="b-run">RON</div></div>
+    </div>
+  </div>
+
+  <!-- TRAJECTORY -->
+  <div class="slabel"><span>Cash Trajectory · 8 luni</span></div>
+  <div class="spark">
+    <div class="spark-bars">
+      <div class="sb"><div class="sb-fill" style="height:27%"></div><div class="sb-m">Dec</div></div>
+      <div class="sb"><div class="sb-fill" style="height:58%"></div><div class="sb-m">Ian</div></div>
+      <div class="sb"><div class="sb-fill" style="height:86%"></div><div class="sb-m">Feb</div></div>
+      <div class="sb"><div class="sb-fill" style="height:96%"></div><div class="sb-m">Mar</div></div>
+      <div class="sb"><div class="sb-fill" style="height:100%"></div><div class="sb-m">Apr</div></div>
+      <div class="sb"><div class="sb-fill" style="height:42%"></div><div class="sb-m">Mai</div></div>
+      <div class="sb"><div class="sb-fill" style="height:42%"></div><div class="sb-m">Iun</div></div>
+      <div class="sb"><div class="sb-fill hi" style="height:39%"></div><div class="sb-m">Iul</div></div></div>
+  </div>
+
+  <!-- STAT ROWS -->
+  <div class="slabel"><span>Working Capital · Debt · Distributions</span></div>
+  <div class="stats">
+    <div class="srow">
+      <div class="s-l"><div class="s-name">Total Payables</div><div class="s-note">Comercial 12z · Imobiliar 5z · Total 16z</div></div>
+      <div class="s-r"><div class="s-val">2.161.375</div><span class="s-tag warn">▲ +13,9% MoM</span></div>
+    </div>
+    <div class="srow">
+      <div class="s-l"><div class="s-name">Net Bank Debt</div><div class="s-note">93,8% din total · tragere nouă 1,68M</div></div>
+      <div class="s-r"><div class="s-val">9.945.133</div><span class="s-tag warn">▲ +19,6% MoM</span></div>
+    </div>
+    <div class="srow">
+      <div class="s-l"><div class="s-name">Fiscal Debt</div><div class="s-note">eșalonare suplimentată cu impozit pe profit</div></div>
+      <div class="s-r"><div class="s-val">655.199</div><span class="s-tag warn">▲ obligații noi în eșalonare</span></div>
+    </div>
+    <div class="srow">
+      <div class="s-l"><div class="s-name">Overdraft tras</div><div class="s-note">rezervă 755.796 RON disponibilă</div></div>
+      <div class="s-r"><div class="s-val">244.204</div><span class="s-tag pos">−291k rambursat</span></div>
+    </div>
+    <div class="srow">
+      <div class="s-l"><div class="s-name">Intercompany Loans</div><div class="s-note">€997.568 cumulat · fără avans nou</div></div>
+      <div class="s-r"><div class="s-val">4.987.841</div><span class="s-tag pos">0 a doua lună</span></div>
+    </div>
+    <div class="srow">
+      <div class="s-l"><div class="s-name">Shareholder Distrib.</div><div class="s-note">€61.558 · peste media de 246k</div></div>
+      <div class="s-r"><div class="s-val">307.792</div><span class="s-tag warn">vs 221k Iunie</span></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-main">Dr. Ardeleanu Dental Clinics · CFO Reporting</div>
+    <div class="footer-sub">Treasury & Cashflow · Toate cifrele în RON · clinicileardeleanu.ro</div>
+  </div>
+
+</div>
+
+<!-- ── SHARE (WhatsApp / nativ) ── -->
+<style>
+#shareFab{
+  position:fixed;right:16px;bottom:16px;z-index:9998;
+  display:inline-flex;align-items:center;gap:8px;
+  background:#7B1C16;color:#fff;border:none;cursor:pointer;
+  font-family:'Poppins',system-ui,sans-serif;font-size:13px;font-weight:700;
+  padding:12px 18px;border-radius:999px;
+  box-shadow:0 8px 24px rgba(60,20,14,0.34);
+  -webkit-tap-highlight-color:transparent;
+}
+#shareFab:active{transform:scale(0.97);}
+#shareFab svg{width:16px;height:16px;fill:none;stroke:#FBE483;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+#shareToast{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:78px;z-index:9999;
+  background:#2b1410;color:#F5EDE3;font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:600;
+  padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .25s ease;
+  box-shadow:0 8px 24px rgba(0,0,0,0.3);max-width:88vw;text-align:center;
+}
+#shareToast.show{opacity:1;}
+@media print{#shareFab,#shareToast{display:none;}}
+</style>
+<button id="shareFab" type="button" aria-label="Trimite raportul">
+  <svg viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/></svg>
+  <span>Trimite</span>
+</button>
+<div id="shareToast"></div>
+<script>
+(function(){
+  var URL_="https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/cashflow-summary.html", TITLE_="CASHFLOW Analysis · Iulie 2026 · Dr. Ardeleanu", TEXT_="Cashflow Dr. Ardeleanu · Iulie 2026 — cash on hand 457.854 RON (-9,0% MoM), EBITDA record 1,45M, furnizori la 16 zile.", IMG_="OG_Cashflow_Jul2026.jpg";
+  var fab=document.getElementById('shareFab'), toast=document.getElementById('shareToast');
+  function say(m){toast.textContent=m;toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},2600);}
+  function copy(){
+    var payload=TEXT_+"\n"+URL_;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(payload).then(function(){say('Link copiat — lipește-l în WhatsApp');},function(){say(URL_);});
+    } else { say(URL_); }
+  }
+  fab.addEventListener('click',function(){
+    if(!navigator.share){ copy(); return; }
+    // doar link + text: WhatsApp genereaza preview-ul din og:image
+    navigator.share({title:TITLE_,text:TEXT_,url:URL_}).catch(function(e){
+      if(e&&e.name==='AbortError') return; copy();
+    });
+  });
+})();
+</script>
+</body>
+</html>

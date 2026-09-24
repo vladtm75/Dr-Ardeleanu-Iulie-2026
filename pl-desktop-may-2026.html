@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>if(sessionStorage.getItem("reportsAuth")!=="1"){var _f=(location.pathname.split("/").pop()||"");location.replace("index.html?next="+encodeURIComponent(_f));}</script>
+
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>May 2026 EBITDA Analysis · Dr. Ardeleanu</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root{color-scheme:light;}
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f7f4f0; --surface:#ffffff; --card:#ffffff; --border:#e4ddd5;
+  --accent:#7B1C16; --blue:#4a8fb5; --red:#cc2200; --green:#6d8a2e;
+  --purple:#8b6aad; --teal:#5c8a5a; --orange:#c06040;
+  --text:#2c1810; --muted:#8a7e74;
+  --y25:#4a8fb5; --actual:#6d8a2e; --budget:#b8960a; --ebitdar:#c06040;
+}
+body{background:var(--bg);font-family:'DM Sans','Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text);}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+h1,h2,h3{font-family:'Playfair Display',Georgia,'Times New Roman',serif;}
+.ribbon{position:sticky;top:0;z-index:100;box-shadow:0 2px 6px rgba(0,0,0,0.06);}
+.hdr{padding:13px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;background:#7B1C16;flex-wrap:wrap;}
+.hdr h1{font-size:20px;color:#fff;letter-spacing:-0.01em;display:flex;align-items:center;gap:10px;font-weight:700;}
+.vbadge{background:rgba(255,255,255,0.18);border-radius:6px;padding:2px 9px;font-weight:600;letter-spacing:0.04em;font-size:11px;font-family:'DM Sans',system-ui;}
+.hdr-right{margin-left:auto;display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
+.chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:4px 10px;}
+.chip .dot{width:8px;height:8px;border-radius:50%;}
+.chip span{color:#fff;font-size:11px;font-weight:600;}
+.pill-now{background:#FBE483;color:#7B1C16;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:0.06em;text-transform:uppercase;}
+.toggle{display:flex;align-items:center;background:rgba(0,0,0,0.25);border-radius:20px;padding:3px;gap:2px;}
+.toggle button{background:transparent;color:rgba(255,255,255,0.7);border:none;cursor:pointer;border-radius:16px;padding:4px 14px;font-size:11px;font-weight:700;font-family:'DM Sans',system-ui;letter-spacing:0.04em;text-transform:uppercase;transition:all .18s;}
+.toggle button.on{background:#fff;color:#7B1C16;}
+.tabs{padding:0 28px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;gap:2px;overflow-x:auto;}
+.tabs button{background:none;border:none;cursor:pointer;padding:12px 14px;font-size:12px;font-family:'DM Sans',system-ui;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;}
+.tabs button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.wrap{padding:20px 28px;max-width:1440px;margin:0 auto;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+.titlebar{padding:14px 20px;background:var(--card);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;gap:16px;}
+.titlebar .ico{width:44px;height:44px;border-radius:10px;background:rgba(123,28,22,0.10);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:var(--accent);}
+.titlebar h2{font-size:19px;color:var(--text);}
+.titlebar p{margin-top:3px;color:var(--muted);font-size:11px;}
+.sh h3{color:var(--accent);font-size:15px;font-weight:600;}
+.sh p{color:var(--muted);font-size:11px;margin-top:3px;margin-bottom:8px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.col{display:flex;flex-direction:column;gap:20px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{color:var(--muted);font-weight:600;padding:5px 8px;font-size:11px;}
+td{padding:7px 8px;}
+.r{text-align:right;} .l{text-align:left;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 16px;}
+.kpi .lbl{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;}
+.kpi .val{font-size:20px;font-weight:700;font-family:'Playfair Display',Georgia,serif;}
+.kpi .sub{color:var(--muted);font-size:10px;margin-bottom:4px;}
+.kpi-foot{display:flex;gap:10px;margin-top:5px;align-items:center;}
+.kpi-foot .seg{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.kpi-foot .seg .t{color:var(--muted);font-size:9px;}
+.divider{width:1px;height:22px;background:var(--border);}
+.costcard{background:var(--card);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.costcard .hd{display:flex;align-items:center;gap:7px;justify-content:space-between;}
+.costcard .hd .nm{font-size:11px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;}
+.heroes{display:flex;gap:10px;}
+.hero{flex:1;border-radius:8px;padding:8px 10px;}
+.hero .hl{font-size:9px;color:var(--muted);margin-bottom:3px;}
+.hero .hv{font-size:24px;font-weight:800;line-height:1;}
+.hero .hb{font-size:9px;font-weight:600;margin-top:3px;}
+.costfoot{border-top:1px solid var(--border);padding-top:7px;display:flex;align-items:center;justify-content:space-between;}
+.chartbox{position:relative;width:100%;}
+.legend{display:flex;gap:14px;margin-bottom:6px;flex-wrap:wrap;}
+.legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
+.legend .ln{width:22px;height:3px;border-radius:2px;display:inline-block;}
+.badge{padding:2px 7px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block;}
+.note-orange{background:rgba(192,96,64,0.12);border:1px solid rgba(192,96,64,0.3);border-radius:10px;padding:10px 16px;font-size:12px;color:var(--orange);}
+.ytd-banner{background:rgba(74,143,181,0.12);border:1px solid rgba(74,143,181,0.3);border-radius:8px;padding:7px 14px;margin-bottom:10px;font-size:11px;color:var(--y25);}
+.tag{font-size:8.5px;color:var(--muted);background:rgba(228,221,213,0.6);border-radius:10px;padding:1px 6px;}
+@media(max-width:900px){.grid4{grid-template-columns:repeat(2,1fr);}.grid3{grid-template-columns:1fr;}.grid2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="ribbon">
+  <div class="hdr">
+    <h1>May 2026 EBITDA Analysis – Dr. Ardeleanu</h1>
+    <div class="hdr-right">
+      <div class="chip"><span class="dot" style="background:var(--y25)"></span><span>Mai 25 Actual</span></div>
+      <div class="chip"><span class="dot" style="background:var(--actual)"></span><span>Mai 26 Actual</span></div>
+      <div class="chip"><span class="dot" style="background:var(--budget)"></span><span>Mai 26 Budget</span></div>
+      <span class="pill-now">Actual Mai 2026</span>
+      <div class="toggle" id="toggle">
+        <button data-mode="month" class="on">Month</button>
+        <button data-mode="ytd">YTD</button>
+      </div>
+    </div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</div>
+<div class="wrap" id="content"></div>
+<script id="DATA" type="application/json">{"G":{"2025":{"sales":[2309337,2854031,3046293,2380825,2758443,2662054,2826748,2684269,3197710.24,3273183,3102233,2191987],"cos":[455130,392170,474449,399324,540237,452421,464218,524595,692364,552298,617222,416076],"doctors":[698123,841699,953148,712627,810583,812626,890500,779454,927153,961932,952679,682267],"staff":[299209,294019,316732,323648,319912,310317,339770,343173,361154,379109,410855,428189],"sga":[202827,236124,240097,252702,232929,300671,306050,294217,315529,285730,357548,360349],"hq":[160691,192128,173828,187238,188811,204117,188101,245015,192836,208507,197508,349427],"ebitda":[614938,1039931,1030079,647326,803691,722539,780095,661163,868799.24,1049106,729920,110222],"icrent":[124581,145040,145040,145040,145040,145040,145040,166499,166499,166499,166499,166499],"ebitdar":[775629,1232059,1203907,834564,992502,926656,968196,906178,1061635.24,1257613,927428,459649]},"2026B":{"sales":[3229424.56,3502562.3,3753732.01,3340081.16,3911766.22,3719792.71,4141810.12,3767716.7,3963827.91,4112003.44,3997108.61,3036322.13],"cos":[587410.27,627193.28,734529.78,718286.39,689212.93,673421.15,731411.87,664006.17,725532.74,752575.85,793407.47,695879.01],"doctors":[986934.05,1070308.9,1131927.23,1017901.62,1197721.36,1135204.33,1264131.55,1149821.86,1209615.07,1254884.45,1205718.45,924034.6],"staff":[437550.49,464078.76,484325.46,498039.89,502842.87,508583.96,508810.6,516030.02,542176.77,568356.69,568669.85,590473.19],"sga":[338437.5,338038.12,351190.52,331834.8,337338.78,349800.22,350914.13,387537.16,337253.51,360673.5,372343.52,372627.4],"hq":[258643.38,259770.18,259770.18,276170.18,281340.18,281340.18,276340.18,276340.18,290580.18,290580.18,290580.18,451348.34],"ebitda":[782426.35,905150.55,953966.35,659825.78,1065287.59,933420.37,1172179.28,935958.81,1020647.13,1046910.26,928366.64,163937.08],"icrent":[166499,166499,166499,166499,166499,166499,166499,166499,166499,166499,166499,166499],"ebitdar":[1041069.74,1164920.73,1213736.53,935995.96,1346627.78,1214760.55,1448519.47,1212298.99,1311227.32,1337490.45,1218946.82,615285.43]},"2026A_may":{"sales":3931424,"cos":638436,"doctors":1191809,"staff":552632,"sga":348825,"hq":296431,"ebitda":1078707,"icrent":178416,"ebitdar":1375138},"2026A_ytd":{"sales":18361836,"cos":3022088,"doctors":5534414,"staff":2730130,"sga":1714834,"hq":1448338,"ebitda":4763621,"icrent":868720,"ebitdar":6211959}},"CLINICS":{"OLT":{"name":"Oltenita","fullName":"P&L OLTENITA","externalRent":false,"j25":{"sales":508597,"cos":89558,"doctors":149391,"staff":65753,"sga":32546,"rent":20720,"ebitda":171349,"ebitdar":192069,"consumables":40450,"lab":48282,"eq":826,"assistants":40619,"reception":13811,"coordinator":11323,"salesMktg":3681,"utilities":2213,"otherSGA":26652},"j26a":{"sales":385761,"cos":92484,"doctors":154700,"staff":70179,"sga":35969,"rent":22302,"ebitda":32429,"ebitdar":54731,"consumables":43666,"lab":46918,"eq":1900,"assistants":42164,"reception":17745,"coordinator":10270,"salesMktg":7197,"utilities":-865,"otherSGA":29637},"j26b":{"sales":524524.5,"cos":84374.92,"doctors":163651.64,"staff":66790.84,"sga":35680.49,"rent":20720,"ebitda":174026.61,"ebitdar":194746.61,"consumables":38752.59,"lab":44322.32,"eq":1300,"assistants":39268.46,"reception":15234.59,"coordinator":12287.79,"salesMktg":5675.92,"utilities":3339.32,"otherSGA":26665.25},"ytd25":{"sales":2647726,"cos":414247,"doctors":810823,"staff":330222,"sga":175998,"rent":103658,"ebitda":916436,"ebitdar":1020094,"consumables":209505,"lab":197137,"eq":7605,"assistants":197944,"reception":69214,"coordinator":63064,"salesMktg":19981,"utilities":24896,"otherSGA":131121},"ytd26a":{"sales":2320158,"cos":321811,"doctors":749819,"staff":379417,"sga":185694,"rent":108590,"ebitda":683417,"ebitdar":792007,"consumables":140891,"lab":175049,"eq":5871,"assistants":220862,"reception":96676,"coordinator":61879,"salesMktg":26873,"utilities":17674,"otherSGA":141147},"ytd26b":{"sales":2529613.91,"cos":407143.75,"doctors":789239.54,"staff":333954.21,"sga":181503.25,"rent":103600,"ebitda":817773.16,"ebitdar":921373.16,"consumables":186891.37,"lab":213752.38,"eq":6500,"assistants":196342.32,"reception":76172.95,"coordinator":61438.95,"salesMktg":30379.58,"utilities":17797.44,"otherSGA":133326.23},"m25":{"sales":[474219,648468,546698,469744,508597,403738,545779,358909,465564,515488,395113,296281],"ebitda":[151103,228322,207498,158164,171349,90658,206961,96844,158663,169513,78443,62117],"ebitdar":[171881,249042,228218,178884,192069,111378,227681,117564,179383,190233,99163,82837]},"m26b":{"sales":[485380.5,530506.35,539705.46,449497.1,524524.5,479958.88,549457.71,477677.86,505256.31,524165.33,482832.36,355543.21],"ebitda":[152709.13,176867.41,181849.12,132320.89,174026.61,150353.26,186993.87,148905.96,163568.66,173868.35,151638.86,78247.44],"ebitdar":[173429.13,197587.41,202569.12,153040.89,194746.61,171073.26,207713.87,169625.96,184288.66,194588.35,172358.86,98967.44]}},"GRG":{"name":"Giurgiu","fullName":"P&L GIURGIU","externalRent":false,"j25":{"sales":715409,"cos":128719,"doctors":243149,"staff":69053,"sga":35870,"rent":20720,"ebitda":238618,"ebitdar":259338,"consumables":51244,"lab":75464,"eq":2011,"assistants":40397,"reception":18673,"coordinator":9983,"salesMktg":4562,"utilities":3721,"otherSGA":27587},"j26a":{"sales":809458,"cos":144649,"doctors":246636,"staff":80316,"sga":48427,"rent":22302,"ebitda":289430,"ebitdar":311732,"consumables":62790,"lab":81359,"eq":500,"assistants":45249,"reception":21332,"coordinator":13735,"salesMktg":12726,"utilities":4415,"otherSGA":31286},"j26b":{"sales":787042.52,"cos":131749.08,"doctors":245215.99,"staff":71245.18,"sga":40524.82,"rent":20720,"ebitda":298307.45,"ebitdar":319027.45,"consumables":63276.38,"lab":66898.61,"eq":1574.09,"assistants":43013.84,"reception":17571.64,"coordinator":10659.7,"salesMktg":7284.16,"utilities":5570.05,"otherSGA":27670.61},"ytd25":{"sales":3509155,"cos":551148,"doctors":1132199,"staff":334027,"sga":189776,"rent":103600,"ebitda":1302005,"ebitdar":1405605,"consumables":262008,"lab":281848,"eq":7292,"assistants":202770,"reception":78693,"coordinator":52564,"salesMktg":26284,"utilities":32386,"otherSGA":131106},"ytd26a":{"sales":4024424,"cos":618279,"doctors":1207853,"staff":407560,"sga":226786,"rent":108590,"ebitda":1563946,"ebitdar":1672536,"consumables":237617,"lab":377091,"eq":3571,"assistants":234211,"reception":106242,"coordinator":67107,"salesMktg":41017,"utilities":33090,"otherSGA":152679},"ytd26b":{"sales":3765654.39,"cos":630361.74,"doctors":1173251.33,"staff":356225.89,"sga":205073.49,"rent":103600,"ebitda":1400741.95,"ebitdar":1504341.95,"consumables":302749.81,"lab":320080.62,"eq":7531.31,"assistants":215069.22,"reception":87858.18,"coordinator":53298.49,"salesMktg":37920.82,"utilities":28799.61,"otherSGA":138353.06},"m25":{"sales":[654211,721910,842362,575263,715409,707515,731620,747041,709074,707683,727193,525726],"ebitda":[208945,310604,362891,180947,238618,338514,284392,223993,268613,281950,229511,115773],"ebitdar":[229665,331324,383611,201667,259338,359234,305112,244713,289333,302670,250231,136493]},"m26b":{"sales":[738307.43,776018.22,789821.37,674464.85,787042.52,730172.36,794454.5,736749.71,758130.84,786503.6,754483.99,533488.19],"ebitda":[273097.18,292342.35,299055.02,237939.95,298307.45,268543.47,301853.81,271717.79,282862.02,297630.41,280722.47,159970.06],"ebitdar":[293817.18,313062.35,319775.02,258659.95,319027.45,289263.47,322573.81,292437.79,303582.02,318350.41,301442.47,180690.06]}},"SLB":{"name":"Slobozia","fullName":"P&L SLOBOZIA","externalRent":false,"j25":{"sales":531595,"cos":115869,"doctors":164182,"staff":59192,"sga":34765,"rent":20720,"ebitda":157587,"ebitdar":178307,"consumables":52184,"lab":58598,"eq":5087,"assistants":29775,"reception":18392,"coordinator":11025,"salesMktg":7613,"utilities":2326,"otherSGA":24826},"j26a":{"sales":763607,"cos":114315,"doctors":236950,"staff":81645,"sga":47694,"rent":22302,"ebitda":283003,"ebitdar":305305,"consumables":39982,"lab":73833,"eq":500,"assistants":42076,"reception":21409,"coordinator":18160,"salesMktg":10081,"utilities":3660,"otherSGA":33953},"j26b":{"sales":579306.88,"cos":103116.62,"doctors":176109.29,"staff":66177,"sga":39075.74,"rent":20720,"ebitda":194828.23,"ebitdar":215548.23,"consumables":52137.62,"lab":49241.08,"eq":1737.92,"assistants":32785.57,"reception":19057.71,"coordinator":14333.73,"salesMktg":9274.17,"utilities":2550.17,"otherSGA":27251.4},"ytd25":{"sales":2470718,"cos":457332,"doctors":737426,"staff":290333,"sga":181390,"rent":103600,"ebitda":804237,"ebitdar":907837,"consumables":257890,"lab":188538,"eq":10904,"assistants":145779,"reception":91604,"coordinator":52950,"salesMktg":38680,"utilities":15057,"otherSGA":127653},"ytd26a":{"sales":3162648,"cos":479613,"doctors":957935,"staff":398938,"sga":209285,"rent":108590,"ebitda":1116877,"ebitdar":1225467,"consumables":205074,"lab":272618,"eq":1921,"assistants":214821,"reception":109099,"coordinator":75018,"salesMktg":42771,"utilities":18548,"otherSGA":147966},"ytd26b":{"sales":2793811.82,"cos":497298.5,"doctors":849343.23,"staff":326762.15,"sga":197378.67,"rent":103600,"ebitda":923029.26,"ebitdar":1026629.26,"consumables":251443.06,"lab":237474,"eq":8381.44,"assistants":163927.83,"reception":95288.55,"coordinator":67545.78,"salesMktg":48370.83,"utilities":12750.83,"otherSGA":136257.01},"m25":{"sales":[413292,451766,585239,488826,531595,548098,486946,614131,650390,535409,599784,337999],"ebitda":[103863,157142,205665,179980,157587,193137,138065,260340,181252,183103,216478,24038],"ebitdar":[124583,177862,226385,200700,178307,213857,158785,281060,201972,203823,237198,44758]},"m26b":{"sales":[536074.6,585913.49,596073.37,496443.48,579306.88,530086.74,606844.16,583100.9,616765.89,639848.12,589393,434011.26],"ebitda":[174382.85,199750.55,203866.67,150200.96,194828.23,169121.1,208654.8,175136.38,206483.1,218314.77,191865.85,107231.77],"ebitdar":[195102.85,220470.55,224586.67,170920.96,215548.23,189841.1,229374.8,195856.38,227203.1,239034.77,212585.85,127951.77]}},"CLR":{"name":"Calarasi","fullName":"P&L CALARASI","externalRent":false,"j25":{"sales":821872,"cos":145714,"doctors":201937,"staff":76469,"sga":34919,"rent":20720,"ebitda":362833,"ebitdar":383553,"consumables":83829,"lab":59873,"eq":2012,"assistants":40708,"reception":18885,"coordinator":16876,"salesMktg":6711,"utilities":1494,"otherSGA":26714},"j26a":{"sales":720933,"cos":119654,"doctors":208697,"staff":79491,"sga":43514,"rent":22302,"ebitda":269577,"ebitdar":291879,"consumables":82504,"lab":36650,"eq":500,"assistants":52898,"reception":18590,"coordinator":8003,"salesMktg":8484,"utilities":1979,"otherSGA":33051},"j26b":{"sales":878339.86,"cos":141412.72,"doctors":265258.64,"staff":81105.1,"sga":38157.02,"rent":20720,"ebitda":352406.38,"ebitdar":373126.38,"consumables":69388.85,"lab":70267.19,"eq":1756.68,"assistants":44773.02,"reception":21045.48,"coordinator":15286.6,"salesMktg":7283.11,"utilities":2926.83,"otherSGA":27947.08},"ytd25":{"sales":3765833,"cos":622263,"doctors":1053617,"staff":388422,"sga":180110,"rent":103803,"ebitda":1521421,"ebitdar":1625224,"consumables":330753,"lab":280968,"eq":10542,"assistants":197371,"reception":115540,"coordinator":75511,"salesMktg":30013,"utilities":16385,"otherSGA":133712},"ytd26a":{"sales":4132011,"cos":656939,"doctors":1234551,"staff":440716,"sga":199353,"rent":108590,"ebitda":1600452,"ebitdar":1709042,"consumables":346864,"lab":309272,"eq":803,"assistants":274613,"reception":97899,"coordinator":68204,"salesMktg":35016,"utilities":17629,"otherSGA":146708},"ytd26b":{"sales":4235952.26,"cos":681988.31,"doctors":1279257.58,"staff":405525.52,"sga":192785.12,"rent":103600,"ebitda":1676395.73,"ebitdar":1779995.73,"consumables":334640.23,"lab":338876.18,"eq":8471.9,"assistants":223865.11,"reception":105227.4,"coordinator":76433.01,"salesMktg":38415.56,"utilities":14634.15,"otherSGA":139735.4},"m25":{"sales":[608892,832469,834626,667974,821872,784036,822511,706220,813617,802162,689448,526094],"ebitda":[208609,411099,318064,220816,362833,252200,329780,311117,358796,363599,228161,170045],"ebitdar":[229532,431819,338784,241536,383553,272920,350500,331837,379516,384319,248881,190765]},"m26b":{"sales":[812791.47,888356.74,883761.06,772703.12,878339.86,803712.72,890091.64,799893.05,846074.41,877738.43,838524.5,595373.1],"ebitda":[317206.89,357785.44,355317.56,293679.45,352406.38,312331.61,358717.09,310280.44,335079.83,352083.41,331025.53,196453.23],"ebitdar":[337926.89,378505.44,376037.56,314399.45,373126.38,333051.61,379437.09,331000.44,355799.83,372803.41,351745.53,217173.23]}},"BRL":{"name":"Braila","fullName":"P&L BRAILA","externalRent":false,"j25":{"sales":0,"cos":0,"doctors":0,"staff":0,"sga":20720,"rent":20720,"ebitda":-20720,"ebitdar":0,"consumables":0,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":0,"utilities":0,"otherSGA":20720},"j26a":{"sales":0,"cos":0,"doctors":0,"staff":0,"sga":22790,"rent":22302,"ebitda":-22790,"ebitdar":-488,"consumables":0,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":0,"utilities":488,"otherSGA":22302},"j26b":{"sales":0,"cos":0,"doctors":0,"staff":0,"sga":27892,"rent":20720,"ebitda":-27892,"ebitdar":-7172,"consumables":0,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":5959,"utilities":1213,"otherSGA":20720},"ytd25":{"sales":0,"cos":0,"doctors":0,"staff":0,"sga":82880,"rent":82880,"ebitda":-82880,"ebitdar":0,"consumables":0,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":0,"utilities":0,"otherSGA":82880},"ytd26a":{"sales":0,"cos":0,"doctors":0,"staff":0,"sga":110586,"rent":108590,"ebitda":-110586,"ebitdar":-1996,"consumables":0,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":0,"utilities":1620,"otherSGA":108966},"ytd26b":{"sales":0,"cos":0,"doctors":0,"staff":0,"sga":114589,"rent":103600,"ebitda":-114589,"ebitdar":-10989,"consumables":0,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":8071,"utilities":2918,"otherSGA":103600},"m25":{"sales":[0,0,0,0,0,0,0,0,0,0,0,0],"ebitda":[0,-20720,-20720,-20720,-20720,-20720,-22148,-22373,-23743,-20772,-22828,-21578],"ebitdar":[0,0,0,0,0,0,-1428,-1653,-3023,-52,-2108,-858]},"m26b":{"sales":[0,0,0,0,0,0,0,0,0,0,149000,245681],"ebitda":[-20720,-20720,-21631,-23626,-27892,-55726,-33390,-66517,-99132,-138405,-120252,-134495.01],"ebitdar":[0,0,-911,-2906,-7172,-35006,-12670,-45797,-78412,-117685,-99532,-113775.01]}},"DRB":{"name":"Dorobanti","fullName":"P&L DOROBANTI","externalRent":false,"j25":{"sales":60078,"cos":8686,"doctors":17611,"staff":26549,"sga":5917,"rent":0,"ebitda":1315,"ebitdar":1315,"consumables":2584,"lab":5152,"eq":950,"assistants":18016,"reception":8533,"coordinator":0,"salesMktg":2836,"utilities":1378,"otherSGA":1703},"j26a":{"sales":145594,"cos":25249,"doctors":39471,"staff":43591,"sga":31559,"rent":22302,"ebitda":5724,"ebitdar":28026,"consumables":11592,"lab":12907,"eq":750,"assistants":26596,"reception":10544,"coordinator":6451,"salesMktg":5283,"utilities":1680,"otherSGA":24596},"j26b":{"sales":125408.19,"cos":27966.03,"doctors":37873.27,"staff":34289.45,"sga":30038.4,"rent":21459,"ebitda":-4758.95,"ebitdar":16700.05,"consumables":16303.06,"lab":10659.7,"eq":1003.27,"assistants":19393.55,"reception":9110.9,"coordinator":5785,"salesMktg":4014.85,"utilities":1836.23,"otherSGA":24187.31},"ytd25":{"sales":357892,"cos":84335,"doctors":113561,"staff":104059,"sga":36818,"rent":0,"ebitda":19119,"ebitdar":19119,"consumables":43692,"lab":38126,"eq":2517,"assistants":75310,"reception":25681,"coordinator":3068,"salesMktg":20080,"utilities":8126,"otherSGA":8612},"ytd26a":{"sales":696357,"cos":124847,"doctors":203544,"staff":206211,"sga":155168,"rent":108590,"ebitda":6587,"ebitdar":115177,"consumables":65678,"lab":57369,"eq":1800,"assistants":134147,"reception":49357,"coordinator":22707,"salesMktg":22709,"utilities":10916,"otherSGA":121543},"ytd26b":{"sales":604803.59,"cos":134871.2,"doctors":182650.69,"staff":158477.23,"sga":152691.98,"rent":107295,"ebitda":-23887.5,"ebitdar":83407.5,"consumables":78624.47,"lab":51408.31,"eq":4838.43,"assistants":95567.73,"reception":45554.5,"coordinator":17355,"salesMktg":22574.25,"utilities":9181.16,"otherSGA":120936.57},"m25":{"sales":[82768,72497,76320,66229,60078,81771,111074,74387,91099.75,126300,132396,105608],"ebitda":[19294,7404,-3690,-5204,1315,26336,23361,-23974,-1674.25,-17799,-11688,-15520],"ebitdar":[19294,7404,-3690,-5204,1315,26336,23361,-2515,19784.75,3660,9771,5939]},"m26b":{"sales":[116049.28,126838.39,129037.8,107469.94,125408.19,114753.03,131369.45,114207.66,120801.37,125322.32,115440.05,85006.57],"ebitda":[-2719.43,-94.61,-3034.89,-13279.62,-4758.95,-17850.15,-7457.35,-15609.2,-12477.19,-10329.74,-17523.82,-29479.72],"ebitdar":[18739.57,21364.39,18424.11,8179.38,16700.05,3608.85,14001.65,5849.8,8981.81,11129.26,3935.18,-8020.72]}},"CTR":{"name":"Cotroceni","fullName":"P&L COTROCENI","externalRent":true,"j25":{"sales":113572,"cos":51691,"doctors":34313,"staff":22896,"sga":17849,"rent":11808,"ebitda":-13177,"ebitdar":-13177,"consumables":28333,"lab":21437,"eq":1921,"assistants":14808,"reception":8088,"coordinator":0,"salesMktg":2896,"utilities":1116,"otherSGA":13837},"j26a":{"sales":134673,"cos":17923,"doctors":44578,"staff":42015,"sga":29445,"rent":19591,"ebitda":712,"ebitdar":712,"consumables":8431,"lab":8192,"eq":1300,"assistants":27048,"reception":8517,"coordinator":6450,"salesMktg":4937,"utilities":1215,"otherSGA":23293},"j26b":{"sales":158098.26,"cos":30275.82,"doctors":47745.68,"staff":33497.3,"sga":25152.87,"rent":16875,"ebitda":21426.61,"ebitdar":21426.61,"consumables":18181.3,"lab":11066.88,"eq":1027.64,"assistants":19062.9,"reception":8649.4,"coordinator":5785,"salesMktg":4041.19,"utilities":1375.92,"otherSGA":19735.76},"ytd25":{"sales":578285,"cos":130976,"doctors":168554,"staff":106457,"sga":96273,"rent":57906,"ebitda":76025,"ebitdar":76025,"consumables":83309,"lab":42210,"eq":5457,"assistants":73705,"reception":29682,"coordinator":3070,"salesMktg":22560,"utilities":6765,"otherSGA":66948},"ytd26a":{"sales":713565,"cos":114144,"doctors":208608,"staff":213129,"sga":135754,"rent":89548,"ebitda":41930,"ebitdar":41930,"consumables":57095,"lab":53028,"eq":4021,"assistants":137150,"reception":53536,"coordinator":22443,"salesMktg":23109,"utilities":8139,"otherSGA":104506},"ytd26b":{"sales":762457.37,"cos":146010.59,"doctors":230262.12,"staff":155916.48,"sga":128264.35,"rent":84375,"ebitda":102003.83,"ebitdar":102003.83,"consumables":87682.6,"lab":53372.02,"eq":4955.97,"assistants":95314.48,"reception":43247,"coordinator":17355,"salesMktg":22705.94,"utilities":6879.6,"otherSGA":98678.81},"m25":{"sales":[72955,123921,158048,109789,113572,132493,125764,91065,130508.5,137332,127784,83714],"ebitda":[806,35747,31042,21607,-13177,25449,28116,42555,8770.5,14286,9389,-29901],"ebitdar":[806,35747,31042,21607,-13177,25449,28116,42555,8770.5,14286,9389,-29901]},"m26b":{"sales":[146299.77,159901.27,162674,135484.07,158098.26,144665.63,165613.45,143978.1,152290.59,157990.01,145531.73,107165.18],"ebitda":[21235.67,25624.83,23744.21,9972.51,21426.61,12122.97,25233.04,14274.74,18485.02,21371.77,12561.66,-4371],"ebitdar":[21235.67,25624.83,23744.21,9972.51,21426.61,12122.97,25233.04,14274.74,18485.02,21371.77,12561.66,-4371]}},"TGV":{"name":"Targoviste","fullName":"P&L TARGOVISTE","externalRent":false,"j25":{"sales":0,"cos":0,"doctors":0,"staff":0,"sga":29623,"rent":20720,"ebitda":-29623,"ebitdar":-8903,"consumables":0,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":5959,"utilities":911,"otherSGA":22753},"j26a":{"sales":570935,"cos":74082,"doctors":131446,"staff":79730,"sga":45558,"rent":22302,"ebitda":240119,"ebitdar":262421,"consumables":23557,"lab":48725,"eq":1800,"assistants":53973,"reception":19738,"coordinator":6019,"salesMktg":14819,"utilities":1481,"otherSGA":29258},"j26b":{"sales":524524.5,"cos":103769.75,"doctors":158406.4,"staff":79464,"sga":44780.62,"rent":20720,"ebitda":138103.73,"ebitdar":158823.73,"consumables":59795.79,"lab":41961.96,"eq":2012,"assistants":50942,"reception":19572,"coordinator":8950,"salesMktg":13945.24,"utilities":2926.83,"otherSGA":27908.54},"ytd25":{"sales":0,"cos":1009,"doctors":0,"staff":0,"sga":117834,"rent":103600,"ebitda":-118843,"ebitdar":-15243,"consumables":1009,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":9019,"utilities":1548,"otherSGA":107267},"ytd26a":{"sales":2311321,"cos":337284,"doctors":664891,"staff":400631,"sga":225334,"rent":108590,"ebitda":683181,"ebitdar":791771,"consumables":185658,"lab":147763,"eq":3863,"assistants":259282,"reception":95548,"coordinator":45801,"salesMktg":60418,"utilities":28667,"otherSGA":136249},"ytd26b":{"sales":2284233.41,"cos":453683.28,"doctors":689838.49,"staff":383660,"sga":226665.53,"rent":103600,"ebitda":530386.11,"ebitdar":633986.11,"consumables":260402.61,"lab":182738.67,"eq":10542,"assistants":241050,"reception":97860,"coordinator":44750,"salesMktg":68342.33,"utilities":18780.49,"otherSGA":139542.71},"m25":{"sales":[0,0,0,0,0,0,0,89365,331082.99,445809,427515,304609],"ebitda":[-20852,-21859,-21163,-25346,-29623,-103238,-144586,-127905,-32350.01,141437,54639,17453],"ebitdar":[-132,-1139,-443,-4626,-8903,-82518,-123866,-107185,-11630.01,162157,75359,38173]},"m26b":{"sales":[390000,430506.35,489705.46,449497.1,524524.5,479958.88,549457.71,477677.86,505256.31,524165.33,482832.36,355543.21],"ebitda":[76667.46,96147.6,122215.12,97252.2,138103.73,118100.31,152371.74,114428.49,130597.24,139638.3,118819.81,51438.97],"ebitdar":[97387.46,116867.6,142935.12,117972.2,158823.73,138820.31,173091.74,135148.49,151317.24,160358.3,139539.81,72158.97]}},"FCS":{"name":"Focsani","fullName":"P&L FOCSANI","externalRent":false,"j25":{"sales":0,"cos":0,"doctors":0,"staff":0,"sga":20720,"rent":20720,"ebitda":-20720,"ebitdar":0,"consumables":0,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":0,"utilities":0,"otherSGA":20720},"j26a":{"sales":397463,"cos":50080,"doctors":129331,"staff":75665,"sga":43869,"rent":22302,"ebitda":98518,"ebitdar":120820,"consumables":38743,"lab":11337,"eq":0,"assistants":44227,"reception":28253,"coordinator":3185,"salesMktg":9944,"utilities":2163,"otherSGA":31762},"j26b":{"sales":330000,"cos":66548,"doctors":103460.44,"staff":70274,"sga":56036.83,"rent":20720,"ebitda":33680.73,"ebitdar":54400.73,"consumables":53348,"lab":13200,"eq":0,"assistants":44112,"reception":18000,"coordinator":8162,"salesMktg":8500,"utilities":2926.83,"otherSGA":44610},"ytd25":{"sales":0,"cos":0,"doctors":0,"staff":0,"sga":103600,"rent":103600,"ebitda":-103600,"ebitdar":0,"consumables":0,"lab":0,"eq":0,"assistants":0,"reception":0,"coordinator":0,"salesMktg":0,"utilities":0,"otherSGA":103600},"ytd26a":{"sales":984221,"cos":369171,"doctors":307213,"staff":283528,"sga":266874,"rent":108590,"ebitda":-242565,"ebitdar":-133975,"consumables":321063,"lab":34125,"eq":13983,"assistants":154194,"reception":123071,"coordinator":6263,"salesMktg":35525,"utilities":16209,"otherSGA":215140},"ytd26b":{"sales":738432,"cos":405275.28,"doctors":210950.17,"staff":266316,"sga":297888.32,"rent":103600,"ebitda":-441997.77,"ebitdar":-338397.77,"consumables":365405,"lab":29537.28,"eq":10333,"assistants":172414.5,"reception":78077.5,"coordinator":15824,"salesMktg":46293,"utilities":15707.32,"otherSGA":235888},"m25":{"sales":[0,0,0,0,0,0,0,0,0,0,0,0],"ebitda":[-20720,-20720,-20720,-20720,-20720,-20720,-20785,-20918,-23191,-24203,-21176,-29277],"ebitdar":[0,0,0,0,0,0,-65,-198,-2471,-3483,-456,-8557]},"m26b":{"sales":[0,0,158432,250000,330000,431962.99,450000,429910.07,454730.68,471748.8,434549.12,319988.89],"ebitda":[-117289,-129281.83,-114144.29,-114963.38,33680.73,91264.98,89043.46,93182.4,119261.64,116819.17,103589.45,23790.68],"ebitdar":[-96569,-108561.83,-93424.29,-94243.38,54400.73,111984.98,109763.46,113902.4,139981.64,137539.17,124309.45,44510.68]}}},"HQ_DATA":{"sales":{"j25":7320,"j26a":3000,"j26b":4521.5},"groupRev":{"j25":2758443,"j26a":3931424,"j26b":3911766.22},"staff":{"j25":151448,"j26a":221181,"j26b":216182.05},"sga":{"salesCost":{"j25":4917,"j26a":10550,"j26b":6580.75},"marketing":{"j25":1086,"j26a":12356,"j26b":1740.66},"brandAwareness":{"j25":5923,"j26a":10721,"j26b":10546.2},"it":{"j25":12978,"j26a":11759,"j26b":10312.19},"rent":{"j25":3235,"j26a":6442,"j26b":6737.5},"utilities":{"j25":0,"j26a":95,"j26b":66.2},"transport":{"j25":5990,"j26a":12772,"j26b":9179.13},"legal":{"j25":0,"j26a":9342,"j26b":2500},"education":{"j25":9252,"j26a":0,"j26b":20000},"regulatory":{"j25":1302,"j26a":4213,"j26b":2017},"others":{"j25":0,"j26a":0,"j26b":0},"total":{"j25":44683,"j26a":78250,"j26b":69679.63}},"totalCost":{"j25":196131,"j26a":299431,"j26b":285861.68},"netOfSales":{"j25":188811,"j26a":296431,"j26b":281340.18},"ytd":{"sales":{"j25":19320,"j26a":17131,"j26b":22607.5},"groupRev":{"j25":13348929,"j26a":18361836,"j26b":17737566.25},"staff":{"j25":716114,"j26a":1098291,"j26b":1009903.47},"sga":{"salesCost":{"j25":24784,"j26a":55733,"j26b":32903.75},"marketing":{"j25":6488,"j26a":22870,"j26b":8703.29},"brandAwareness":{"j25":17767,"j26a":37840,"j26b":52731},"it":{"j25":42996,"j26a":67951,"j26b":51560.94},"rent":{"j25":16173,"j26a":32191,"j26b":33687.5},"utilities":{"j25":0,"j26a":444,"j26b":331},"transport":{"j25":33416,"j26a":74109,"j26b":45895.67},"legal":{"j25":21935,"j26a":19762,"j26b":12500},"education":{"j25":32919,"j26a":38647,"j26b":100000},"regulatory":{"j25":9424,"j26a":17081,"j26b":10085},"others":{"j25":0,"j26a":550,"j26b":0},"total":{"j25":205902,"j26a":367178,"j26b":348398.15}},"totalCost":{"j25":922016,"j26a":1465469,"j26b":1358301.62},"netOfSales":{"j25":902696,"j26a":1448338,"j26b":1335694.12}}},"LFL":[{"code":"OLT","name":"Oltenița","m25":508597,"m26a":385761,"ytd25":2647726,"ytd26a":2320158},{"code":"GRG","name":"Giurgiu","m25":715409,"m26a":809458,"ytd25":3509155,"ytd26a":4024424},{"code":"SLB","name":"Slobozia","m25":531595,"m26a":763607,"ytd25":2470718,"ytd26a":3162648},{"code":"CLR","name":"Călărași","m25":821872,"m26a":720933,"ytd25":3765833,"ytd26a":4132011},{"code":"CTR","name":"Cotroceni","m25":113572,"m26a":134673,"ytd25":578285,"ytd26a":713565},{"code":"DRB","name":"Dorobanți","m25":60078,"m26a":145594,"ytd25":357892,"ytd26a":696357}],"GA_MONTHLY":[3293609,3363235,4178437,3595131,3931424]}</script>
+<script>/* ===== Dr. Ardeleanu — May 2026 CFO dashboard (Chart.js) ===== */
+const DATA = JSON.parse(document.getElementById('DATA').textContent);
+const G = DATA.G, CLINICS = DATA.CLINICS, HQ = DATA.HQ_DATA, LFL = DATA.LFL, GA_MONTHLY = DATA.GA_MONTHLY;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const P = {accent:css('--accent'),blue:css('--blue'),red:css('--red'),green:css('--green'),purple:css('--purple'),teal:css('--teal'),orange:css('--orange'),muted:css('--muted'),border:css('--border'),y25:css('--y25'),actual:css('--actual'),budget:css('--budget'),ebitdar:css('--ebitdar'),text:css('--text')};
+const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CLINIC_ORDER = ['OLT','GRG','SLB','CLR','BRL','DRB','CTR','TGV','FCS'];
+const CLUSTERS = {
+  cluster1:{name:'Cluster One – South',manager:'Roxana Stefan',clinics:['OLT','GRG','SLB','CLR'],color:'#b05540',note:'Oltenița · Giurgiu · Slobozia · Călărași — owned premises, EBITDAR primary metric'},
+  cluster2:{name:'Cluster Two – Central & Bucharest',manager:'Alin Diaconu',clinics:['DRB','CTR','TGV','FCS'],color:'#7a5a96',note:'Dorobanți · Cotroceni · Târgoviște · Focșani — mixed premises (CTR has external rent)'},
+};
+
+let VM = 'month'; // 'month' | 'ytd'
+let TAB = 'overview';
+let charts = [];
+
+/* ---- formatters ---- */
+const fmt = n => { const k=n/1000; return Math.abs(k)>=1000?(k/1000).toFixed(1)+'M':Math.abs(k)>=1?k.toFixed(1):k.toFixed(2); };
+const fmtRON = n => new Intl.NumberFormat('ro-RO',{maximumFractionDigits:1}).format(Math.round(n/1000))+' KRON';
+const fmtK = n => new Intl.NumberFormat('ro-RO',{maximumFractionDigits:0}).format(Math.round(n/1000));
+const asPct = (v,b) => (b&&b!==0)?(v/b*100):0;
+const sum3 = arr => arr[0]+arr[1]+arr[2];
+const sum5 = arr => arr.slice(0,5).reduce((a,b)=>a+b,0);
+
+function labels(){
+  return VM==='ytd'
+    ? {p25:'YTD 25A',p26a:'YTD 26A',p26b:'YTD 26B',note:'YTD: Ian–Mai 2026 · 5 luni',isYTD:true}
+    : {p25:'Mai 25A',p26a:'Mai 26A',p26b:'Mai 26B',note:'Month: May 2026',isYTD:false};
+}
+// budget single-month (May = index 4) or YTD (sum 0..4)
+function budgetSlice(){
+  const f = k => VM==='ytd' ? sum5(G['2026B'][k]) : G['2026B'][k][4];
+  return {sales:f('sales'),cos:f('cos'),doctors:f('doctors'),staff:f('staff'),sga:f('sga'),hq:f('hq'),ebitda:f('ebitda'),icrent:f('icrent'),ebitdar:f('ebitdar')};
+}
+function ly25Slice(){
+  const f = k => VM==='ytd' ? sum5(G['2025'][k]) : G['2025'][k][4];
+  return {sales:f('sales'),cos:f('cos'),doctors:f('doctors'),staff:f('staff'),sga:f('sga'),hq:f('hq'),ebitda:f('ebitda'),icrent:f('icrent'),ebitdar:f('ebitdar')};
+}
+function actSlice(){ return VM==='ytd' ? G['2026A_ytd'] : G['2026A_may']; }
+function perKeys(){ return VM==='ytd' ? ['ytd25','ytd26a','ytd26b'] : ['j25','j26a','j26b']; }
+
+/* ---- small DOM helpers ---- */
+const el = (t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+
+/* variance cell: cost rows -> pp variance of cost%; else KRON delta + % */
+function varCell(actual,ref,inv,refSales,actualSales){
+  if(ref==null) return '<td class="r" style="color:var(--muted);font-size:10px">—</td>';
+  if(ref===0&&actual===0) return '<td class="r" style="color:var(--muted);font-size:10px">—</td>';
+  if(inv&&refSales&&actualSales){
+    const aP=actual/actualSales*100, rP=ref/refSales*100, d=aP-rP, good=d<=0;
+    const col=good?P.green:P.red, sign=d>=0?'+':'';
+    return `<td class="r"><span style="color:${col};font-size:11px;font-weight:700">${sign}${d.toFixed(2)} pp</span><br><span style="color:${P.muted};font-size:8.5px">${aP.toFixed(1)}% vs ${rP.toFixed(1)}%</span></td>`;
+  }
+  const d=actual-ref, good=inv?d<=0:d>=0, col=good?P.green:P.red, sign=d>=0?'+':'';
+  const pct=ref!==0?(d/Math.abs(ref)*100).toFixed(1):'—';
+  return `<td class="r"><span style="color:${col};font-size:11px;font-weight:700">${sign}${fmtRON(d)}</span><br><span style="color:${P.muted};font-size:8.5px">${pct!=='—'?sign+pct+'%':'—'}</span></td>`;
+}
+
+function kpiCard(label,p25,p26a,p26b,fmtFn,color,sub){
+  const f=fmtFn||(v=>fmtRON(v));
+  const absDelta=(a,r,inv=false)=>{ if(!r||r===0) return `<span style="color:${P.muted};font-size:10px">—</span>`; const d=a-r,good=inv?d<=0:d>=0,sign=d>=0?'+':'',pct=(d/Math.abs(r)*100).toFixed(1); return `<span style="color:${good?P.green:P.red};font-size:11px;font-weight:700">${sign}${f(d)}<span style="color:${P.muted};font-size:8.5px;font-weight:400;margin-left:3px">${sign}${pct}%</span></span>`; };
+  return `<div class="kpi"><div class="lbl">${label}</div>${sub?`<div class="sub">${sub}</div>`:''}<div class="val" style="color:${color||P.actual}">${f(p26a)}</div>
+   <div class="kpi-foot">
+     <div class="seg"><span class="t">vs ${labels().p25.replace(' 25A',' 25').replace('YTD','YTD')}</span>${p25&&p25!==0?absDelta(p26a,p25):`<span style="color:${P.muted};font-size:10px">—</span>`}</div>
+     <div class="divider"></div>
+     <div class="seg"><span class="t">vs Budget</span>${p26b&&p26b!==0?absDelta(p26a,p26b):`<span style="color:${P.muted};font-size:10px">—</span>`}</div>
+     <div class="divider"></div>
+     <div class="seg"><span class="t">Budget</span><span style="color:${P.budget};font-size:11px">${f(p26b)}</span></div>
+   </div></div>`;
+}
+
+function costCard(label,field,color,icon,vals){
+  // vals: {a25,a26a,a26b, totS25,totS26a,totS26b}
+  const {p25,p26a,p26b,s25,s26a,s26b} = vals;
+  const pc26a=s26a?p26a/s26a*100:0, pc26b=s26b?p26b/s26b*100:0, pc25=s25?p25/s25*100:0;
+  const dB=pc26a-pc26b, dP=pc26a-pc25, bGood=dB<=0, pGood=dP<=0;
+  return `<div class="costcard" style="border:1px solid ${color}33;border-top:3px solid ${color}">
+    <div class="hd"><span>${icon}</span><span class="nm" style="color:${color}">${label}</span></div>
+    <div class="heroes">
+      <div class="hero" style="background:${bGood?'rgba(109,138,46,0.08)':'rgba(204,34,0,0.07)'}"><div class="hl">vs Budget</div><div class="hv" style="color:${bGood?P.green:P.red}">${dB>0?'+':''}${dB.toFixed(1)}<span style="font-size:12px;font-weight:700"> pp</span></div><div class="hb" style="color:${P.budget}">${pc26b.toFixed(1)}% bgt</div></div>
+      <div class="hero" style="background:${pGood?'rgba(109,138,46,0.08)':'rgba(204,34,0,0.07)'}"><div class="hl">vs ${labels().p25}</div><div class="hv" style="color:${pGood?P.green:P.red};font-size:20px">${dP>0?'+':''}${dP.toFixed(1)}<span style="font-size:11px;font-weight:600"> pp</span></div><div class="hb" style="color:${P.y25}">${pc25.toFixed(1)}% py</div></div>
+    </div>
+    <div class="costfoot">
+      <div><span style="font-size:10px;color:${P.muted}">Actual </span><span style="font-size:13px;font-weight:800;color:${color}">${pc26a.toFixed(1)}%</span><span style="font-size:9.5px;color:${P.muted};margin-left:4px">${fmtK(p26a)}</span></div>
+      <div style="text-align:right"><span style="font-size:9px;color:${P.muted}">gain vs bgt </span><span style="font-size:12px;font-weight:800;color:${bGood?P.green:P.red}">${bGood?'+':''}${fmtK(-(p26a-p26b))} KRON</span></div>
+    </div></div>`;
+}
+
+/* ---- chart factory ---- */
+function makeChart(canvas,cfg){ const c=new Chart(canvas,cfg); charts.push(c); return c; }
+function destroyCharts(){ charts.forEach(c=>c.destroy()); charts=[]; }
+const gridCfg = {color:P.border+'88'};
+const baseScales = (yFmt)=>({
+  x:{grid:{display:false},ticks:{color:P.muted,font:{size:10}}},
+  y:{grid:gridCfg,ticks:{color:P.muted,font:{size:9},callback:yFmt}}
+});
+
+/* ============ TAB: FULL P&L ============ */
+function renderFullPL(root){
+  const lbl=labels(), a=actSlice(), b=budgetSlice(), p=ly25Slice();
+  const aEbN=a.ebitdar-a.icrent, bEbN=b.ebitdar-b.icrent, pEbN=p.ebitdar-p.icrent;
+  const rows=[
+    {label:'Total Sales',vP:p.sales,vA:a.sales,vB:b.sales,pct:false,bold:true,color:P.accent},
+    {label:'Cost of Sales',vP:p.cos,vA:a.cos,vB:b.cos,pct:true,color:P.orange,inv:true},
+    {label:'Doctors Cost',vP:p.doctors,vA:a.doctors,vB:b.doctors,pct:true,color:P.blue,inv:true},
+    {label:'Staff Cost',vP:p.staff,vA:a.staff,vB:b.staff,pct:true,color:P.purple,inv:true},
+    {label:'SG&A',vP:p.sga,vA:a.sga,vB:b.sga,pct:true,color:P.teal,inv:true},
+    {label:'EBITDA Network',vP:pEbN,vA:aEbN,vB:bEbN,pct:true,bold:true,color:P.green,hl:'green'},
+    {label:'(+) Interco. Rent',vP:p.icrent,vA:a.icrent,vB:b.icrent,pct:true,color:P.muted,indent:true},
+    {label:'EBITDAR Network',vP:p.ebitdar,vA:a.ebitdar,vB:b.ebitdar,pct:true,bold:true,color:P.ebitdar,hl:'ebitdar'},
+    {label:'(−) HQ Cost',vP:p.hq,vA:a.hq,vB:b.hq,pct:true,color:P.red,inv:true,indent:true},
+    {label:'EBITDA GROUP',vP:p.ebitda,vA:a.ebitda,vB:b.ebitda,pct:true,bold:true,color:P.accent,hl:'group'},
+  ];
+  const trs=rows.map(r=>{
+    const bg=r.hl==='green'?'rgba(109,138,46,0.10)':r.hl==='ebitdar'?'rgba(192,96,64,0.14)':r.hl==='group'?'rgba(123,28,22,0.12)':'transparent';
+    return `<tr style="border-bottom:1px solid ${P.border}33;background:${bg}">
+      <td style="color:${r.color};font-weight:${r.bold?700:400};padding-left:${r.indent?24:r.bold?8:18}px;font-style:${r.indent?'italic':'normal'};font-size:${r.indent?11:12.5}px">${r.label}</td>
+      <td class="r" style="color:${P.y25};font-size:11px">${r.vP!==0?fmtRON(r.vP):'—'}</td>
+      <td class="r" style="color:${P.muted};font-size:10px">${r.pct&&p.sales?asPct(r.vP,p.sales).toFixed(1)+'%':'—'}</td>
+      <td class="r" style="color:${r.color};font-weight:${r.bold?700:500};font-size:12.5px">${r.vA!==0?fmtRON(r.vA):'—'}</td>
+      <td class="r" style="color:${P.muted};font-size:10px">${r.pct&&a.sales?asPct(r.vA,a.sales).toFixed(1)+'%':'—'}</td>
+      <td class="r" style="color:${P.budget};font-size:11px">${r.vB!==0?fmtRON(r.vB):'—'}</td>
+      <td class="r" style="color:${P.muted};font-size:10px">${r.pct&&b.sales?asPct(r.vB,b.sales).toFixed(1)+'%':'—'}</td>
+      ${varCell(r.vA,r.vP,r.inv,p.sales,a.sales)}
+      ${varCell(r.vA,r.vB,r.inv,b.sales,a.sales)}
+    </tr>`;
+  }).join('');
+
+  const em=a.sales?a.ebitda/a.sales*100:0, erm=a.sales?a.ebitdar/a.sales*100:0;
+  const emB=b.sales?b.ebitda/b.sales*100:0, ermB=b.sales?b.ebitdar/b.sales*100:0;
+
+  root.innerHTML = `
+    <div class="col">
+      <div class="titlebar"><div class="ico">P&L</div><div><h2>Full P&L — Group Consolidated</h2><p>${lbl.note} · Actual vs Budget · all values KRON · Proforma: SGA → EBITDA Network → (+) IC Rent → EBITDAR Network → (−) HQ → EBITDA GROUP · 9 clinics + HQ</p></div></div>
+      <div id="lflcard"></div>
+      <div class="grid4">
+        ${kpiCard('Total Revenue',p.sales,a.sales,b.sales)}
+        <div class="kpi"><div class="lbl">May 2026 — Actual</div>
+          <div style="display:flex;gap:12px;align-items:center;margin-top:4px">
+            <div style="display:flex;flex-direction:column;gap:3px"><span style="color:${P.muted};font-size:10px">EBITDA GROUP</span><span style="color:${a.ebitda>=0?P.green:P.red};font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700">${fmt(a.ebitda)}</span><span class="badge" style="background:${em>=20?'rgba(109,138,46,0.13)':'rgba(192,96,64,0.13)'};color:${em>=20?P.green:P.orange}">${em.toFixed(1)}%</span><span style="color:${P.muted};font-size:9px">Budget: ${emB.toFixed(1)}%</span></div>
+            <div class="divider" style="height:50px"></div>
+            <div style="display:flex;flex-direction:column;gap:3px"><span style="color:${P.muted};font-size:10px">EBITDAR Network</span><span style="color:${P.ebitdar};font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700">${fmt(a.ebitdar)}</span><span class="badge" style="background:rgba(192,96,64,0.13);color:${P.ebitdar}">${erm.toFixed(1)}%</span><span style="color:${P.muted};font-size:9px">Budget: ${ermB.toFixed(1)}%</span></div>
+          </div></div>
+        ${kpiCard('EBITDA GROUP Margin %',p.sales?p.ebitda/p.sales*100:0,a.sales?a.ebitda/a.sales*100:0,b.sales?b.ebitda/b.sales*100:0,v=>v.toFixed(1)+'%',P.green)}
+        ${kpiCard('EBITDAR Network Margin %',p.sales?p.ebitdar/p.sales*100:0,a.sales?a.ebitdar/a.sales*100:0,b.sales?b.ebitdar/b.sales*100:0,v=>v.toFixed(1)+'%',P.ebitdar,'Pre-HQ · EBITDA Network + Interco. Rent')}
+      </div>
+      <div class="card">
+        <div class="sh"><h3>P&L — ${lbl.note} · Actual vs Budget</h3><p>Mai 25 Actual · Mai 26 Actual · Mai 26 Budget · all values KRON</p></div>
+        ${lbl.isYTD?`<div class="ytd-banner">📅 YTD view — May 2026 · YTD Ian–Mai 2026 · 5 luni.</div>`:''}
+        <table><thead><tr style="border-bottom:1px solid ${P.border}">
+          <th class="l">Line Item</th><th class="r" style="color:${P.y25}">${lbl.p25}</th><th class="r">% Rev</th>
+          <th class="r" style="color:${P.actual}">${lbl.p26a}</th><th class="r">% Rev</th>
+          <th class="r" style="color:${P.budget}">${lbl.p26b}</th><th class="r">% Rev</th>
+          <th class="r">Δ vs 25A</th><th class="r">Δ vs Budget</th></tr></thead><tbody>${trs}</tbody></table>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="sh"><h3>Monthly Revenue — 2025 Actual vs 2026 Budget</h3><p>Ian–Mai 26 Actual marcate</p></div>
+          <div class="legend"><span><span class="ln" style="background:${P.y25}"></span>2025 Actual</span><span><span class="ln" style="background:${P.budget}"></span>2026 Budget</span><span><span class="ln" style="background:${P.actual}"></span>Actual 26</span></div>
+          <div class="chartbox" style="height:200px"><canvas id="c_rev"></canvas></div></div>
+        <div class="card"><div class="sh"><h3>Cost Structure — % of Revenue</h3><p>${lbl.p25} · ${lbl.p26a} · ${lbl.p26b}</p></div>
+          <div class="chartbox" style="height:200px"><canvas id="c_cost"></canvas></div></div>
+      </div>
+    </div>`;
+  renderLFL(document.getElementById('lflcard'));
+
+  // Revenue chart: 2025A line, 2026B line, actual bars (5 months)
+  makeChart(document.getElementById('c_rev'),{
+    data:{labels:M,datasets:[
+      {type:'line',label:'Sales 25A',data:G['2025'].sales.map(x=>x/1000),borderColor:P.y25,borderDash:[4,3],borderWidth:1.5,pointRadius:0,tension:0.3},
+      {type:'line',label:'Sales 26B',data:G['2026B'].sales.map(x=>x/1000),borderColor:P.budget,borderWidth:2,pointRadius:2.5,pointBackgroundColor:P.budget,tension:0.3},
+      {type:'bar',label:'Actual 26',data:M.map((m,i)=>i<5?GA_MONTHLY[i]/1000:null),backgroundColor:M.map((m,i)=>`rgba(109,138,46,${0.45+i*0.12})`),borderRadius:4,barPercentage:0.5},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y*1000)}}},scales:baseScales(v=>fmt(v*1000))}
+  });
+  // Cost structure bars: CoS, Doctors, Staff, SGA, HQ as %
+  const cw=[['CoS',a.cos,b.cos,p.cos],['Doctors',a.doctors,b.doctors,p.doctors],['Staff',a.staff,b.staff,p.staff],['SG&A',a.sga,b.sga,p.sga],['HQ',a.hq,b.hq,p.hq]];
+  makeChart(document.getElementById('c_cost'),{
+    type:'bar',
+    data:{labels:cw.map(x=>x[0]),datasets:[
+      {label:lbl.p25,data:cw.map(x=>x[3]/p.sales*100),backgroundColor:P.y25+'80',borderRadius:3},
+      {label:lbl.p26a,data:cw.map(x=>x[1]/a.sales*100),backgroundColor:P.actual+'d8',borderRadius:3},
+      {label:lbl.p26b,data:cw.map(x=>x[2]/b.sales*100),backgroundColor:P.budget+'b0',borderRadius:3},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:P.muted,font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(1)+'%'}}},scales:baseScales(v=>v.toFixed(0)+'%')}
+  });
+}
+
+/* ---- LFL card ---- */
+function renderLFL(root){
+  const isYTD=VM==='ytd';
+  const s25=LFL.reduce((a,c)=>a+(isYTD?c.ytd25:c.m25),0);
+  const s26a=LFL.reduce((a,c)=>a+(isYTD?c.ytd26a:c.m26a),0);
+  const growth=(s26a-s25)/s25*100;
+  const gS25=isYTD?sum5(G['2025'].sales):G['2025'].sales[4];
+  const gS26a=isYTD?G['2026A_ytd'].sales:G['2026A_may'].sales;
+  const gGrowth=(gS26a-gS25)/gS25*100;
+  const newLift=gGrowth-growth;
+  const periodLabel=isYTD?'Ian–Mai':'Mai';
+  const barMax=Math.max(...LFL.map(c=>Math.abs(((isYTD?c.ytd26a:c.m26a)-(isYTD?c.ytd25:c.m25))/(isYTD?c.ytd25:c.m25)*100)));
+  const bars=LFL.map((c,i)=>{
+    const s25c=isYTD?c.ytd25:c.m25, s26c=isYTD?c.ytd26a:c.m26a, g=(s26c-s25c)/s25c*100;
+    const h=Math.max(3,Math.abs(g)/barMax*38), col=g>=0?P.green:P.red;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border-right:${i<LFL.length-1?`1px solid ${P.border}44`:'none'};padding:0 6px">
+      <span style="font-size:9.5px;color:${col};font-weight:700">${g>=0?'+':''}${g.toFixed(0)}%</span>
+      <div style="width:100%;display:flex;align-items:flex-end;justify-content:center;height:40px;position:relative">
+        <div style="width:55%;height:${h}px;background:${col};opacity:.8;border-radius:3px 3px 0 0"></div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:${P.border}"></div></div>
+      <span style="font-size:9px;color:${P.muted};font-weight:600;text-align:center">${c.name}</span>
+      <span style="font-size:8px;color:${P.muted}">${Math.round(s26c/1000)}K</span></div>`;
+  }).join('');
+  const newClinic=(name,val,h,op)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.7;padding:0 6px">
+    <span style="font-size:9.5px;color:${P.blue};font-weight:700">NEW</span>
+    <div style="width:100%;display:flex;align-items:flex-end;justify-content:center;height:40px;position:relative"><div style="width:55%;height:${h}px;background:${P.blue};opacity:${op};border-radius:3px 3px 0 0"></div><div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:${P.border}"></div></div>
+    <span style="font-size:9px;color:${P.muted};font-weight:600;text-align:center">${name}</span><span style="font-size:8px;color:${P.muted}">${val}</span></div>`;
+  root.innerHTML=`<div style="background:var(--card);border:1px solid ${P.border};border-radius:12px;padding:12px 18px;display:flex;align-items:stretch;gap:0">
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:6px;padding-right:18px;border-right:1px solid ${P.border};min-width:210px">
+      <div style="color:${P.muted};font-size:10px;text-transform:uppercase;letter-spacing:0.07em">Like-for-Like Sales</div>
+      <div style="display:flex;align-items:baseline;gap:7px"><span style="color:${growth>=0?P.green:P.red};font-family:'Playfair Display',Georgia,serif;font-size:26px;font-weight:700;line-height:1">${growth>=0?'+':''}${growth.toFixed(1)}%</span><span style="color:${P.muted};font-size:11px">${periodLabel} YoY</span></div>
+      <div style="color:${P.muted};font-size:10px">${Math.round(s25/1000)} → <span style="color:${P.actual};font-weight:600">${Math.round(s26a/1000)} KRON</span> · 6 clinici</div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:2px">
+        <div style="background:rgba(123,28,22,0.06);border-radius:7px;padding:3px 9px;text-align:center"><div style="color:${P.muted};font-size:8px;text-transform:uppercase">LFL</div><div style="color:${growth>=0?P.green:P.red};font-size:12px;font-weight:700">${growth>=0?'+':''}${growth.toFixed(1)}%</div></div>
+        <span style="color:${P.muted};font-size:11px">+</span>
+        <div style="background:rgba(74,143,181,0.07);border-radius:7px;padding:3px 9px;text-align:center"><div style="color:${P.muted};font-size:8px;text-transform:uppercase">New</div><div style="color:${P.blue};font-size:12px;font-weight:700">+${newLift.toFixed(1)}%</div></div>
+        <span style="color:${P.muted};font-size:11px">=</span>
+        <div style="background:rgba(109,138,46,0.08);border:1px solid rgba(109,138,46,0.2);border-radius:7px;padding:3px 9px;text-align:center"><div style="color:${P.muted};font-size:8px;text-transform:uppercase">Group</div><div style="color:${P.actual};font-size:12px;font-weight:700">+${gGrowth.toFixed(1)}%</div></div>
+      </div></div>
+    <div style="flex:1;display:flex;align-items:center;padding-left:18px">${bars}
+      <div style="width:1px;height:60px;background:${P.border};margin:0 8px;align-self:center"></div>
+      ${newClinic('Târgoviște',isYTD?'2.311K':'571K',38,0.55)}
+      ${newClinic('Focșani',isYTD?'984K':'397K',isYTD?22:24,0.4)}
+    </div></div>`;
+}
+
+/* ============ TAB: CLINICS OVERVIEW ============ */
+function get(code,per,field){ const s=CLINICS[code][per]||CLINICS[code].j26a; return (s&&s[field]!=null)?s[field]:0; }
+function renderClinics(root){
+  const lbl=labels(),[per25,per26a,per26b]=perKeys(),codes=CLINIC_ORDER;
+  const tS=(per,f)=>codes.reduce((a,c)=>a+get(c,per,f),0);
+  const costCards=[['Cost of Sales','cos',P.orange,'🧪'],['Doctors Cost','doctors',P.blue,'🩺'],['Staff Cost','staff',P.purple,'👥'],['SG&A','sga',P.teal,'📊']];
+  const cc=costCards.map(([l,f,c,ic])=>costCard(l,f,c,ic,{p25:tS(per25,f),p26a:tS(per26a,f),p26b:tS(per26b,f),s25:tS(per25,'sales'),s26a:tS(per26a,'sales'),s26b:tS(per26b,'sales')})).join('');
+
+  // breakdown table builder
+  function breakdownTable(title,sub,subfields,subLabels,totalField,thr){
+    const cols=[per25,per26a,per26b], colColors=[P.y25,P.actual,P.budget];
+    let rows=codes.map(code=>{
+      const c=CLINICS[code];
+      const cells=cols.map((per,j)=>{
+        const snap=c[per]||c.j26a, s=snap.sales||0, isB=j===1, col=colColors[j];
+        const sub=subfields.map(sf=>{
+          const val=snap[sf]||0, pc=s?val/s*100:0;
+          if(!(s>0||snap[totalField]>0)) return `<td class="r" style="color:${P.muted};font-size:10px">—</td>`;
+          if(s<=0) return `<td class="r"><span style="color:${col};font-size:9px">${val>0?fmtK(val):'0'}</span></td>`;
+          return `<td class="r"><span style="color:${col};font-size:${isB?11:10}px;font-weight:${isB?600:400}">${pc.toFixed(1)}%</span><br><span style="color:${P.muted};font-size:8.5px">${val>0?fmtK(val):'0'}</span></td>`;
+        }).join('');
+        const tot=snap[totalField]||0, tpc=s?tot/s*100:0;
+        const tcell = (s>0)?`<td class="r"><span class="badge" style="background:${(tpc<=thr[0]?P.green:tpc<=thr[1]?P.orange:P.red)}22;color:${tpc<=thr[0]?P.green:tpc<=thr[1]?P.orange:P.red}">${tpc.toFixed(1)}%</span></td>`:`<td class="r" style="color:${(tot>0)?P.red:P.muted};font-size:10px">${tot>0?'n/a':'—'}</td>`;
+        return sub+tcell;
+      }).join('');
+      return `<tr style="border-bottom:1px solid ${P.border}22"><td style="color:${P.accent};font-weight:700;white-space:nowrap;font-size:11px">${code} – ${c.name}</td>${cells}${varCell(get(code,per26a,totalField),get(code,per26b,totalField),true)}</tr>`;
+    }).join('');
+    // total row
+    const totals=cols.map(per=>({sales:tS(per,'sales'),tot:tS(per,totalField),subs:subfields.map(sf=>tS(per,sf))}));
+    const totRow=`<tr style="border-top:2px solid ${P.accent}44;background:rgba(123,28,22,0.04)"><td style="color:${P.accent};font-weight:700;font-size:12px">NETWORK TOTAL</td>`+
+      totals.map((t,j)=>{const col=colColors[j];
+        const subc=t.subs.map(val=>`<td class="r"><span style="color:${col};font-weight:700;font-size:11px">${t.sales?(val/t.sales*100).toFixed(1):'0'}%</span><br><span style="color:${P.muted};font-size:8.5px">${fmtK(val)}</span></td>`).join('');
+        const tpc=t.sales?t.tot/t.sales*100:0;
+        return subc+`<td class="r"><span class="badge" style="background:${P.orange}22;color:${P.orange}">${tpc.toFixed(1)}%</span></td>`;
+      }).join('')+varCell(totals[1].tot,totals[2].tot,true)+`</tr>`;
+    const head=`<tr style="border-bottom:1px solid ${P.border}"><th class="l" rowspan="2">Clinic</th><th colspan="${subfields.length+1}" style="color:${P.y25};text-align:center;border-bottom:2px solid ${P.y25}44">${lbl.p25}</th><th colspan="${subfields.length+1}" style="color:${P.actual};text-align:center;border-bottom:2px solid ${P.actual}44">${lbl.p26a}</th><th colspan="${subfields.length+1}" style="color:${P.budget};text-align:center;border-bottom:2px solid ${P.budget}44">${lbl.p26b}</th><th style="color:${P.muted};text-align:center;border-bottom:2px solid ${P.muted}44">Δ</th></tr>`;
+    const sub2cells=[...subLabels,'Total',...subLabels,'Total',...subLabels,'Total','vs Bgt'].map(h=>`<th class="r" style="font-weight:500;font-size:9.5px">${h}</th>`).join('');
+    return `<div class="card"><div class="sh"><h3>${title} — ${lbl.note}</h3><p>${sub}</p></div><table><thead>${head}<tr style="border-bottom:1px solid ${P.border}">${sub2cells}</tr></thead><tbody>${rows}${totRow}</tbody></table></div>`;
+  }
+
+  // scorecard
+  function scorecard(){
+    const cols=[per25,per26a,per26b];
+    const ebCell=(v,col,bold,sz)=>`<td class="r"><span style="color:${v>=0?P.green:P.red};font-size:${sz||11}px;font-weight:${bold?700:600}">${fmtK(v)}</span></td>`;
+    const clinicRow=(code,clColor)=>{const c=CLINICS[code];
+      const s=cols.map(p=>get(code,p,'sales')), e=cols.map(p=>get(code,p,'ebitdar'));
+      return `<tr style="border-bottom:1px solid ${P.border}22"><td style="color:${clColor};font-weight:600;white-space:nowrap;font-size:11.5px;padding-left:16px">${code} – ${c.name}${c.externalRent?` <span style="color:${P.orange};font-size:9px">(ext.rent)</span>`:''}</td>
+        <td class="r" style="color:${P.y25};font-size:10px">${s[0]>0?fmt(s[0]):'—'}</td>${(s[0]>0||e[0]!==0)?ebCell(e[0],P.y25,false,10):`<td class="r" style="color:${P.muted};font-size:10px">—</td>`}
+        <td class="r" style="color:${P.actual};font-size:11px;font-weight:600">${s[1]>0?fmt(s[1]):'—'}</td>${(s[1]>0||e[1]!==0)?ebCell(e[1],P.actual,true,11):`<td class="r" style="color:${P.muted};font-size:10px">—</td>`}
+        <td class="r" style="color:${P.budget};font-size:10px">${s[2]>0?fmt(s[2]):'—'}</td>${(s[2]>0||e[2]!==0)?ebCell(e[2],P.budget,false,10):`<td class="r" style="color:${P.muted};font-size:10px">—</td>`}
+        ${(s[2]>0||s[1]>0)?varCell(s[1],s[2],false):`<td class="r" style="color:${P.muted}">—</td>`}${(s[1]>0||s[2]>0||e[1]!==0||e[2]!==0)?varCell(e[1],e[2],false):`<td class="r" style="color:${P.muted}">—</td>`}</tr>`;
+    };
+    const subtotal=(label,arr,color)=>{const sm=(p,f)=>arr.reduce((a,c)=>a+get(c,p,f),0);
+      const s=cols.map(p=>sm(p,'sales')),e=cols.map(p=>sm(p,'ebitdar'));
+      return `<tr style="border-top:2px solid ${color}44;background:${color}0d"><td style="color:${color};font-weight:700;font-size:12px">${label}</td>
+        <td class="r" style="color:${P.y25};font-weight:700;font-size:11px">${fmt(s[0])}</td><td class="r"><span style="color:${e[0]>=0?P.green:P.red};font-weight:700;font-size:11px">${fmtK(e[0])}</span></td>
+        <td class="r" style="color:${P.actual};font-weight:700;font-size:12px">${fmt(s[1])}</td><td class="r"><span style="color:${e[1]>=0?P.green:P.red};font-weight:700;font-size:12px">${fmtK(e[1])}</span></td>
+        <td class="r" style="color:${P.budget};font-weight:700;font-size:11px">${fmt(s[2])}</td><td class="r"><span style="color:${e[2]>=0?P.green:P.red};font-weight:700;font-size:11px">${fmtK(e[2])}</span></td>
+        ${varCell(s[1],s[2],false)}${varCell(e[1],e[2],false)}</tr>`;
+    };
+    let body='';
+    [['cluster1','①'],['cluster2','②']].forEach(([id,sym])=>{const cl=CLUSTERS[id];
+      body+=`<tr style="background:${cl.color}08"><td colspan="9" style="color:${cl.color};font-weight:700;font-size:11.5px">${sym} ${cl.name}</td></tr>`;
+      body+=cl.clinics.map(c=>clinicRow(c,cl.color)).join('');
+      body+=subtotal('Subtotal '+cl.name.split('–')[0].trim(),cl.clinics,cl.color);
+    });
+    body+=`<tr style="background:${P.muted}08"><td colspan="9" style="color:${P.muted};font-weight:700;font-size:11.5px">③ Pre-opening</td></tr>`+clinicRow('BRL',P.muted);
+    const all=[...CLUSTERS.cluster1.clinics,...CLUSTERS.cluster2.clinics,'BRL'];
+    const sm=(p,f)=>all.reduce((a,c)=>a+get(c,p,f),0);
+    const s=cols.map(p=>sm(p,'sales')),e=cols.map(p=>sm(p,'ebitdar'));
+    body+=`<tr style="border-top:3px solid ${P.accent};background:rgba(123,28,22,0.07)"><td style="color:${P.accent};font-weight:800;font-size:13px">NETWORK TOTAL</td>
+      <td class="r" style="color:${P.y25};font-weight:700">${fmt(s[0])}</td><td class="r"><span style="color:${e[0]>=0?P.green:P.red};font-weight:800;font-size:12px">${fmtK(e[0])}</span></td>
+      <td class="r" style="color:${P.actual};font-weight:800;font-size:13px">${fmt(s[1])}</td><td class="r"><span style="color:${e[1]>=0?P.green:P.red};font-weight:800;font-size:13px">${fmtK(e[1])}</span></td>
+      <td class="r" style="color:${P.budget};font-weight:700">${fmt(s[2])}</td><td class="r"><span style="color:${e[2]>=0?P.green:P.red};font-weight:800;font-size:12px">${fmtK(e[2])}</span></td>
+      ${varCell(s[1],s[2],false)}${varCell(e[1],e[2],false)}</tr>`;
+    return `<div class="card"><div class="sh"><h3>Clinic Scorecard — ${lbl.note}</h3><p>Actual vs Budget · Revenue and EBITDAR in KRON</p></div>
+      <table><thead><tr style="border-bottom:1px solid ${P.border}"><th class="l">Clinic</th>
+        <th colspan="2" style="color:${P.y25};text-align:center;border-bottom:2px solid ${P.y25}44">${lbl.p25}</th>
+        <th colspan="2" style="color:${P.actual};text-align:center;border-bottom:2px solid ${P.actual}44">${lbl.p26a}</th>
+        <th colspan="2" style="color:${P.budget};text-align:center;border-bottom:2px solid ${P.budget}44">${lbl.p26b}</th>
+        <th colspan="2" style="color:${P.muted};text-align:center">Δ vs Budget</th></tr>
+        <tr style="border-bottom:1px solid ${P.border}"><th></th>${['Rev','EBITDAR','Rev','EBITDAR','Rev','EBITDAR','Rev','EBITDAR'].map(h=>`<th class="r" style="font-weight:500;font-size:10px">${h}</th>`).join('')}</tr></thead>
+      <tbody>${body}</tbody></table></div>`;
+  }
+
+  // EBITDAR by cluster cards
+  function clusterCards(){
+    return [['cluster1','①'],['cluster2','②']].map(([id,sym])=>{const cl=CLUSTERS[id],cs=cl.clinics;
+      const e26a=cs.reduce((a,c)=>a+get(c,per26a,'ebitdar'),0),e26b=cs.reduce((a,c)=>a+get(c,per26b,'ebitdar'),0),e25=cs.reduce((a,c)=>a+get(c,per25,'ebitdar'),0);
+      const s26a=cs.reduce((a,c)=>a+get(c,per26a,'sales'),0),s26b=cs.reduce((a,c)=>a+get(c,per26b,'sales'),0),s25=cs.reduce((a,c)=>a+get(c,per25,'sales'),0);
+      const dB=e26a-e26b,dP=e26a-e25,bGood=dB>=0,pGood=dP>=0;
+      const m26a=s26a?e26a/s26a*100:0,m26b=s26b?e26b/s26b*100:0,m25=s25?e25/s25*100:0;
+      return `<div style="background:var(--card);border:1px solid ${cl.color}33;border-top:3px solid ${cl.color};border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+        <div><div style="font-size:11px;font-weight:700;color:${cl.color};text-transform:uppercase">${sym} ${cl.name}</div><div style="font-size:9.5px;color:${P.muted};margin-top:2px">${cl.note}</div></div>
+        <div style="display:flex;align-items:baseline;gap:8px"><div style="font-size:30px;font-weight:800;color:${e26a>=0?P.ebitdar:P.red};line-height:1">${fmtK(e26a)}</div><div style="font-size:11px;color:${P.muted}">KRON EBITDAR</div></div>
+        <div style="display:flex;gap:10px">
+          <div class="hero" style="background:${bGood?'rgba(109,138,46,0.08)':'rgba(204,34,0,0.07)'}"><div class="hl">vs Budget</div><div class="hv" style="font-size:22px;color:${bGood?P.green:P.red}">${dB>0?'+':''}${fmtK(dB)}</div><div class="hb" style="color:${P.budget}">${fmtK(e26b)} bgt</div></div>
+          <div class="hero" style="background:${pGood?'rgba(109,138,46,0.08)':'rgba(204,34,0,0.07)'}"><div class="hl">vs ${lbl.p25}</div><div class="hv" style="font-size:22px;color:${pGood?P.green:P.red}">${dP>0?'+':''}${fmtK(dP)}</div><div class="hb" style="color:${P.y25}">${fmtK(e25)} py</div></div>
+        </div>
+        <div class="costfoot"><span style="font-size:9.5px;color:${P.muted}">Marjă EBITDAR</span><div style="display:flex;gap:10px;align-items:center"><span style="font-size:9.5px;color:${P.y25}">${m25.toFixed(1)}% py</span><span style="font-size:9.5px;color:${P.budget}">${m26b.toFixed(1)}% bgt</span><span style="font-size:13px;font-weight:800;color:${cl.color}">${m26a.toFixed(1)}%</span></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  root.innerHTML=`<div class="col">
+    <div class="titlebar"><div class="ico">CL</div><div><h2>Clinics Cost Analysis</h2><p>${lbl.note} · Actual vs Budget · % expressed as share of Clinic Revenue · all 9 clinics · cost breakdown by category</p></div></div>
+    <div class="grid4">${cc}</div>
+    ${breakdownTable('Cost of Sales Breakdown','Consumables · Laboratory · Eq. Maintenance · % of Revenue · KRON in parentheses',['consumables','lab','eq'],['Consum.','Lab','Eq.'],'cos',[18,25])}
+    ${breakdownTable('Doctors Cost Breakdown','Medical Cost per clinic · % of Revenue · benchmark ≤ 31%',['doctors'],['% Rev'],'doctors',[28,33])}
+    ${breakdownTable('Staff Cost Breakdown','Assistants · Reception & Admin · Coordinator · % of Revenue',['assistants','reception','coordinator'],['Assist.','Recep.','Coord.'],'staff',[12,18])}
+    ${breakdownTable('SG&A Breakdown','Sales & Marketing · Utilities · Other · % of Revenue',['salesMktg','utilities','otherSGA'],['S&M','Util.','Other'],'sga',[10,15])}
+    ${scorecard()}
+    <div class="grid2">${clusterCards()}</div>
+    <div class="note-orange">ℹ️ <strong>Cotroceni (CTR)</strong> is the only clinic with external market rent. For all other clinics, rent is intercompany — EBITDAR is the most relevant profitability metric at clinic level.</div>
+  </div>`;
+}
+
+/* ============ TAB: CLINIC P&L ============ */
+function renderClinicPL(root,code){
+  const lbl=labels(),c=CLINICS[code],isExt=c.externalRent;
+  const a=VM==='ytd'?c.ytd26a:c.j26a, b=VM==='ytd'?c.ytd26b:c.j26b, p=VM==='ytd'?c.ytd25:c.j25;
+  const arm=a.sales?a.ebitdar/a.sales*100:0;
+  const rows=[
+    {label:'Total Sales',vP:p.sales,vA:a.sales,vB:b.sales,pct:false,bold:true,color:P.accent},
+    {label:'Cost of Sales',vP:p.cos,vA:a.cos,vB:b.cos,pct:true,color:P.orange,inv:true},
+    {label:'Doctors Cost',vP:p.doctors,vA:a.doctors,vB:b.doctors,pct:true,color:P.blue,inv:true},
+    {label:'Staff Cost',vP:p.staff,vA:a.staff,vB:b.staff,pct:true,color:P.purple,inv:true},
+    {label:'SG&A',vP:p.sga,vA:a.sga,vB:b.sga,pct:true,color:P.teal,inv:true},
+    {label:'EBITDA',vP:p.ebitda,vA:a.ebitda,vB:b.ebitda,pct:true,bold:true,color:P.green,hl:'green'},
+    {label:`(+) Rent${isExt?' (market)':' (interco)'}`,vP:p.rent,vA:a.rent,vB:b.rent,pct:true,color:P.muted,indent:true},
+    {label:'EBITDAR',vP:p.ebitdar,vA:a.ebitdar,vB:b.ebitdar,pct:true,bold:true,color:P.ebitdar,hl:'ebitdar'},
+  ];
+  const trs=rows.map(r=>{const bg=r.hl==='green'?'rgba(123,28,22,0.06)':r.hl==='ebitdar'?'rgba(192,96,64,0.14)':'transparent';
+    return `<tr style="border-bottom:1px solid ${P.border}22;background:${bg}"><td style="color:${r.color};font-weight:${r.bold?700:400};padding-left:${r.indent?16:r.bold?5:12}px;font-style:${r.indent?'italic':'normal'};font-size:${r.indent?10:11}px;white-space:nowrap">${r.label}</td>
+      <td class="r" style="color:${P.y25};font-size:10px">${r.vP!==0?fmtRON(r.vP):'—'}</td><td class="r" style="color:${P.muted};font-size:9px">${r.pct&&p.sales?asPct(r.vP,p.sales).toFixed(1)+'%':'—'}</td>
+      <td class="r" style="color:${r.color};font-weight:${r.bold?700:400};font-size:11px">${r.vA!==0?fmtRON(r.vA):'—'}</td><td class="r" style="color:${P.muted};font-size:9px">${r.pct&&a.sales?asPct(r.vA,a.sales).toFixed(1)+'%':'—'}</td>
+      <td class="r" style="color:${P.budget};font-size:10px">${r.vB!==0?fmtRON(r.vB):'—'}</td><td class="r" style="color:${P.muted};font-size:9px">${r.pct&&b.sales?asPct(r.vB,b.sales).toFixed(1)+'%':'—'}</td>
+      ${varCell(r.vA,r.vB,r.inv,b.sales,a.sales)}</tr>`;
+  }).join('');
+  let costCardsHtml='';
+  if(a.sales>0){
+    costCardsHtml='<div class="grid4">'+[['Cost of Sales','cos',P.orange,'🧪'],['Doctors Cost','doctors',P.blue,'🩺'],['Staff Cost','staff',P.purple,'👥'],['SG&A','sga',P.teal,'📊']].map(([l,f,col,ic])=>
+      costCard(l,f,col,ic,{p25:p[f]||0,p26a:a[f]||0,p26b:b[f]||0,s25:p.sales,s26a:a.sales,s26b:b.sales})).join('')+'</div>';
+  }
+  root.innerHTML=`<div class="col">
+    <div class="titlebar"><div class="ico" style="background:${arm>=0?'rgba(192,96,64,0.13)':'rgba(204,34,0,0.13)'};color:${arm>=0?P.ebitdar:P.red}">${code}</div>
+      <div><h2>${c.fullName}</h2><div style="display:flex;gap:8px;margin-top:3px;align-items:center"><span style="color:${P.muted};font-size:11px">${lbl.note} — Actual vs Budget</span>${isExt?`<span class="badge" style="background:rgba(192,96,64,0.13);color:${P.orange}">External (market) rent</span>`:`<span class="badge" style="background:rgba(192,96,64,0.13);color:${P.ebitdar}">EBITDAR = primary metric</span>`}</div></div></div>
+    <div class="grid3">
+      ${kpiCard('Revenue',p.sales,a.sales,b.sales,v=>v>0?fmt(v)+' KRON':'—')}
+      ${kpiCard('EBITDA Margin',p.sales>0?p.ebitda/p.sales*100:0,a.sales>0?a.ebitda/a.sales*100:0,b.sales>0?b.ebitda/b.sales*100:0,v=>v?v.toFixed(1)+'%':'—',a.ebitda>=0?P.green:P.red)}
+      ${kpiCard(isExt?'EBITDAR Margin (ext.rent)':'EBITDAR Margin (interco)',p.sales>0?p.ebitdar/p.sales*100:0,a.sales>0?a.ebitdar/a.sales*100:0,b.sales>0?b.ebitdar/b.sales*100:0,v=>v?v.toFixed(1)+'%':'—',P.ebitdar)}
+    </div>
+    ${costCardsHtml}
+    <div class="grid2">
+      <div class="card"><div class="sh"><h3>P&L — ${lbl.note}</h3><p>% of sales</p></div>
+        <table><thead><tr style="border-bottom:1px solid ${P.border}"><th class="l">Item</th><th class="r" style="color:${P.y25}">${lbl.p25}</th><th class="r">%</th><th class="r" style="color:${P.actual}">${lbl.p26a}</th><th class="r">%</th><th class="r" style="color:${P.budget}">${lbl.p26b}</th><th class="r">%</th><th class="r">ΔB</th></tr></thead><tbody>${trs}</tbody></table></div>
+      <div class="col">
+        <div class="card"><div class="sh"><h3>Monthly Revenue — 2025A vs 2026B</h3></div>
+          <div class="legend"><span><span class="ln" style="background:${P.y25}"></span>2025A</span><span><span class="ln" style="background:${P.budget}"></span>2026B</span><span><span class="ln" style="background:${P.actual}"></span>Mai 26A</span></div>
+          <div class="chartbox" style="height:150px"><canvas id="cpl_rev"></canvas></div></div>
+        <div class="card"><div class="sh"><h3>EBITDAR Trajectory — 2025 vs 2026</h3><p>Monthly · KRON</p></div>
+          <div class="legend"><span><span class="ln" style="background:${P.y25}"></span>2025</span><span><span class="ln" style="background:${P.ebitdar}"></span>2026B</span><span><span class="ln" style="background:${P.actual}"></span>Mai 26A</span></div>
+          <div class="chartbox" style="height:150px"><canvas id="cpl_eb"></canvas></div></div>
+      </div>
+    </div></div>`;
+  if(a.sales>0||a.ebitda!==0){
+    makeChart(document.getElementById('cpl_rev'),{data:{labels:M,datasets:[
+      {type:'line',label:'2025A',data:c.m25.sales.map(x=>x/1000),borderColor:P.y25,borderDash:[4,3],borderWidth:1.5,pointRadius:0,tension:.3},
+      {type:'line',label:'2026B',data:c.m26b.sales.map(x=>x/1000),borderColor:P.budget,borderWidth:2,pointRadius:2,pointBackgroundColor:P.budget,tension:.3},
+      {type:'bar',label:'Mai 26A',data:M.map((m,i)=>i===4?a.sales/1000:null),backgroundColor:P.actual+'cc',borderRadius:3,barPercentage:0.5},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:cx=>cx.dataset.label+': '+fmt(cx.parsed.y*1000)}}},scales:baseScales(v=>fmt(v*1000))}});
+    makeChart(document.getElementById('cpl_eb'),{data:{labels:M,datasets:[
+      {type:'line',label:'25A',data:c.m25.ebitdar.map(x=>x/1000),borderColor:P.y25,borderDash:[4,3],borderWidth:1.5,pointRadius:0,tension:.3},
+      {type:'line',label:'26B',data:c.m26b.ebitdar.map(x=>x/1000),borderColor:P.ebitdar,borderWidth:2.5,pointRadius:2,pointBackgroundColor:P.ebitdar,tension:.3},
+      {type:'bar',label:'Mai 26A',data:M.map((m,i)=>i===4?a.ebitdar/1000:null),backgroundColor:P.actual+'cc',borderRadius:3,barPercentage:0.5},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:cx=>cx.dataset.label+': '+fmt(cx.parsed.y*1000)}}},scales:baseScales(v=>fmt(v*1000))}});
+  }
+}
+
+/* ============ TAB: CLUSTER ============ */
+function renderCluster(root,clusterId){
+  const lbl=labels(),cl=CLUSTERS[clusterId],codes=cl.clinics,clColor=cl.color,[per25,per26a,per26b]=perKeys();
+  const sf=(per,f)=>codes.reduce((a,c)=>a+((CLINICS[c][per]&&CLINICS[c][per][f])||0),0);
+  const j25={},j26a={},j26b={};['sales','cos','doctors','staff','sga','rent','ebitda','ebitdar'].forEach(f=>{j25[f]=sf(per25,f);j26a[f]=sf(per26a,f);j26b[f]=sf(per26b,f);});
+  const arm=j26a.sales?j26a.ebitdar/j26a.sales*100:0;
+  const rows=[['Total Sales','sales',false,true,P.accent],['Cost of Sales','cos',true,false,P.orange],['Doctors Cost','doctors',true,false,P.blue],['Staff Cost','staff',true,false,P.purple],['SG&A','sga',true,false,P.teal],['EBITDA','ebitda',true,true,P.green,'green'],['(+) Rent add-back','rent',true,false,P.muted,'',true],['EBITDAR','ebitdar',true,true,P.ebitdar,'ebitdar']];
+  const trs=rows.map(([l,f,pct,bold,color,hl,indent])=>{const vP=j25[f],vA=j26a[f],vB=j26b[f],bg=hl==='green'?'rgba(123,28,22,0.06)':hl==='ebitdar'?'rgba(192,96,64,0.14)':'transparent';
+    return `<tr style="border-bottom:1px solid ${P.border}22;background:${bg}"><td style="color:${color};font-weight:${bold?700:400};padding-left:${indent?20:bold?7:16}px;font-style:${indent?'italic':'normal'};font-size:${indent?10.5:12}px;white-space:nowrap">${l}</td>
+      <td class="r" style="color:${P.y25};font-size:10px">${vP!==0?fmtRON(vP):'—'}</td><td class="r" style="color:${P.muted};font-size:9px">${pct&&j25.sales?asPct(vP,j25.sales).toFixed(1)+'%':'—'}</td>
+      <td class="r" style="color:${color};font-weight:${bold?700:400};font-size:12px">${vA!==0?fmtRON(vA):'—'}</td><td class="r" style="color:${P.muted};font-size:9px">${pct&&j26a.sales?asPct(vA,j26a.sales).toFixed(1)+'%':'—'}</td>
+      <td class="r" style="color:${P.budget};font-size:10px">${vB!==0?fmtRON(vB):'—'}</td><td class="r" style="color:${P.muted};font-size:9px">${pct&&j26b.sales?asPct(vB,j26b.sales).toFixed(1)+'%':'—'}</td>
+      ${varCell(vA,vB,!!hl?false:pct,j26b.sales,j26a.sales)}</tr>`;
+  }).join('');
+  // divergent + revenue/ebitdar charts data
+  const monRev=M.map((m,i)=>codes.reduce((a,c)=>a+CLINICS[c].m25.sales[i],0)/1000);
+  const monRevB=M.map((m,i)=>codes.reduce((a,c)=>a+CLINICS[c].m26b.sales[i],0)/1000);
+  const monEb=M.map((m,i)=>codes.reduce((a,c)=>a+CLINICS[c].m25.ebitdar[i],0)/1000);
+  const monEbB=M.map((m,i)=>codes.reduce((a,c)=>a+CLINICS[c].m26b.ebitdar[i],0)/1000);
+  root.innerHTML=`<div class="col">
+    <div style="background:linear-gradient(135deg,${clColor}15 0%,var(--card) 60%);border:1px solid ${clColor}44;border-radius:16px;padding:20px 28px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+      <div style="width:56px;height:56px;border-radius:14px;background:${clColor}25;border:2px solid ${clColor}66;display:flex;align-items:center;justify-content:center;font-size:22px">${clusterId==='cluster1'?'①':'②'}</div>
+      <div style="flex:1;min-width:200px"><h2 style="font-size:22px;color:${clColor}">${cl.name}</h2><p style="color:${P.muted};font-size:12px;margin-top:4px">${cl.note}</p></div>
+      <div style="text-align:right;border-left:1px solid ${P.border};padding-left:24px"><div style="color:${P.muted};font-size:10px;text-transform:uppercase">Regional Manager</div><div style="color:${clColor};font-size:17px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin-top:2px">${cl.manager}</div></div>
+      <div style="text-align:center;background:${clColor}18;border:1px solid ${clColor}44;border-radius:12px;padding:10px 20px"><div style="color:${P.muted};font-size:10px;text-transform:uppercase">Mai 26A EBITDAR</div><div style="color:${clColor};font-size:22px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin-top:2px">${fmt(j26a.ebitdar)}</div><div style="color:${arm>=0?P.ebitdar:P.red};font-size:12px;font-weight:600;margin-top:2px">${arm.toFixed(1)}% margin</div></div>
+    </div>
+    <div class="grid3">
+      ${kpiCard('Cluster Revenue',j25.sales,j26a.sales,j26b.sales)}
+      ${kpiCard('EBITDA Margin %',j25.sales?j25.ebitda/j25.sales*100:0,j26a.sales?j26a.ebitda/j26a.sales*100:0,j26b.sales?j26b.ebitda/j26b.sales*100:0,v=>v.toFixed(1)+'%',P.green)}
+      ${kpiCard('EBITDAR Margin %',j25.sales?j25.ebitdar/j25.sales*100:0,arm,j26b.sales?j26b.ebitdar/j26b.sales*100:0,v=>v.toFixed(1)+'%',P.ebitdar)}
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="sh"><h3>Consolidated P&L — ${cl.name}</h3><p>${lbl.note} · Actual vs Budget · KRON</p></div>
+        <table><thead><tr style="border-bottom:1px solid ${P.border}"><th class="l">Line Item</th><th class="r" style="color:${P.y25}">${lbl.p25}</th><th class="r">%</th><th class="r" style="color:${P.actual}">${lbl.p26a}</th><th class="r">%</th><th class="r" style="color:${P.budget}">${lbl.p26b}</th><th class="r">%</th><th class="r">ΔB</th></tr></thead><tbody>${trs}</tbody></table></div>
+      <div class="col">
+        <div class="card"><div class="sh"><h3>Monthly Revenue — 2025A vs 2026B</h3></div><div class="chartbox" style="height:155px"><canvas id="cl_rev"></canvas></div></div>
+        <div class="card"><div class="sh"><h3>Monthly EBITDAR — 2025A vs 2026B</h3><p>KRON</p></div><div class="chartbox" style="height:155px"><canvas id="cl_eb"></canvas></div></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="sh"><h3>Sales vs Budget — ${lbl.note}</h3><p>Δ Actual minus Budget per clinic · KRON · green = above budget</p></div><div class="chartbox" style="height:200px"><canvas id="cl_dsales"></canvas></div></div>
+      <div class="card"><div class="sh"><h3>EBITDAR vs Budget — ${lbl.note}</h3><p>Δ Actual minus Budget per clinic · KRON · green = above budget</p></div><div class="chartbox" style="height:200px"><canvas id="cl_deb"></canvas></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><div class="sh"><h3>Revenue by Clinic — Mai 25A vs 26A vs 26B</h3><p>KRON</p></div><div class="chartbox" style="height:200px"><canvas id="cl_byrev"></canvas></div></div>
+      <div class="card"><div class="sh"><h3>EBITDAR by Clinic — Mai 25A vs 26A vs 26B</h3><p>KRON · primary profitability</p></div><div class="chartbox" style="height:200px"><canvas id="cl_byeb"></canvas></div></div>
+    </div>
+    <div class="card"><div class="sh"><h3>Clinic Performance — ${cl.name} · ${lbl.note}</h3><p>Actual vs Budget · Revenue and EBITDAR in KRON</p></div>${clusterPerfTable(codes,clColor,per25,per26a,per26b,lbl,j25,j26a,j26b)}</div>
+  </div>`;
+  // charts
+  const mk=(id,actualVal,col)=>makeChart(document.getElementById(id),{data:{labels:M,datasets:[
+    {type:'line',label:'25A',data:id==='cl_rev'?monRev:monEb,borderColor:P.y25,borderDash:[4,3],borderWidth:1.5,pointRadius:0,tension:.3},
+    {type:'line',label:'26B',data:id==='cl_rev'?monRevB:monEbB,borderColor:col,borderWidth:2.5,pointRadius:2,pointBackgroundColor:col,tension:.3},
+    {type:'bar',label:'Mai 26A',data:M.map((m,i)=>i===4?actualVal/1000:null),backgroundColor:P.actual+'cc',borderRadius:3,barPercentage:0.5},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:cx=>cx.dataset.label+': '+fmt(cx.parsed.y*1000)}}},scales:baseScales(v=>fmt(v*1000))}});
+  mk('cl_rev',j26a.sales,clColor); mk('cl_eb',j26a.ebitdar,P.ebitdar);
+  // divergent
+  const dv=codes.map(c=>({name:CLINICS[c].name,sv:Math.round((get(c,per26a,'sales')-get(c,per26b,'sales'))/1000),ev:Math.round((get(c,per26a,'ebitdar')-get(c,per26b,'ebitdar'))/1000)}));
+  const dvChart=(id,key)=>makeChart(document.getElementById(id),{type:'bar',data:{labels:dv.map(d=>d.name),datasets:[{data:dv.map(d=>d[key]),backgroundColor:dv.map(d=>d[key]>=0?P.green+'d0':P.red+'d0'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:cx=>(cx.parsed.y>=0?'+':'')+cx.parsed.y+' KRON'}}},scales:{x:{grid:{display:false},ticks:{color:P.muted,font:{size:10}}},y:{grid:gridCfg,ticks:{color:P.muted,font:{size:9},callback:v=>(v>=0?'+':'')+v+'K'}}}}});
+  dvChart('cl_dsales','sv'); dvChart('cl_deb','ev');
+  // by-clinic grouped
+  const byChart=(id,field)=>makeChart(document.getElementById(id),{type:'bar',data:{labels:codes.map(c=>CLINICS[c].name),datasets:[
+    {label:'Mai 25A',data:codes.map(c=>get(c,per25,field)/1000),backgroundColor:P.y25+'70',borderRadius:3},
+    {label:'Mai 26A',data:codes.map(c=>get(c,per26a,field)/1000),backgroundColor:(field==='ebitdar'?P.ebitdar:P.actual)+'e0',borderRadius:3},
+    {label:'Mai 26B',data:codes.map(c=>get(c,per26b,field)/1000),backgroundColor:clColor+'a0',borderRadius:3},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:P.muted,font:{size:10},boxWidth:12}},tooltip:{callbacks:{label:cx=>cx.dataset.label+': '+fmt(cx.parsed.y*1000)}}},scales:baseScales(v=>fmt(v*1000))}});
+  byChart('cl_byrev','sales'); byChart('cl_byeb','ebitdar');
+}
+function clusterPerfTable(codes,clColor,per25,per26a,per26b,lbl,j25,j26a,j26b){
+  const rowsHtml=codes.map(code=>{const c=CLINICS[code];
+    const cells=[per25,per26a,per26b].map((per,j)=>{const sv=(c[per]||c.j26a).sales,er=(c[per]||c.j26a).ebitdar,erm=sv?er/sv*100:0,col=j===0?P.y25:j===1?P.actual:clColor;
+      return `<td class="r" style="color:${col};font-size:${j===1?11:10}px;font-weight:${j===1?600:400}">${sv>0?fmt(sv):'—'}</td><td class="r">${(sv>0||er!==0)?`<span style="color:${er>=0?P.green:P.red};font-size:${j===1?11:10}px;font-weight:${j===1?700:600}">${fmtK(er)}</span>`:'—'}</td><td class="r">${sv>0?`<span class="badge" style="background:rgba(192,96,64,0.13);color:${P.ebitdar}">${erm.toFixed(1)}%</span>`:er<0?`<span class="badge" style="background:rgba(204,34,0,0.13);color:${P.red}">neg.</span>`:'—'}</td>`;
+    }).join('');
+    return `<tr style="border-bottom:1px solid ${P.border}22"><td style="color:${clColor};font-weight:700;white-space:nowrap">${code} – ${c.name}${c.externalRent?` <span style="color:${P.orange};font-size:9px">(ext.rent)</span>`:''}</td>${cells}</tr>`;
+  }).join('');
+  const totCells=[j25,j26a,j26b].map((d,j)=>{const col=j===0?P.y25:j===1?P.actual:clColor,erm=d.sales?d.ebitdar/d.sales*100:0;
+    return `<td class="r" style="color:${col};font-weight:700;font-size:12px">${fmt(d.sales)}</td><td class="r"><span style="color:${d.ebitdar>=0?P.green:P.red};font-weight:700;font-size:12px">${fmtK(d.ebitdar)}</span></td><td class="r"><span class="badge" style="background:rgba(192,96,64,0.2);color:${P.ebitdar}">${erm.toFixed(1)}%</span></td>`;
+  }).join('');
+  return `<table><thead><tr style="border-bottom:1px solid ${P.border}"><th class="l">Clinic</th>
+    <th colspan="3" style="color:${P.y25};text-align:center;border-bottom:2px solid ${P.y25}44">${lbl.p25}</th>
+    <th colspan="3" style="color:${P.actual};text-align:center;border-bottom:2px solid ${P.actual}44">${lbl.p26a}</th>
+    <th colspan="3" style="color:${clColor};text-align:center;border-bottom:2px solid ${clColor}44">${lbl.p26b}</th></tr>
+    <tr style="border-bottom:1px solid ${P.border}"><th></th>${['Rev','EBITDAR','Margin','Rev','EBITDAR','Margin','Rev','EBITDAR','Margin'].map(h=>`<th class="r" style="font-weight:500;font-size:10px">${h}</th>`).join('')}</tr></thead>
+    <tbody>${rowsHtml}<tr style="border-top:2px solid ${clColor}44;background:${clColor}0d"><td style="color:${clColor};font-weight:700;font-size:13px">CLUSTER TOTAL</td>${totCells}</tr></tbody></table>`;
+}
+
+/* ============ TAB: HQ ============ */
+function renderHQ(root){
+  const lbl=labels(),D=VM==='ytd'?HQ.ytd:HQ,P_=['j25','j26a','j26b'];
+  const pct=(v,b)=>b>0?v/b*100:0;
+  const SGA_ROWS=[['salesCost','Sales & Operations HQ Cost'],['marketing','Marketing Cost'],['brandAwareness','Brand Awareness & PR'],['it','IT, Communications & Office'],['rent','Rent'],['utilities','Energy & Utilities'],['transport','Transport & Travel'],['legal','Legal, Accounting & Advisory'],['education','Education & Trainings'],['regulatory','Regulatory, Security & Insurance'],['others','Others']];
+  function vcellHQ(actual,ref,inv){if(ref==null)return `<td class="r" style="color:${P.muted};font-size:10px">—</td>`;const d=actual-ref,good=inv?d<=0:d>=0,col=good?P.green:P.red,sign=d>=0?'+':'',p=ref!==0?(d/Math.abs(ref)*100).toFixed(1):'—';return `<td class="r"><span style="color:${col};font-size:11px;font-weight:700">${sign}${fmtK(d)}</span><br><span style="color:${P.muted};font-size:8.5px">${p!=='—'?sign+p+'%':'—'}</span></td>`;}
+  function pctAbs(val,grv,col,bold){const p=pct(val,grv);return `<td class="r"><span style="color:${col};font-size:${bold?11:10}px;font-weight:${bold?700:400}">${p.toFixed(2)}%</span><br><span style="color:${P.muted};font-size:8.5px">${val>0?fmtK(val):'0'}</span></td>`;}
+  const hqCards=[['HQ Staff Cost',P.purple,'👥',D.staff],['HQ SG&A',P.teal,'📊',D.sga.total]].map(([l,col,ic,obj])=>{
+    const pc26a=pct(obj.j26a,D.groupRev.j26a),pc26b=pct(obj.j26b,D.groupRev.j26b),pc25=pct(obj.j25,D.groupRev.j25),dB=pc26a-pc26b,dP=pc26a-pc25,bGood=dB<=0,pGood=dP<=0;
+    return `<div class="costcard" style="border:1px solid ${col}33;border-top:3px solid ${col}"><div class="hd"><span>${ic}</span><span class="nm" style="color:${col}">${l}</span></div>
+      <div class="heroes"><div class="hero" style="background:${bGood?'rgba(109,138,46,0.08)':'rgba(204,34,0,0.07)'}"><div class="hl">vs Budget</div><div class="hv" style="color:${bGood?P.green:P.red}">${dB>0?'+':''}${dB.toFixed(1)}<span style="font-size:12px"> pp</span></div><div class="hb" style="color:${P.budget}">${pc26b.toFixed(1)}% bgt</div></div>
+        <div class="hero" style="background:${pGood?'rgba(109,138,46,0.08)':'rgba(204,34,0,0.07)'}"><div class="hl">vs ${lbl.p25}</div><div class="hv" style="font-size:20px;color:${pGood?P.green:P.red}">${dP>0?'+':''}${dP.toFixed(1)}<span style="font-size:11px"> pp</span></div><div class="hb" style="color:${P.y25}">${pc25.toFixed(1)}% py</div></div></div>
+      <div class="costfoot"><div><span style="font-size:10px;color:${P.muted}">Actual </span><span style="font-size:13px;font-weight:800;color:${col}">${pc26a.toFixed(1)}%</span><span style="font-size:9.5px;color:${P.muted};margin-left:4px">${fmtK(obj.j26a)}</span></div><div style="text-align:right"><span style="font-size:9px;color:${P.muted}">gain vs bgt </span><span style="font-size:12px;font-weight:800;color:${bGood?P.green:P.red}">${bGood?'+':''}${fmtK(-(obj.j26a-obj.j26b))} KRON</span></div></div></div>`;
+  }).join('');
+  const sumRow=(label,obj,color,inv,bold)=>{const g=D.groupRev;
+    return `<tr style="border-bottom:1px solid ${P.border}22${bold?`;border-top:2px solid ${P.accent}44;background:rgba(123,28,22,0.04)`:''}"><td style="color:${color};font-weight:700;font-size:${bold?13:12}px">${label}</td>
+      ${pctAbs(obj.j25,g.j25,P.y25,false)}<td class="r" style="color:${P.y25};font-size:10px">${fmtK(obj.j25)}</td>
+      ${pctAbs(obj.j26a,g.j26a,P.actual,true)}<td class="r" style="color:${P.actual};font-weight:700;font-size:11px">${fmtK(obj.j26a)}</td>
+      ${pctAbs(obj.j26b,g.j26b,P.budget,false)}<td class="r" style="color:${P.budget};font-size:10px">${fmtK(obj.j26b)}</td>
+      ${vcellHQ(obj.j26a,obj.j25,inv)}${vcellHQ(obj.j26a,obj.j26b,inv)}</tr>`;
+  };
+  const sgaTrs=SGA_ROWS.map(([k,l])=>{const o=D.sga[k],g=D.groupRev;
+    return `<tr style="border-bottom:1px solid ${P.border}22"><td style="padding-left:16px;font-size:11px">${l}</td>
+      <td class="r" style="color:${P.y25};font-size:10px">${o.j25>0?pct(o.j25,g.j25).toFixed(2)+'%':'—'}</td><td class="r" style="color:${P.y25};font-size:10px">${o.j25>0?fmtK(o.j25):'—'}</td>
+      <td class="r" style="color:${P.actual};font-size:11px;font-weight:700">${o.j26a>0?pct(o.j26a,g.j26a).toFixed(2)+'%':'—'}</td><td class="r" style="color:${P.actual};font-weight:600;font-size:11px">${o.j26a>0?fmtK(o.j26a):'—'}</td>
+      <td class="r" style="color:${P.budget};font-size:10px">${o.j26b>0?pct(o.j26b,g.j26b).toFixed(2)+'%':'—'}</td><td class="r" style="color:${P.budget};font-size:10px">${o.j26b>0?fmtK(o.j26b):'—'}</td>
+      ${vcellHQ(o.j26a,o.j25,true)}${vcellHQ(o.j26a,o.j26b,true)}</tr>`;
+  }).join('');
+  const sgaTot=D.sga.total,g=D.groupRev;
+  const spot=[['Marketing & Brand','#8b6aad','📣',{j25:D.sga.marketing.j25+D.sga.brandAwareness.j25,j26a:D.sga.marketing.j26a+D.sga.brandAwareness.j26a,j26b:D.sga.marketing.j26b+D.sga.brandAwareness.j26b}],['Education & Trainings','#5c8a5a','🎓',D.sga.education],['Transport & Travel','#c06040','✈️',D.sga.transport]].map(([l,col,ic,o])=>{
+    const pc26a=pct(o.j26a,g.j26a),pc26b=pct(o.j26b,g.j26b),pc25=pct(o.j25,g.j25),dB=pc26a-pc26b,dP=pc26a-pc25,bGood=dB<=0,pGood=dP<=0;
+    return `<div class="costcard" style="border:1px solid ${col}33;border-top:3px solid ${col}"><div class="hd"><span>${ic}</span><span class="nm" style="color:${col}">${l}</span><span class="tag">SG&A sub-item</span></div>
+      <div class="heroes"><div class="hero" style="background:${bGood?'rgba(109,138,46,0.08)':'rgba(204,34,0,0.07)'}"><div class="hl">vs Budget</div><div class="hv" style="color:${bGood?P.green:P.red}">${dB>0?'+':''}${dB.toFixed(1)}<span style="font-size:12px"> pp</span></div><div class="hb" style="color:${P.budget}">${pc26b.toFixed(1)}% bgt</div></div>
+        <div class="hero" style="background:${pGood?'rgba(109,138,46,0.08)':'rgba(204,34,0,0.07)'}"><div class="hl">vs ${lbl.p25}</div><div class="hv" style="font-size:20px;color:${pGood?P.green:P.red}">${dP>0?'+':''}${dP.toFixed(1)}<span style="font-size:11px"> pp</span></div><div class="hb" style="color:${P.y25}">${pc25.toFixed(1)}% py</div></div></div>
+      <div class="costfoot"><div><span style="font-size:10px;color:${P.muted}">Actual </span><span style="font-size:13px;font-weight:800;color:${col}">${pc26a.toFixed(1)}%</span><span style="font-size:9.5px;color:${P.muted};margin-left:4px">${fmtK(o.j26a)}</span></div><div style="text-align:right"><span style="font-size:9px;color:${P.muted}">gain vs bgt </span><span style="font-size:12px;font-weight:800;color:${bGood?P.green:P.red}">${bGood?'+':''}${fmtK(-(o.j26a-o.j26b))} KRON</span></div></div></div>`;
+  }).join('');
+  root.innerHTML=`<div class="col">
+    <div class="titlebar"><div class="ico">HQ</div><div><h2>HQ Cost Analysis</h2><p>May 2026 · Actual vs Budget · % expressed as share of Group Revenue · HQ = support &amp; overhead centre</p></div></div>
+    <div class="grid2">${hqCards}</div>
+    <div class="card"><div class="sh"><h3>HQ P&L Summary — ${lbl.note}</h3><p>All values as % of Group Revenue · absolute KRON in parentheses</p></div>
+      <table><thead><tr style="border-bottom:1px solid ${P.border}"><th class="l">Line Item</th>
+        <th colspan="2" style="color:${P.y25};text-align:center;border-bottom:2px solid ${P.y25}44">${lbl.p25}</th>
+        <th colspan="2" style="color:${P.actual};text-align:center;border-bottom:2px solid ${P.actual}44">${lbl.p26a}</th>
+        <th colspan="2" style="color:${P.budget};text-align:center;border-bottom:2px solid ${P.budget}44">${lbl.p26b}</th>
+        <th colspan="2" style="color:${P.muted};text-align:center">Variance (26A)</th></tr>
+        <tr style="border-bottom:1px solid ${P.border}"><th></th>${['% Rev','KRON','% Rev','KRON','% Rev','KRON','Δ vs 25A','Δ vs Bgt'].map(h=>`<th class="r" style="font-weight:500;font-size:9.5px">${h}</th>`).join('')}</tr></thead>
+      <tbody>
+        ${sumRow('HQ Sales (non-medical)',D.sales,P.accent,false,false)}
+        ${sumRow('HQ Staff Cost',D.staff,P.purple,true,false)}
+        ${sumRow('HQ SG&A (see detail below)',D.sga.total,P.teal,true,false)}
+        ${sumRow('TOTAL HQ COST',D.totalCost,P.accent,true,true)}
+        ${sumRow('of which: Net HQ Charge to Group',D.netOfSales,P.muted,true,false)}
+      </tbody></table></div>
+    <div class="grid3">${spot}</div>
+    <div class="card"><div class="sh"><h3>HQ SG&A Breakdown — ${lbl.note}</h3><p>Each line · % of Group Revenue · absolute KRON in parentheses</p></div>
+      <table><thead><tr style="border-bottom:1px solid ${P.border}"><th class="l" rowspan="2">SG&A Line Item</th>
+        <th colspan="2" style="color:${P.y25};text-align:center;border-bottom:2px solid ${P.y25}44">${lbl.p25}</th>
+        <th colspan="2" style="color:${P.actual};text-align:center;border-bottom:2px solid ${P.actual}44">${lbl.p26a}</th>
+        <th colspan="2" style="color:${P.budget};text-align:center;border-bottom:2px solid ${P.budget}44">${lbl.p26b}</th>
+        <th colspan="2" style="color:${P.muted};text-align:center">Variance (26A)</th></tr>
+        <tr style="border-bottom:1px solid ${P.border}">${['% Rev','KRON','% Rev','KRON','% Rev','KRON','Δ vs 25A','Δ vs Bgt'].map(h=>`<th class="r" style="font-weight:500;font-size:9.5px">${h}</th>`).join('')}</tr></thead>
+      <tbody>${sgaTrs}
+        <tr style="border-top:2px solid ${P.teal}44;background:${P.teal}0a"><td style="color:${P.teal};font-weight:700;font-size:12px">TOTAL HQ SG&A</td>
+          <td class="r"><span style="color:${P.y25};font-weight:700;font-size:10px">${pct(sgaTot.j25,g.j25).toFixed(2)}%</span></td><td class="r" style="color:${P.y25};font-weight:700;font-size:10px">${fmtK(sgaTot.j25)}</td>
+          <td class="r"><span class="badge" style="background:${P.teal}22;color:${P.teal}">${pct(sgaTot.j26a,g.j26a).toFixed(2)}%</span></td><td class="r" style="color:${P.actual};font-weight:700;font-size:12px">${fmtK(sgaTot.j26a)}</td>
+          <td class="r"><span style="color:${P.budget};font-weight:700;font-size:10px">${pct(sgaTot.j26b,g.j26b).toFixed(2)}%</span></td><td class="r" style="color:${P.budget};font-weight:700;font-size:10px">${fmtK(sgaTot.j26b)}</td>
+          ${vcellHQ(sgaTot.j26a,sgaTot.j25,true)}${vcellHQ(sgaTot.j26a,sgaTot.j26b,true)}</tr>
+      </tbody></table></div>
+  </div>`;
+}
+
+/* ============ ROUTER ============ */
+const TABS=[{id:'overview',label:'Full P&L'},{id:'hq',label:'HQ Cost Analysis'},{id:'clinics',label:'Clinics Cost Analysis'},{id:'cluster1',label:'① Cluster 1 – South'},{id:'cluster2',label:'② Cluster 2 – Central & BUC'},...CLINIC_ORDER.map(c=>({id:c,label:`${c} – ${CLINICS[c].name}`}))];
+function renderTabs(){
+  const t=document.getElementById('tabs'); t.innerHTML='';
+  TABS.forEach(tb=>{const b=el('button',tb.id===TAB?'on':'',tb.label);b.onclick=()=>{TAB=tb.id;render();};t.appendChild(b);});
+}
+function render(){
+  destroyCharts();
+  renderTabs();
+  const root=document.getElementById('content'); root.innerHTML='';
+  if(TAB==='overview')renderFullPL(root);
+  else if(TAB==='hq')renderHQ(root);
+  else if(TAB==='clinics')renderClinics(root);
+  else if(TAB==='cluster1')renderCluster(root,'cluster1');
+  else if(TAB==='cluster2')renderCluster(root,'cluster2');
+  else if(CLINICS[TAB])renderClinicPL(root,TAB);
+}
+document.querySelectorAll('#toggle button').forEach(b=>b.onclick=()=>{
+  VM=b.dataset.mode;
+  document.querySelectorAll('#toggle button').forEach(x=>x.classList.toggle('on',x.dataset.mode===VM));
+  render();
+});
+render();
+</script>
+
+<!-- ── TABURI LUNARE: bara alba sub header, stil identic cu "Perioada" din raportul Sales ── -->
+<script>
+(function(){
+  var ACTIVE = "may";
+  var CLASS = "plMonthBar";
+  var LABEL = "RAPOARTE LUNARE";
+  var MONTHS = [
+    {k:'jan',l:'Ianuarie 2026',h:'pl-desktop-jan-2026.html'},
+    {k:'feb',l:'Februarie 2026',h:'pl-desktop-feb-2026.html'},
+    {k:'mar',l:'Martie 2026',h:'pl-desktop-mar-2026.html'},
+    {k:'apr',l:'Aprilie 2026',h:'pl-desktop-apr-2026.html'},
+    {k:'may',l:'Mai 2026',h:'pl-desktop-may-2026.html'},
+    {k:'jun',l:'Iunie 2026',h:'pl-desktop-jun-2026.html'},
+    {k:'jul',l:'Iulie 2026',h:'pl-desktop.html'}
+  ];
+  var BURG=["123, 28, 22","142, 32, 25","92, 21, 16","101, 21, 17","94, 21, 15"];
+  function isB(e){var cs=getComputedStyle(e),s=cs.backgroundColor+" "+cs.backgroundImage;
+    for(var i=0;i<BURG.length;i++){if(s.indexOf(BURG[i])>-1)return true;}return false;}
+  function findHeader(){
+    var vw=window.innerWidth,els=document.querySelectorAll('header,div,section');
+    for(var i=0;i<els.length;i++){var e=els[i];
+      if(e.className&&(""+e.className).indexOf('drNav')>-1)continue;
+      if(e.className&&(""+e.className).indexOf(CLASS)>-1)continue;
+      var r=e.getBoundingClientRect();
+      if(r.top>200||r.width<vw*0.4||r.height<36||r.height>200)continue;
+      if(isB(e))return e;}
+    return null;}
+  function removeLegendChips(root){
+    // strips the "Jun 25 Actual / Jun 26 Actual / Jun 26 Budget" legend chips —
+    // a colored dot + label pair, redundant next to the Month/YTD toggle
+    var all = root.querySelectorAll('div');
+    for (var i=0; i<all.length; i++){
+      var e = all[i];
+      if (e.children.length !== 2) continue;
+      var dot = e.children[0], txt = e.children[1];
+      var dotCs = getComputedStyle(dot);
+      var isDot = dot.tagName==='SPAN' && parseInt(dotCs.borderRadius)>=50 &&
+        dot.getBoundingClientRect().width < 14 && dot.getBoundingClientRect().height < 14;
+      if (isDot && txt.tagName==='SPAN' && /Actual|Budget/.test(txt.textContent)){
+        e.parentNode.removeChild(e);
+      }
+    }
+  }
+  function build(){
+    var bar=document.createElement('div');
+    bar.className=CLASS;
+    bar.style.cssText='background:#FFFFFF;border-bottom:1px solid #F0F0F0;padding:9px 28px;display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-family:"Poppins",system-ui,-apple-system,sans-serif;';
+    var lbl=document.createElement('span');
+    lbl.style.cssText='font-size:9px;font-weight:600;color:#C9A227;margin-right:6px;text-transform:uppercase;letter-spacing:1.6px;';
+    lbl.textContent=LABEL;
+    bar.appendChild(lbl);
+    MONTHS.forEach(function(m){
+      var a=document.createElement('a');
+      a.href=m.h; a.textContent=m.l;
+      var on=(m.k===ACTIVE);
+      a.style.cssText='padding:5px 14px;border-radius:20px;border:1px solid '+(on?'#7B1C16':'#E6E0DA')+';'+
+        'background:'+(on?'#7B1C16':'#FFFFFF')+';color:'+(on?'#FFFFFF':'#5A5A5A')+';'+
+        'box-shadow:'+(on?'0 2px 6px rgba(123,28,22,0.28)':'none')+';'+
+        'font-weight:'+(on?'700':'500')+';font-size:11px;text-decoration:none;font-family:inherit;white-space:nowrap;';
+      bar.appendChild(a);
+    });
+    return bar;
+  }
+  var tries=0;
+  function mount(){
+    if(document.querySelector('.'+CLASS))return;
+    var h=findHeader();
+    if(!h){ if(++tries<40){setTimeout(mount,200);} return; }
+    removeLegendChips(h);
+    h.parentNode.insertBefore(build(), h.nextSibling);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(mount,350); });
+  else setTimeout(mount,350);
+})();
+</script>
+
+<!-- ── NAVIGARE: butoane integrate in headerul raportului ── -->
+<style id="drNavCss">
+.drNav{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+.drNav a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;
+  font-family:'Poppins',system-ui,-apple-system,sans-serif;font-size:11.5px;font-weight:600;
+  letter-spacing:.02em;padding:7px 13px;border-radius:999px;white-space:nowrap;
+  transition:background .15s ease;-webkit-tap-highlight-color:transparent;}
+.drNav a.home{background:rgba(255,255,255,.14);color:#F5EDE3;border:1px solid rgba(242,218,183,.45);}
+.drNav a.home:hover{background:rgba(255,255,255,.26);}
+#drNavFb{position:fixed;top:10px;left:12px;z-index:9997;padding:6px 8px;border-radius:999px;
+  background:#7B1C16;box-shadow:0 4px 14px rgba(60,20,14,.28);}
+@media print{.drNav{display:none;}}
+</style>
+<script>
+(function(){
+  var BURG=["123, 28, 22","142, 32, 25","92, 21, 16","101, 21, 17","94, 21, 15"];
+  function isB(e){var cs=getComputedStyle(e),s=cs.backgroundColor+" "+cs.backgroundImage;
+    for(var i=0;i<BURG.length;i++){if(s.indexOf(BURG[i])>-1)return true;}return false;}
+  function findHeader(){
+    var vw=window.innerWidth,els=document.querySelectorAll('header,div,section');
+    for(var i=0;i<els.length;i++){var e=els[i];
+      if(e.className&&(''+e.className).indexOf('drNav')>-1)continue;
+      if(e.className&&(''+e.className).indexOf('plMonthNav')>-1)continue;
+      var r=e.getBoundingClientRect();
+      if(r.top>200||r.width<vw*0.4||r.height<36||r.height>200)continue;
+      if(isB(e))return e;}
+    return null;}
+  function build(){var d=document.createElement('div');d.className='drNav';
+    d.innerHTML='<a class="home" href="index.html">\u2190 Pagina principal\u0103</a>';return d;}
+  var tries=0;
+  function mount(){
+    if(document.querySelector('.drNav'))return;
+    var h=findHeader();
+    if(h){var d=build(),cs=getComputedStyle(h);
+      if(cs.display==='flex'&&cs.flexDirection.indexOf('row')===0){d.style.marginRight='14px';}
+      else{d.style.margin='0 0 12px 0';}
+      h.insertBefore(d,h.firstChild);return;}
+    if(++tries<30){setTimeout(mount,200);return;}
+    var fb=build();fb.id='drNavFb';document.body.appendChild(fb);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(mount,350);});
+  else setTimeout(mount,350);
+})();
+</script>
+
+
+<!-- ── FOOTER STANDARD (model: raportul Sales) ── -->
+<style id="drFootCss">
+.drFoot{width:100%;margin-top:30px;font-family:'Poppins',system-ui,-apple-system,sans-serif;}
+.drFoot .rule{height:2px;background:linear-gradient(90deg,rgba(201,162,39,0) 0%,#C9A227 18%,#F2DAB7 50%,#C9A227 82%,rgba(201,162,39,0) 100%);}
+.drFoot .body{background:linear-gradient(135deg,#7B1C16 0%,#5F1410 100%);padding:26px 32px;position:relative;overflow:hidden;}
+.drFoot .glow{position:absolute;bottom:-160px;right:-60px;width:420px;height:300px;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(242,218,183,0.08) 0%,rgba(242,218,183,0) 70%);}
+.drFoot .inner{position:relative;max-width:1280px;margin:0 auto;}
+.drFoot .cols{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:28px;}
+.drFoot .brand{display:flex;align-items:center;gap:14px;}
+.drFoot .brand img{width:46px;height:46px;border-radius:12px;object-fit:cover;display:block;flex-shrink:0;
+  border:1px solid rgba(201,162,39,0.35);}
+.drFoot .name{font-family:'Playfair Display',Georgia,serif;font-size:15px;font-weight:700;color:#fff;line-height:1.15;}
+.drFoot .name span{color:#F2DAB7;}
+.drFoot .tag{font-size:10.5px;font-weight:300;color:rgba(255,255,255,0.58);margin-top:4px;}
+.drFoot .lbl{font-size:8.5px;font-weight:600;color:#C9A227;letter-spacing:1.8px;text-transform:uppercase;margin-bottom:7px;}
+.drFoot .net{max-width:430px;}
+.drFoot .txt{font-size:10.5px;font-weight:300;color:rgba(255,255,255,0.60);line-height:1.75;}
+.drFoot .contact{text-align:right;}
+.drFoot .phone{font-size:14px;font-weight:700;color:#fff;letter-spacing:0.4px;line-height:1.2;}
+.drFoot .lnk{font-size:10.5px;font-weight:300;margin-top:4px;}
+.drFoot .lnk a{color:rgba(242,218,183,0.85);text-decoration:none;border-bottom:1px solid rgba(242,218,183,0.28);}
+.drFoot .lnk a:hover{color:#fff;border-bottom-color:rgba(255,255,255,0.6);}
+.drFoot .hr{height:1px;background:rgba(242,218,183,0.18);margin:20px 0 12px;}
+.drFoot .bottom{display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding-right:200px;}
+.drFoot .since{font-size:11px;font-weight:700;color:#F2DAB7;letter-spacing:2px;}
+.drFoot .sep{width:1px;height:12px;background:rgba(242,218,183,0.30);}
+.drFoot .copy{font-size:9.5px;font-weight:300;color:rgba(255,255,255,0.45);letter-spacing:0.2px;}
+@media(max-width:700px){
+  .drFoot .body{padding:22px 18px;}
+  .drFoot .cols{gap:20px;}
+  .drFoot .contact{text-align:left;}
+  .drFoot .bottom{padding-right:120px;}
+}
+</style>
+<div class="drFoot">
+  <div class="rule"></div>
+  <div class="body">
+    <div class="glow"></div>
+    <div class="inner">
+      <div class="cols">
+        <div class="brand">
+          <img src="logo_adc.jpg" alt="Dr. Ardeleanu Dental Clinics"/>
+          <div>
+            <div class="name">Dr. Ardeleanu <span>Dental Clinics</span></div>
+            <div class="tag">Excelen&#539;a la pre&#539;uri accesibile &middot; Clinica familiei tale</div>
+          </div>
+        </div>
+        <div class="net">
+          <div class="lbl">Re&#539;eaua</div>
+          <div class="txt">Bucure&#537;ti Dorob&#259;n&#539;i &middot; Bucure&#537;ti Cotroceni &middot; Olteni&#539;a &middot; Slobozia &middot; C&#259;l&#259;ra&#537;i &middot; Giurgiu &middot; T&#226;rgovi&#537;te &middot; Foc&#537;ani &middot; Br&#259;ila</div>
+        </div>
+        <div class="contact">
+          <div class="lbl">Contact</div>
+          <div class="phone">031 99 63</div>
+          <div class="lnk"><a href="https://clinicileardeleanu.ro" target="_blank" rel="noreferrer">clinicileardeleanu.ro</a></div>
+          <div class="lnk"><a href="mailto:clinici@ardeleanu.ro">clinici@ardeleanu.ro</a></div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="bottom">
+        <div class="since">DIN 2017</div>
+        <span class="sep"></span>
+        <div class="copy">&copy; 2026 Dr. Ardeleanu Dental Clinics &middot; Raport intern &middot; Date confiden&#539;iale</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
