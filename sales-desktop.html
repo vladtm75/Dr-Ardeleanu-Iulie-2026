@@ -163,6 +163,9 @@ const NET = {
 
 // LFL = all clinics with full year of data in both 2025 and 2026 actuals months
 // Defined as: Zona de Sud (OLT,GRG,SLB,CLR) + DRB + CTR
+// Semnalări de calitate a bugetului — afișate în tab-urile Buget, Rețea și pe pagina clinicii.
+// Bugetul TGV verificat 2026-09-24 contra fișierului de buget (rândul Budget 2026, total 5,659,125) — identic, fără semnalări.
+const BUDGET_FLAGS = {};
 const LFL = ['OLT','GRG','SLB','CLR','DRB','CTR'];
 const C1  = ['OLT','GRG','SLB','CLR'];
 const C2  = ['DRB','CTR','TGV','FCS'];
@@ -1008,14 +1011,43 @@ function RampupTab() {
     return v.toFixed(0);
   };
 
-  const daRows = RAMP.filter(r=>r.group==='DA');
+  // Rândurile DA se recalculează din datele de vânzări (CD), ca să nu rămână cifre fixe vechi:
+  //  · anii < 2026 = realizat an complet din CD (valorile fixe din RAMP rămân doar pentru anii fără date în CD)
+  //  · 2026 = ESTIMARE: realizat Ian–luna curentă + buget pentru lunile rămase (marcat „e")
+  //  · clinică fără vânzări realizate încă (Brăila) = doar buget, marcat distinct
+  //  · 26/25 = YTD vs YTD (aceeași perioadă), doar dacă 2025 are toate lunile comparabile
+  //  · CA/Unit = vânzări realizate ultimele 12 luni / unituri (anualizat dacă < 12 luni de activitate)
+  const RAMP_CODE = {'Oltenița':'OLT','Giurgiu':'GRG','Dorobanți':'DRB','Cotroceni':'CTR','Slobozia':'SLB','Călărași':'CLR','Târgoviște':'TGV','Focșani':'FCS','Brăila':'BRL'};
+  const yoyR = (a,b) => (a!=null&&b) ? Math.round((a-b)/b*100) : null;
+  const daRows = RAMP.filter(r=>r.group==='DA').map(r=>{
+    const code=RAMP_CODE[r.clinic], c=CD[code]; if(!c) return r;
+    const a26=c.actuals[2026]||[], b26=c.budget[2026]||[];
+    const ytdA=sum(a26.slice(0,ACT_MO).map(x=>x||0));
+    const restB=sum(b26.slice(ACT_MO).map(x=>x||0));
+    const years=r.years.map((v,i)=>{
+      const y=r.start+i;
+      if(y<2026){ const a=c.actuals[y]; return (a&&a.some(x=>x!=null)) ? sum(a.map(x=>x||0)) : v; }
+      if(y===2026) return ytdA>0 ? ytdA+restB : sum(b26.map(x=>x||0));
+      return null;
+    });
+    const at=y=>{ const i=y-r.start; return i>=0?years[i]:null; };
+    const p25=(c.actuals[2025]||[]).slice(0,ACT_MO);
+    const yoy2625 = (ytdA>0 && p25.length===ACT_MO && p25.every(x=>x!=null)) ? yoyR(ytdA,sum(p25)) : null;
+    const ltm=[...(c.actuals[2025]||[]).slice(ACT_MO),...a26.slice(0,ACT_MO)].filter(x=>x!=null);
+    const caUnit = (r.units&&ltm.length) ? sum(ltm)/ltm.length*12/r.units : null;
+    return {...r, code, years, ytdA, estIdx:2026-r.start, estKind: ytdA>0?'est':'bud',
+      yoy2423:yoyR(at(2024),at(2023)), yoy2524:yoyR(at(2025),at(2024)), yoy2625,
+      caUnit, caAnn: ltm.length>0&&ltm.length<12, caNone: !ltm.length};
+  });
+  const DR = Object.fromEntries(daRows.map(r=>[r.code,r]));
+  const e26 = code => DR[code]?.years[DR[code].estIdx];
   const cRows  = RAMP.filter(r=>r.group==='C');
 
   // Chart data: index by year offset, one line per clinic
   const maxYears = 9; // show Y0–Y8 in chart
   const chartData = Array.from({length:maxYears},(_,yi)=>({
     label:`Y${yi}`,
-    ...RAMP.reduce((o,r)=>({...o,[`${r.clinic}`]:r.years[yi]??null}),{})
+    ...[...daRows,...cRows].reduce((o,r)=>({...o,[`${r.clinic}`]:r.years[yi]??null}),{})
   }));
 
   const yoyBadge = (v, size='sm') => {
@@ -1027,7 +1059,7 @@ function RampupTab() {
 
   // Max Y value across DA for bar scaling
   const daMax = Math.max(...daRows.map(r=>Math.max(...r.years.filter(x=>x!=null))));
-  const allMax = Math.max(...RAMP.map(r=>Math.max(...r.years.filter(x=>x!=null))));
+  const allMax = Math.max(...[...daRows,...cRows].map(r=>Math.max(...r.years.filter(x=>x!=null))));
 
   const rowColors = { DA: P.primary, C: '#888' };
 
@@ -1071,6 +1103,7 @@ function RampupTab() {
             {/* Year columns Y0–Y11 */}
             {r.years.map((v,yi)=>{
               const isLatest = v!=null && r.years[yi+1]==null && yi>0;
+              const isEst = isDA && r.estIdx===yi && r.estKind;
               const isPeak = v!=null && v===maxVal && yi>0;
               return (
                 <div key={yi} style={{padding:'7px 4px',textAlign:'right'}}>
@@ -1079,7 +1112,8 @@ function RampupTab() {
                       <div style={{
                         fontSize:10,fontWeight:isPeak?800:isDA?600:400,
                         color:isPeak?(isDA?P.primary:'#5B3F8A'):isLatest?(isDA?P.olive:'#16803C'):'#444',
-                      }}>{fmtM(v)}</div>
+                        fontStyle:isEst?'italic':'normal',
+                      }} title={isEst==='est'?`Estimare 2026: realizat Ian–${MONTHS[ACT_MO-1]} ${fmtM(r.ytdA)} + buget ${MONTHS[ACT_MO]||''}–Dec`:isEst==='bud'?'Doar buget 2026 — fără vânzări realizate încă':undefined}>{fmtM(v)}{isEst==='est'?<sup style={{fontSize:7,marginLeft:1}}>e</sup>:isEst==='bud'?<sup style={{fontSize:7,marginLeft:1}}>b</sup>:null}</div>
                       {/* mini bar */}
                       <div style={{height:2,background:'#EEE',borderRadius:1,marginTop:2,width:'100%'}}>
                         <div style={{height:'100%',width:`${(v/allMax)*100}%`,maxWidth:'100%',background:isDA?(isPeak?P.primary:P.terracotta):(isPeak?'#5B3F8A':'#AAA'),borderRadius:1}}/>
@@ -1094,7 +1128,13 @@ function RampupTab() {
             <div style={{padding:'7px 6px',textAlign:'center'}}>{yoyBadge(r.yoy2524)}</div>
             <div style={{padding:'7px 6px',textAlign:'center'}}>{yoyBadge(r.yoy2625,'lg')}</div>
             <div style={{padding:'7px 6px',textAlign:'center'}}>
-              {r.units && lastV ? (
+              {isDA && r.code ? (r.caUnit!=null ? (
+                <div>
+                  <div style={{fontSize:10,fontWeight:700,color:P.primary}}>{fmtM(r.caUnit)}</div>
+                  <div style={{fontSize:8,color:P.muted}}>{r.units} unituri{r.caAnn?' · anualizat':''}</div>
+                </div>
+              ) : <span style={{color:'#CCC',fontSize:9}} title="Fără vânzări realizate încă">—</span>)
+              : r.units && lastV ? (
                 <div>
                   <div style={{fontSize:10,fontWeight:700,color:isDA?P.primary:'#5B3F8A'}}>{fmtM(lastV/r.units)}</div>
                   <div style={{fontSize:8,color:P.muted}}>{r.units} unituri</div>
@@ -1116,7 +1156,7 @@ function RampupTab() {
         <div style={{background:P.primary,padding:'12px 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
             <div style={{fontSize:13,fontWeight:700,color:P.white,fontFamily:"'Playfair Display',serif"}}>Ramp-up Comparativ · Dr. Ardeleanu vs Concurență</div>
-            <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:2}}>Vânzări anuale de la Year 0 (an incomplet de deschidere) · RON · CA/Unit = ultimul an raportat / nr. unituri</div>
+            <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:2}}>Vânzări anuale de la Year 0 (an incomplet de deschidere) · RON · DA 2026<sup>e</sup> = estimare: realizat Ian–{MONTHS[ACT_MO-1]} + buget {MONTHS[ACT_MO]||''}–Dec · <sup>b</sup> = doar buget · 26/25 = YTD vs YTD · CA/Unit DA = realizat ultimele 12 luni / unituri; concurență = ultimul an raportat / unituri</div>
           </div>
           <div style={{display:'flex',gap:16,alignItems:'center'}}>
             {[['Peak',P.wheat],['Ultimul an',P.olive],['DA','rgba(255,255,255,0.7)'],['Concurență','#AAA']].map(([l,c])=>(
@@ -1144,7 +1184,7 @@ function RampupTab() {
           ))}
           <div style={{padding:'8px 6px',textAlign:'center',fontSize:9,fontWeight:700,color:'#7B5EA7'}}>24/23</div>
           <div style={{padding:'8px 6px',textAlign:'center',fontSize:9,fontWeight:700,color:'#5B3F8A'}}>25/24</div>
-          <div style={{padding:'8px 6px',textAlign:'center',fontSize:9,fontWeight:700,color:'#2D7D46'}}>26/25</div>
+          <div style={{padding:'8px 6px',textAlign:'center',fontSize:9,fontWeight:700,color:'#2D7D46'}}>26/25 YTD</div>
           <div style={{padding:'8px 6px',textAlign:'center',fontSize:9,fontWeight:700,color:P.primary}}>CA/Unit</div>
         </div>
 
@@ -1157,28 +1197,28 @@ function RampupTab() {
         <Card>
           <Sec>Viteză de Ramp-up DA</Sec>
           {[
-            ['Slobozia','Y1: 4.35M · cel mai rapid ramp-up','green'],
-            ['Călărași','Y0: 4.92M · start excepțional','green'],
-            ['Târgoviște','Y1: 5.64M · accelerare 2025→2026','green'],
-            ['Cotroceni','Y1: 692K → Y3: 1.75M · creștere urbană','amber'],
+            ['Slobozia',`Y1: ${fmtM(DR.SLB.years[1])} · cel mai rapid ramp-up`,'green'],
+            ['Călărași',`Y0: ${fmtM(DR.CLR.years[0])} · start excepțional`,'green'],
+            ['Târgoviște',`Y1 (2026e): ${fmtM(e26('TGV'))} · realizat Ian–${MONTHS[ACT_MO-1]}: ${fmtM(DR.TGV.ytdA)}${BUDGET_FLAGS.TGV?' · buget de confirmat':''}`,'green'],
+            ['Cotroceni',`Y1: ${fmtM(DR.CTR.years[1])} → Y3 (2026e): ${fmtM(e26('CTR'))} · YTD ${pct0(DR.CTR.yoy2625)} YoY`,'amber'],
           ].map(([c,t,type])=><Pill key={c} type={type}><b>{c}</b> — {t}</Pill>)}
         </Card>
         <Card>
           <Sec>Benchmark vs Concurență</Sec>
           {[
             ['Slobozia vs Dental Blue Slobozia','DA depășește în Y2 nivelul Y5 al concurenței','green'],
-            ['Târgoviște vs CM Prolife + Elida','DA la +348% YoY · Elida a accelerat în 2025: +47% (8.67M)','amber'],
-            ['Focșani vs Dentrust','DA Y0: 3.72M · Denta Vital 2025: 10.05M (+53%) · grup 4 CUI, exclus din tabel: 16.59M','red'],
-            ['Oltenița maturitate','Y8: 5.89M · trend stabil top-performer','green'],
+            ['Târgoviște vs CM Prolife + Elida',`DA 2026e: ${fmtM(e26('TGV'))} (primul an complet) · Elida a accelerat în 2025: +47% (8.67M)`,'amber'],
+            ['Focșani vs Dentrust',`DA 2026e: ${fmtM(e26('FCS'))} (realizat Mar–${MONTHS[ACT_MO-1]}: ${fmtM(DR.FCS.ytdA)}) · Denta Vital 2025: 10.05M (+53%) · grup 4 CUI, exclus din tabel: 16.59M`,'red'],
+            ['Oltenița maturitate',`Y8 (2026e): ${fmtM(e26('OLT'))} · YTD ${pct0(DR.OLT.yoy2625)} YoY — creștere plată, sub buget YTD`, DR.OLT.yoy2625!=null&&DR.OLT.yoy2625<5?'amber':'green'],
           ].map(([c,t,type])=><Pill key={c} type={type}><b>{c}</b> — {t}</Pill>)}
         </Card>
         <Card>
           <Sec>Observații Strategice</Sec>
           {[
             ['Pattern DA','Clinicile DA ating Y1 rapid dar cu baze solide în Y0','green'],
-            ['Risc Giurgiu','YoY 26/25: +6% · baza ridicată comprimă creșterea','amber'],
-            ['Potențial Cotroceni','Y3: 1.75M · creștere constantă pe segment urban','amber'],
-            ['Brăila 2026','Start modest 394K · urmărire necesară în Y1','amber'],
+            DR.GRG.yoy2625!=null&&DR.GRG.yoy2625<8 ? ['Risc Giurgiu',`YoY YTD 26/25: ${pct0(DR.GRG.yoy2625)} · baza ridicată comprimă creșterea`,'amber'] : ['Giurgiu',`YoY YTD 26/25: ${pct0(DR.GRG.yoy2625)} · creștere solidă pe cea mai mare bază din rețea`,'green'],
+            ['Potențial Cotroceni',`2026e: ${fmtM(e26('CTR'))} · CA/unit ${fmtM(DR.CTR.caUnit)} pe ${DR.CTR.units} unituri`,'amber'],
+            ['Brăila 2026',DR.BRL.ytdA>0?`Realizat YTD ${fmtM(DR.BRL.ytdA)} · urmărire necesară în Y1`:`Deschidere planificată Nov 2026 · buget Nov–Dec ${fmtM(e26('BRL'))} · fără vânzări realizate încă`,'amber'],
           ].map(([c,t,type])=><Pill key={c} type={type}><b>{c}</b> — {t}</Pill>)}
         </Card>
       </div>
@@ -1207,6 +1247,41 @@ const TABS=[
   {id:'rampup',     label:'Ramp-up & Concurență'},
 ];
 
+// ─── Componente comune pentru antetul tab-urilor (Rețea, Categorii) ─────────────
+const HeadTile=({label,value,valueColor,caption,children})=>(
+  <div style={{background:P.white,border:`1px solid ${P.border}`,borderRadius:12,padding:'14px 16px',display:'flex',flexDirection:'column',gap:6,minWidth:0}}>
+    <div style={{fontSize:10,fontWeight:700,color:P.muted,textTransform:'uppercase',letterSpacing:0.8}}>{label}</div>
+    <div style={{display:'flex',alignItems:'baseline',gap:7,flexWrap:'wrap'}}>
+      <span style={{fontSize:28,fontWeight:700,lineHeight:1,color:valueColor||P.primary,fontFamily:"'Playfair Display',serif"}}>{value}</span>
+      {caption&&<span style={{fontSize:10.5,color:P.muted}}>{caption}</span>}
+    </div>
+    <div style={{fontSize:11,color:'#555',lineHeight:1.45,borderTop:`1px solid ${P.border}`,paddingTop:9,marginTop:4}}>{children}</div>
+  </div>);
+const InsightCol=({title,color,bg,items,empty})=>(
+  <div style={{flex:'1 1 300px',minWidth:0}}>
+    <div style={{display:'flex',alignItems:'center',gap:7,marginBottom:9}}>
+      <span style={{width:8,height:8,borderRadius:4,background:color}}/>
+      <span style={{fontSize:10.5,fontWeight:700,color,textTransform:'uppercase',letterSpacing:0.8}}>{title}</span>
+      <span style={{fontSize:10,color:P.muted}}>({items.length})</span>
+    </div>
+    {items.length? items.map((x,i)=>(
+      <div key={i} style={{background:bg,borderLeft:`3px solid ${color}`,borderRadius:'0 8px 8px 0',padding:'8px 12px',marginBottom:7}}>
+        <div style={{fontSize:12,fontWeight:700,color:P.text,marginBottom:2}}>{x.t}</div>
+        <div style={{fontSize:11.5,color:'#555',lineHeight:1.5}}>{x.d}</div>
+      </div>)) : <div style={{fontSize:11.5,color:P.muted,fontStyle:'italic'}}>{empty}</div>}
+  </div>);
+const InsightPanel=({title,sub,pos,watch})=>(
+  <Card style={{marginBottom:16,borderRadius:12}}>
+    <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:6}}>
+      <div style={{fontSize:14,fontWeight:700,color:P.primary,fontFamily:"'Playfair Display',serif"}}>{title}</div>
+      <div style={{fontSize:10,color:P.muted,textTransform:'uppercase',letterSpacing:0.6}}>{sub}</div>
+    </div>
+    <div style={{display:'flex',gap:18,flexWrap:'wrap'}}>
+      <InsightCol title="Puncte forte" color="#15803D" bg="#F3FBF5" items={pos} empty="Niciun punct forte semnalat în perioadă."/>
+      <InsightCol title="De urmărit" color="#B45309" bg="#FFFAEB" items={watch} empty="Nimic de semnalat în perioadă."/>
+    </div>
+  </Card>);
+
 // ─── Network Tab ──────────────────────────────────────────────────────────────
 function NetworkTab({period}) {
   const n26=netv(period), n25=sum(period==='Month'?[NET.actuals[2025][ACT_MO-1]]:period==='YTD'?NET.actuals[2025].slice(0,ACT_MO):NET.actuals[2025].filter(x=>x!==null));
@@ -1215,6 +1290,22 @@ function NetworkTab({period}) {
   const lfl26=LFL.reduce((a,c)=>a+(val(CD[c],2026,period)||0),0);
   const lfl25=LFL.reduce((a,c)=>a+(val(CD[c],2025,period)||0),0);
   const lfl=gr(lfl26,lfl25);
+  // ── Comentariu calculat din date (nu text fix) ──
+  const dNet=n26-n25, dLfl=lfl26-lfl25, dNew=dNet-dLfl;
+  const newCodes=Object.keys(CD).filter(c=>!LFL.includes(c)&&val(CD[c],2026,period));
+  const bMonths=MONTHS.slice(0,ACT_MO).map((m,i)=>({m,d:(NET.actuals[2026][i]||0)-(NET.budget[2026][i]||0)}));
+  const bBelow=bMonths.filter(x=>x.d<0).map(x=>x.m);
+  const vbYtd=gr(netv('YTD'),netb('YTD'));
+  const kRON=v=>(v>=0?'+':'−')+fmt(Math.abs(v));
+  const isMonth=period==='Month';
+  const underBud=Object.values(CD).map(c=>{ const a=val(c,2026,'YTD'), b=bval(c,2026,'YTD');
+      const p25=(c.actuals[2025]||[]).slice(0,ACT_MO), cmp=p25.length===ACT_MO&&p25.every(x=>x!=null);
+      return (a&&b)?{c,a,b,d:a-b,g:gr(a,b),yoy:cmp?gr(a,val(c,2025,'YTD')):null}:null; })
+    .filter(x=>x&&x.d<0).sort((x,y)=>x.d-y.d);
+  const mi=ACT_MO-1;
+  const baseFx=Object.values(CD).map(c=>{ const a25=c.actuals[2025]; if(!a25||mi<1||!a25[mi]||!a25[mi-1]) return null;
+      const yoyM=gr(c.actuals[2026][mi],a25[mi]), dip=gr(a25[mi],a25[mi-1]);
+      return (yoyM!=null&&yoyM>=25&&dip<=-20)?{c,yoyM,dip}:null; }).filter(Boolean);
 
   const monthly=MONTHS.slice(0,ACT_MO).map((m,i)=>({month:m,'2025':NET.actuals[2025][i]||0,'2026':NET.actuals[2026][i]||0,'Budget':NET.budget[2026][i]||0}));
   const annual=[2022,2023,2024,2025].map(yr=>({year:`${yr}`,rev:sum(NET.actuals[yr].filter(x=>x!==null))}));
@@ -1229,29 +1320,109 @@ function NetworkTab({period}) {
   }).filter(x=>x.hasAny2026);
 
   return <div>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(145px,1fr))',gap:12,marginBottom:20}}>
-      <KPI hi label="Total Rețea" value={fmt(n26)} sub={pLabel(period)}/>
-      <KPI label="LFL Growth" value={pct0(lfl)} subColor={pcol(lfl)} sub="OLT+GRG+SLB+CLR+DRB+CTR"/>
-      <KPI label="YoY Growth" value={pct0(yoy)} subColor={pcol(yoy)} sub={`vs 2025 · ${fmt(n25)}`}/>
-      <KPI label="vs Budget" value={pct(vb)} subColor={pcol(vb)} sub={`Budget: ${fmt(nb)}`}/>
-      <KPI label="Δ Actual vs Buget" value={(n26-nb>=0?'+':'')+fmt(n26-nb)} subColor={n26-nb>=0?'#15803D':P.alert} sub="RON" delta={n26-nb>=0}/>
-    </div>
+    {/* ── Antet rețea: cifra principală + 3 indicatori explicați + progres față de bugetul anual ── */}
+    {(()=>{
+      const mi=ACT_MO-1, isM=period==='Month';
+      const a26=NET.actuals[2026], a25=NET.actuals[2025], b26=NET.budget[2026];
+      const ytd26=netv('YTD'), fyB=sum(b26), estFY=ytd26+sum(b26.slice(ACT_MO));
+      const prog=ytd26/fyB, elapsed=ACT_MO/12;
+      const sparkMax=Math.max(...a26.slice(0,ACT_MO), ...b26.slice(0,ACT_MO));
+      const gShare=dNet?Math.max(0,Math.min(1,dLfl/dNet)):0;
+      const good='#15803D', bad=P.alert;
+      const Tile=HeadTile;
+      return (
+      <div style={{marginBottom:16}}>
+        <div className="net-head">
+          {/* Cifra principală */}
+          <div className="net-hero" style={{background:`linear-gradient(145deg, ${P.primary} 0%, #5E140F 100%)`,borderRadius:14,padding:'18px 20px',color:P.white,boxShadow:'0 4px 18px rgba(123,28,22,0.22)',display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:0.9,textTransform:'uppercase',color:'rgba(255,255,255,0.7)'}}>Vânzări rețea · {pLabel(period)}</div>
+            </div>
+            <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+              <span style={{fontSize:42,fontWeight:700,lineHeight:1,fontFamily:"'Playfair Display',serif"}}>{fmt(n26)}</span>
+              <span style={{fontSize:12,color:'rgba(255,255,255,0.65)'}}>RON</span>
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <span style={{background:'rgba(255,255,255,0.14)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{pct(yoy)} vs {isM?`${MONTHS[mi]} 2025`:'2025'} · {fmt(n25)}</span>
+              <span style={{background:vb>=0?'rgba(181,189,92,0.30)':'rgba(217,48,37,0.35)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{kRON(n26-nb)} vs buget ({pct(vb)})</span>
+            </div>
+            {/* evoluție lunară 2026 — bară = realizat, linie fină = buget; luna/perioada selectată e accentuată */}
+            <div>
+              <div style={{display:'flex',alignItems:'flex-end',gap:4,height:46}}>
+                {a26.slice(0,ACT_MO).map((v,i)=>{
+                  const on=isM?i===mi:true, bh=b26[i]/sparkMax*46;
+                  return <div key={i} title={`${MONTHS[i]} 26: ${fmt(v)} · buget ${fmt(b26[i])} (${pct(gr(v,b26[i]))}) · YoY ${pct(gr(v,a25[i]))}`}
+                    style={{flex:1,position:'relative',height:'100%',display:'flex',alignItems:'flex-end',cursor:'default'}}>
+                    <div style={{width:'100%',height:`${v/sparkMax*100}%`,background:on?P.wheat:'rgba(255,255,255,0.28)',borderRadius:'3px 3px 0 0'}}/>
+                    <div style={{position:'absolute',left:-1,right:-1,bottom:bh-1,height:2,background:v>=b26[i]?'#B5BD5C':'#FF8A80',borderRadius:1}}/>
+                  </div>;
+                })}
+              </div>
+              <div style={{display:'flex',gap:4,marginTop:4}}>
+                {MONTHS.slice(0,ACT_MO).map((m,i)=><div key={m} style={{flex:1,textAlign:'center',fontSize:8.5,color:(isM?i===mi:true)?'rgba(255,255,255,0.85)':'rgba(255,255,255,0.45)'}}>{m}</div>)}
+              </div>
+              <div style={{fontSize:9,color:'rgba(255,255,255,0.55)',marginTop:4}}>bară = vânzări 2026 · linie = buget (verde peste, roșu sub)</div>
+            </div>
+          </div>
 
-    <Card style={{marginBottom:16,background:'linear-gradient(135deg,#FFFFFF 0%,#FBF6F4 100%)',border:`1px solid ${P.border}`,borderLeft:`3px solid ${P.primary}`,boxShadow:'0 1px 8px rgba(123,28,22,0.06)'}}>
-      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:13}}>
-        <div style={{width:28,height:28,borderRadius:8,background:`${P.primary}12`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>📈</div>
-        <div>
-          <div style={{fontSize:13,fontWeight:700,color:P.primary,fontFamily:"'Playfair Display',serif",letterSpacing:0.2,lineHeight:1.2}}>Analiză Vânzări</div>
-          <div style={{fontSize:9.5,fontWeight:600,color:P.muted,marginTop:2,letterSpacing:0.6,textTransform:'uppercase'}}>{pLabel(period)}</div>
+          {/* Creștere: din ce vine */}
+          <Tile label="Creștere YoY" value={pct0(yoy)} valueColor={yoy>=0?good:bad} caption={`vs ${isM?MONTHS[mi]+' 2025':'2025'}`}>
+            <div style={{display:'flex',height:8,borderRadius:4,overflow:'hidden',gap:2,margin:'2px 0 6px'}} title={`LFL ${kRON(dLfl)} · clinici noi ${kRON(dNew)}`}>
+              <div style={{width:`${gShare*100}%`,background:P.primary,borderRadius:'4px 0 0 4px'}}/>
+              <div style={{flex:1,background:P.wheat,borderRadius:'0 4px 4px 0'}}/>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',gap:6}}>
+              <span><span style={{display:'inline-block',width:7,height:7,borderRadius:2,background:P.primary,marginRight:4}}/>comparabile <b>{kRON(dLfl)}</b></span>
+              <span><span style={{display:'inline-block',width:7,height:7,borderRadius:2,background:P.wheat,marginRight:4}}/>noi <b>{kRON(dNew)}</b></span>
+            </div>
+            <div style={{color:P.muted,marginTop:3}}>{kRON(dNet)} RON în total · clinici noi: {newCodes.join(', ')}</div>
+          </Tile>
+
+          {/* Organic */}
+          <Tile label="Creștere organică (LFL)" value={pct0(lfl)} valueColor={lfl>=0?good:bad} caption="clinici comparabile">
+            <b>{fmt(lfl26)}</b> vs {fmt(lfl25)} la cele 6 clinici cu istoric complet
+            <div style={{color:P.muted,marginTop:3}}>{LFL.join(' · ')}</div>
+          </Tile>
+
+          {/* Buget */}
+          <Tile label="Față de buget" value={pct(vb)} valueColor={vb>=0?good:bad} caption={pLabel(period)}>
+            <b>{kRON(n26-nb)} RON</b> · buget {fmt(nb)}
+            <div style={{display:'flex',gap:3,margin:'7px 0 4px'}}>
+              {bMonths.map((x,i)=><div key={x.m} title={`${x.m}: ${kRON(x.d)} vs buget`} style={{flex:1,height:14,borderRadius:3,background:x.d>=0?'#DCFCE7':'#FEE2E2',border:`1px solid ${x.d>=0?'#86EFAC':'#FCA5A5'}`,outline:isM&&i===mi?`2px solid ${P.primary}`:'none',outlineOffset:1}}/>)}
+            </div>
+            <div style={{color:P.muted}}>peste buget în <b style={{color:P.text}}>{ACT_MO-bBelow.length} din {ACT_MO}</b> luni{bBelow.length?` · sub: ${bBelow.join(', ')}`:''}</div>
+          </Tile>
         </div>
-      </div>
-      <div style={{display:'flex',flexDirection:'column',gap:6}}>
-        <Pill type={yoy>=20?'green':yoy>=0?'amber':'red'}><b>Creștere rețea {pct(yoy)} YoY.</b> Ritmul reflectă maturizarea bazei — baza de comparație 2025 devine tot mai înaltă.</Pill>
-        <Pill type="green"><b>LFL {pct(lfl)} — creștere organică validată</b> la clinicile cu minimum 1 an complet de activitate (Cluster 1 + DRB + CTR), izolând efectul expansiunii noi.</Pill>
-        <Pill type={vb>=0?'green':'amber'}><b>vs Budget: {pct(vb)}.</b> {vb>=0?`Execuție peste plan în primele ${ACT_MO} luni.`:'Ușor sub plan — monitorizare necesară.'}</Pill>
-        <Pill type="amber"><b>OLT — presiune YoY {MONTHS[ACT_MO-1]} 2026:</b> {pct(gr(CD.OLT.actuals[2026][ACT_MO-1],CD.OLT.actuals[2025][ACT_MO-1]))} față de {MONTHS[ACT_MO-1]} 2025. Efect de baze înalte probabil — recomand analiză mix &amp; trafic.</Pill>
-      </div>
-    </Card>
+
+        {/* Progres față de bugetul anual */}
+        <div style={{marginTop:12,background:P.white,border:`1px solid ${P.border}`,borderRadius:12,padding:'12px 16px'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:8}}>
+            <div style={{fontSize:10,fontWeight:700,color:P.muted,textTransform:'uppercase',letterSpacing:0.8}}>Progres față de bugetul anual 2026</div>
+            <div style={{fontSize:11.5,color:'#555'}}>
+              <b style={{color:P.primary}}>{fmt(ytd26)}</b> realizat din <b>{fmt(fyB)}</b> ({Math.round(prog*100)}%) · timp scurs {ACT_MO}/12 luni ({Math.round(elapsed*100)}%) · estimare an: <b style={{color:estFY>=fyB?good:bad}} title={`Realizat Ian–${MONTHS[mi]} + buget ${MONTHS[ACT_MO]||''}–Dec`}>{fmt(estFY)}</b> ({kRON(estFY-fyB)} vs buget)
+            </div>
+          </div>
+          <div style={{position:'relative',height:10,background:'#F1ECE6',borderRadius:5}}>
+            <div style={{position:'absolute',left:0,top:0,bottom:0,width:`${Math.min(prog,1)*100}%`,background:`linear-gradient(90deg, ${P.primary}, #A0352C)`,borderRadius:5}}/>
+            <div title={`timp scurs: ${ACT_MO}/12 luni`} style={{position:'absolute',left:`calc(${elapsed*100}% - 1px)`,top:-4,bottom:-4,width:2,background:P.text,borderRadius:1}}/>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:P.muted,marginTop:4}}>
+            <span>Ian</span><span>marcaj = timp scurs din an · {prog>=elapsed?'înaintea ritmului necesar':'sub ritmul necesar'}</span><span>Dec</span>
+          </div>
+        </div>
+      </div>);
+    })()}
+
+    {/* ── Analiză: ce merge bine / ce trebuie urmărit ── */}
+    {(()=>{
+      const pos=[], watch=[];
+      (yoy>=0?pos:watch).push({t:`Rețea ${pct(yoy)} YoY (${kRON(dNet)} RON)`, d:`${dNet?Math.round(dLfl/dNet*100):0}% din creștere vine din clinicile comparabile, restul din clinicile noi (${newCodes.join(', ')}).`});
+      (lfl>=0?pos:watch).push({t:`Creștere organică ${pct(lfl)}`, d:`La clinicile cu minimum 1 an complet de activitate (Cluster 1 + DRB + CTR), fără efectul expansiunii.`});
+      (vb>=0?pos:watch).push({t:`${pct(vb)} față de buget${isMonth?` în ${MONTHS[ACT_MO-1]}`:''}`, d:`${isMonth?`YTD ${pct(vbYtd)} · `:''}peste buget în ${ACT_MO-bBelow.length} din ${ACT_MO} luni${bBelow.length?` (sub buget: ${bBelow.join(', ')})`:''}.`});
+      underBud.forEach(x=>watch.push({t:`${x.c.name} sub buget YTD: ${kRON(x.d)}`, d:`${pct(x.g)} vs buget · ${x.yoy!=null?`${pct(x.yoy)} YoY`:'clinică nouă, fără bază YoY'}${BUDGET_FLAGS[x.c.code]?' · buget de confirmat':''}.`}));
+      if(baseFx.length) watch.push({t:`Efect de bază în ${MONTHS[ACT_MO-1]}`, d:`${baseFx.map(x=>`${x.c.name} ${pct(x.yoyM)} YoY (${MONTHS[ACT_MO-1]} 25 ${pct(x.dip)} vs ${MONTHS[ACT_MO-2]} 25)`).join(' · ')} — creștere din baza slabă, nu accelerare; urmăriți YTD.`});
+      return <InsightPanel title="Analiză vânzări" sub={`${pLabel(period)} · calculat din date`} pos={pos} watch={watch}/>;
+    })()}
 
     <div style={{marginBottom:16}}>
       <Card>
@@ -1513,23 +1684,82 @@ function CategoryTab({period}) {
 
 
   return <div>
-    {/* KPI Strip — mix-share lens */}
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:20}}>
-      <KPI hi label={`#1 — ${rows[0].name}`} value={fmt(rows[0].v)} sub={`${rows[0].pct.toFixed(1)}% din total · ${catPLabel}`}/>
-      <KPI    label={`#2 — ${rows[1].name}`} value={fmt(rows[1].v)} sub={`${rows[1].pct.toFixed(1)}% din total`}/>
-      <KPI    label={`#3 — ${rows[2].name}`} value={fmt(rows[2].v)} sub={`${rows[2].pct.toFixed(1)}% din total`}/>
-      <KPI    label="Top mix gainer YoY"   value={dFmt(dTOD)}      subColor={dCol(dTOD)} sub={`Tratamente odontale · ${sTOD.toFixed(1)}%`}/>
-      <KPI    label="Categorii active"     value="13"              sub="cu venituri non-zero"/>
-    </div>
+    {/* ── Antet Categorii: mix-ul dintr-o privire + 3 indicatori + analiză calculată din date ── */}
+    {(()=>{
+      const ci=CIDX(), isM=period==='Month';
+      const prevVal = k => isM ? CAT_DATA[k][ci-12] : catSumRange(k,0,ci-12);
+      const tot25 = CAT_LIST.reduce((a,c)=>a+prevVal(c.key),0);
+      const totG = gr(total,tot25);
+      const active = rows.filter(r=>r.v>0).length;
+      const byD = rows.filter(r=>r.dPP!=null).slice().sort((a,b)=>b.dPP-a.dPP);
+      const gain=byD[0], loss=byD[byD.length-1];
+      const rG = r => gr(r.v, prevVal(r.key));
+      const top=rows.slice(0,5), rest=rows.slice(5), restPct=rest.reduce((a,r)=>a+r.pct,0);
+      const eng=sIMP+sPRO, dEng=dIMP+dPRO, engV=catVal('IMP',period)+catVal('PRO',period);
+      const good='#15803D', bad=P.alert;
+      const vs = isM ? `${MONTHS[ACT_MO-1]} 2025` : 'YTD 2025';
+      return (
+      <div style={{marginBottom:16}}>
+        <div className="net-head">
+          <div className="net-hero" style={{background:`linear-gradient(145deg, ${P.primary} 0%, #5E140F 100%)`,borderRadius:14,padding:'18px 20px',color:P.white,boxShadow:'0 4px 18px rgba(123,28,22,0.22)',display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:0.9,textTransform:'uppercase',color:'rgba(255,255,255,0.7)'}}>Încasări pe categorii · {catPLabel}</div>
+            <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+              <span style={{fontSize:42,fontWeight:700,lineHeight:1,fontFamily:"'Playfair Display',serif"}}>{fmt(total)}</span>
+              <span style={{fontSize:12,color:'rgba(255,255,255,0.65)'}}>RON</span>
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <span style={{background:'rgba(255,255,255,0.14)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{pct(totG)} vs {vs} · {fmt(tot25)}</span>
+              <span style={{background:'rgba(255,255,255,0.14)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{active} categorii active</span>
+            </div>
+            {/* compoziția mix-ului — top 5 + restul */}
+            <div>
+              <div style={{display:'flex',height:14,gap:2,borderRadius:4,overflow:'hidden'}}>
+                {top.map(r=><div key={r.key} title={`${r.name}: ${fmt(r.v)} · ${r.pct.toFixed(1)}%`} style={{width:`${r.pct}%`,background:r.color}}/>)}
+                <div title={`Altele (${rest.length} categorii): ${restPct.toFixed(1)}%`} style={{flex:1,background:'rgba(255,255,255,0.3)'}}/>
+              </div>
+              <div style={{display:'flex',flexWrap:'wrap',gap:'4px 10px',marginTop:8}}>
+                {top.map(r=><span key={r.key} style={{fontSize:9.5,color:'rgba(255,255,255,0.85)',display:'flex',alignItems:'center',gap:4}}><span style={{width:7,height:7,borderRadius:2,background:r.color,display:'inline-block'}}/>{r.name} {r.pct.toFixed(0)}%</span>)}
+                <span style={{fontSize:9.5,color:'rgba(255,255,255,0.6)',display:'flex',alignItems:'center',gap:4}}><span style={{width:7,height:7,borderRadius:2,background:'rgba(255,255,255,0.3)',display:'inline-block'}}/>altele {restPct.toFixed(0)}%</span>
+              </div>
+              <div style={{fontSize:9,color:'rgba(255,255,255,0.55)',marginTop:6}}>bază: încasat (achitat) — poate diferi ușor de vânzările facturate din tab-ul Rețea</div>
+            </div>
+          </div>
 
-    {/* CFO Analysis — mix-aware framing */}
-    <Card style={{marginBottom:16,background:'#FAFAFA',border:`1px solid #F0F0F0`}}>
-      <Sec>Analiză Mix — {catPLabel} (pondere în cifra de afaceri totală)</Sec>
-      <Pill type="green"><b>Implantologie + Protetică = {(sIMP+sPRO).toFixed(1)}%</b> din cifra de afaceri ({CAT_MONTHS[CIDX()]}) — cele două motoare comerciale ale rețelei. {CIDX()>=12 ? <span>Combinat, mix-ul a variat cu {(dIMP+dPRO)>0?'+':''}{(dIMP+dPRO).toFixed(1)}pp YoY (de la {(shPrev('IMP')+shPrev('PRO')).toFixed(1)}% la {(sIMP+sPRO).toFixed(1)}%) — {(dIMP+dPRO)<0?'semn că mix-ul se diversifică':'motoarele comerciale își consolidează ponderea'}.</span> : <span>Comparația YoY pe categorii este disponibilă din Apr 2026 — fereastra de date începe în Apr 25.</span>}</Pill>
-      {CIDX()>=12 && <Pill type="green"><b>Tratamente odontale: {dFmt(dTOD)} pondere YoY</b> (de la {shPrev('TOD').toFixed(1)}% la {sTOD.toFixed(1)}%) — cel mai mare câștigător de mix. Endodonția la microscop urmează cu {dFmt(dEND)} ({sEND.toFixed(1)}%). Semnal pozitiv pe servicii core și complexitate crescută.</Pill>}
-      <Pill type={dIMPmom < -2 ? 'amber' : 'green'}><b>Implantologie: pondere {dFmt(dIMP)} YoY</b> ({shPrev('IMP').toFixed(1)}% → {sIMP.toFixed(1)}%). Variație lunară de mix în {CAT_MONTHS[CIDX()]}: {dFmt(dIMPmom)} față de {CAT_MONTHS[CIDX()-1]} ({sIMPmar.toFixed(1)}%). Recomand verificare pipeline CT &amp; Plan Tratament pentru luna următoare.</Pill>
-      <Pill type="green"><b>Estetică facială — categorie nouă (din Iul 2026):</b> mezoterapie, volumizare buze etc., realizată de medic dermatolog. {fmt(catVal('ESF',period))} în {catPLabel} ({shNow('ESF').toFixed(1)}% din mix) — segment tangențial dentar, cu potențial de creștere. Estetică (dentară + facială) + Consultații = {(sEST+sCON).toFixed(1)}% din mix.</Pill>
-    </Card>
+          <HeadTile label="Motoare comerciale" value={`${eng.toFixed(1)}%`} caption="implant + protetică">
+            <b>{fmt(engV)} RON</b> · {dEng>=0?'+':''}{dEng.toFixed(1)}pp pondere vs {vs}
+            <div style={{display:'flex',height:8,borderRadius:4,overflow:'hidden',gap:2,margin:'7px 0 5px'}}>
+              <div style={{width:`${sIMP/eng*100}%`,background:CAT_LIST[0].color}}/><div style={{flex:1,background:CAT_LIST[1].color}}/>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between'}}><span>Implantologie <b>{sIMP.toFixed(1)}%</b></span><span>Protetică <b>{sPRO.toFixed(1)}%</b></span></div>
+          </HeadTile>
+
+          <HeadTile label="Cel mai mare câștig de pondere" value={dFmt(gain.dPP)} valueColor={gain.dPP>=0?good:bad} caption={gain.name}>
+            {gain.sApr25.toFixed(1)}% → <b>{gain.sApr26.toFixed(1)}%</b> din mix · {fmt(gain.v)} RON
+            <div style={{color:P.muted,marginTop:3}}>încasări {pct(rG(gain))} vs {vs}</div>
+          </HeadTile>
+
+          <HeadTile label="Cea mai mare pierdere de pondere" value={dFmt(loss.dPP)} valueColor={loss.dPP>=0?good:bad} caption={loss.name}>
+            {loss.sApr25.toFixed(1)}% → <b>{loss.sApr26.toFixed(1)}%</b> din mix · {fmt(loss.v)} RON
+            <div style={{color:P.muted,marginTop:3}}>încasări {pct(rG(loss))} vs {vs}</div>
+          </HeadTile>
+        </div>
+      </div>);
+    })()}
+
+    {(()=>{
+      const ci=CIDX(), isM=period==='Month';
+      const prevVal = k => isM ? CAT_DATA[k][ci-12] : catSumRange(k,0,ci-12);
+      const vs = isM ? `${MONTHS[ACT_MO-1]} 2025` : 'YTD 2025';
+      const rG = r => gr(r.v, prevVal(r.key));
+      const pos=[], watch=[];
+      const dEng=dIMP+dPRO;
+      (dEng>-1?pos:watch).push({t:`Implantologie + Protetică = ${(sIMP+sPRO).toFixed(1)}% din încasări`, d:`${dEng>=0?'+':''}${dEng.toFixed(1)}pp vs ${vs} — ${Math.abs(dEng)<1?'pondere stabilă a celor două motoare comerciale':dEng>0?'motoarele comerciale își consolidează ponderea':'ponderea motoarelor comerciale scade'}.`});
+      rows.filter(r=>r.dPP!=null&&r.dPP>=1).forEach(r=>pos.push({t:`${r.name}: ${dFmt(r.dPP)} pondere`, d:`${r.sApr25.toFixed(1)}% → ${r.sApr26.toFixed(1)}% din mix · ${fmt(r.v)} RON, ${pct(rG(r))} vs ${vs}.`}));
+      rows.filter(r=>r.dPP!=null&&r.dPP<=-1).forEach(r=>watch.push({t:`${r.name}: ${dFmt(r.dPP)} pondere`, d:`${r.sApr25.toFixed(1)}% → ${r.sApr26.toFixed(1)}% din mix · ${fmt(r.v)} RON, ${pct(rG(r))} vs ${vs}${rG(r)!=null&&rG(r)>0?' — crește în RON, dar mai lent decât restul':''}.`}));
+      rows.filter(r=>rG(r)!=null&&rG(r)<0&&!(r.dPP<=-1)).forEach(r=>watch.push({t:`${r.name}: încasări în scădere`, d:`${pct(rG(r))} vs ${vs} (${fmt(r.v)} RON).`}));
+      if(isM && dIMPmom<=-1) watch.push({t:`Implantologie ${dFmt(dIMPmom)} față de ${CAT_MONTHS[ci-1]}`, d:`Pondere ${sIMPmar.toFixed(1)}% → ${sIMP.toFixed(1)}% de la o lună la alta — verificați pipeline-ul CT și planurile de tratament pentru luna următoare.`});
+      return <InsightPanel title="Analiză mix" sub={`${catPLabel} · pondere în încasări · calculat din date`} pos={pos} watch={watch}/>;
+    })()}
 
     {/* Two-column charts */}
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
@@ -1593,7 +1823,7 @@ function CategoryTab({period}) {
         </ResponsiveContainer>
         <Legend items={MIX_STACK.map(k=>{const c=CAT_LIST.find(x=>x.key===k);return [c.color,c.name];})}/>
         <div style={{fontSize:10,color:P.muted,marginTop:6,fontStyle:'italic',lineHeight:1.4}}>
-          Sursă: slide Sales Split din raportul lunar — pondere pe clinică (%). Etichetele apar pentru segmente ≥5%; valorile complete în tooltip. Ultima coloană = Total Rețea.
+          Sursă: Puls (Monthly brief) — Sales Split, pondere pe clinică (%). Etichetele apar pentru segmente ≥5%; valorile complete în tooltip. Ultima coloană = Total Rețea.
         </div>
         </div>;
       })() : <div style={{fontSize:12,color:P.muted,padding:'18px 6px'}}>Slide-ul Sales Split nu este disponibil în raportul acestei luni. Selectează altă lună.</div>}</SafeBox>
@@ -1699,7 +1929,7 @@ function MonthlyBudgetCard() {
       <div style={{background:P.primary,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:10}}>
         <div>
           <div style={{fontSize:13,fontWeight:700,color:P.white,fontFamily:"'Playfair Display',serif",letterSpacing:0.3}}>Buget 2026 · Lunar per Clinică</div>
-          <div style={{fontSize:10,color:'rgba(255,255,255,0.55)',marginTop:2,letterSpacing:0.5}}>Ianuarie – Decembrie 2026 · realizat până în {MONTHS_FULL[ACT_MO-1]} · sursă: slide W31 Buget 2026</div>
+          <div style={{fontSize:10,color:'rgba(255,255,255,0.55)',marginTop:2,letterSpacing:0.5}}>Ianuarie – Decembrie 2026 · realizat până în {MONTHS_FULL[ACT_MO-1]} · sursă: Buget 2026 pe clinică</div>
         </div>
         <div style={{display:'flex',alignItems:'center',background:'rgba(0,0,0,0.25)',borderRadius:20,padding:3,gap:2}}>
           {[['pct','Abatere %'],['ron','RON']].map(([v,l])=>{ const on=mode===v; return (
@@ -1792,6 +2022,7 @@ function MonthlyBudgetCard() {
       </div>
       <div style={{padding:'8px 16px 10px',borderTop:`1px solid ${P.border}`,background:'#FAFAFA'}}>
         <span style={{fontSize:10,color:P.muted}}>Cifra bold = Buget lunar (mereu vizibil, an complet) · sub linie = {mode==='pct'?'abatere % vs realizat':'actual realizat'} · lunile de la {MONTHS[ACT_MO]||'—'} încolo sunt buget planificat (fără actual încă) · click pe o clinică pentru graficul Actual vs Buget</span>
+        {Object.entries(BUDGET_FLAGS).map(([k,t])=><div key={k} style={{marginTop:8}}><Pill type="amber"><b>{CD[k].name} — buget de confirmat:</b> {t}</Pill></div>)}
       </div>
     </Card>
   );
@@ -1826,12 +2057,14 @@ function AllClinicsTable({period}) {
   const lfl26=LFL.reduce((a,c)=>a+(val(CD[c],2026,period)||0),0);
   const lfl25=LFL.reduce((a,c)=>a+(val(CD[c],2025,period)||0),0);
   const lflb=LFL.reduce((a,c)=>a+(bval(CD[c],2026,period)||0),0);
-  // Full year LFL YoY
-  const lflFY25=LFL.reduce((a,c)=>{ const v=CD[c].actuals?.[2025]; return a+(v&&v.filter(x=>x!=null).length===12?sum(v.filter(x=>x!=null)):0); },0);
-  const lflFY24=LFL.reduce((a,c)=>{ const v=CD[c].actuals?.[2024]; return a+(v&&v.filter(x=>x!=null).length===12?sum(v.filter(x=>x!=null)):0); },0);
-  const lflFY23=LFL.reduce((a,c)=>{ const v=CD[c].actuals?.[2023]; return a+(v&&v.filter(x=>x!=null).length===12?sum(v.filter(x=>x!=null)):0); },0);
-  const lflFY2423=gr(lflFY24,lflFY23);
-  const lflFY2524=gr(lflFY25,lflFY24);
+  // Full year LFL YoY — același set de clinici în ambii ani: doar clinicile cu 12 luni complete
+  // în AMBII ani comparați (altfel o clinică deschisă în anul de bază umflă creșterea, ex. CLR din Feb 24).
+  const full12=(c,yr)=>{ const v=CD[c].actuals?.[yr]; return v&&v.filter(x=>x!=null).length===12; };
+  const lflFYset=(y1,y0)=>LFL.filter(c=>full12(c,y1)&&full12(c,y0));
+  const lflFYsum=(codes,yr)=>codes.reduce((a,c)=>a+sum(CD[c].actuals[yr]),0);
+  const lflSet2423=lflFYset(2024,2023), lflSet2524=lflFYset(2025,2024);
+  const lflFY2423=lflSet2423.length?gr(lflFYsum(lflSet2423,2024),lflFYsum(lflSet2423,2023)):null;
+  const lflFY2524=lflSet2524.length?gr(lflFYsum(lflSet2524,2025),lflFYsum(lflSet2524,2024)):null;
 
   return (
     <div style={{marginBottom:16,background:P.white,border:`1px solid ${P.border}`,borderRadius:12,overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,0.06)'}}>
@@ -1982,10 +2215,10 @@ function AllClinicsTable({period}) {
                 <span style={{display:'inline-block',padding:'3px 9px',borderRadius:20,fontSize:11,fontWeight:700,background:gr(lfl26,lfl25)>=0?'#DCFCE7':'#FEE2E2',color:gr(lfl26,lfl25)>=0?'#15803D':P.alert,boxShadow:'0 1px 4px rgba(0,0,0,0.08)'}}>{pct(gr(lfl26,lfl25))}</span>
               </td>
               <td style={{padding:'10px 10px',textAlign:'center',borderLeft:`3px solid #7B5EA722`}}>
-                {lflFY2423!=null&&<span style={{display:'inline-block',padding:'2px 7px',borderRadius:20,fontSize:10,fontWeight:600,background:lflFY2423>=0?'#F5F0FF':'#FEF2F2',color:lflFY2423>=0?'#5B3F8A':P.alert}}>{pct(lflFY2423)}</span>}
+                {lflFY2423!=null&&<span title={`Set comparabil FY 24/23 (12 luni în ambii ani): ${lflSet2423.join(', ')}`} style={{display:'inline-block',padding:'2px 7px',borderRadius:20,fontSize:10,fontWeight:600,background:lflFY2423>=0?'#F5F0FF':'#FEF2F2',color:lflFY2423>=0?'#5B3F8A':P.alert}}>{pct(lflFY2423)}</span>}
               </td>
               <td style={{padding:'10px 10px',textAlign:'center'}}>
-                {lflFY2524!=null&&<span style={{display:'inline-block',padding:'3px 9px',borderRadius:20,fontSize:11,fontWeight:700,background:lflFY2524>=0?'#EDE9FF':'#FEE2E2',color:lflFY2524>=0?'#4C2F8A':P.alert,boxShadow:'0 1px 4px rgba(91,63,138,0.15)'}}>{pct(lflFY2524)}</span>}
+                {lflFY2524!=null&&<span title={`Set comparabil FY 25/24 (12 luni în ambii ani): ${lflSet2524.join(', ')}`} style={{display:'inline-block',padding:'3px 9px',borderRadius:20,fontSize:11,fontWeight:700,background:lflFY2524>=0?'#EDE9FF':'#FEE2E2',color:lflFY2524>=0?'#4C2F8A':P.alert,boxShadow:'0 1px 4px rgba(91,63,138,0.15)'}}>{pct(lflFY2524)}</span>}
               </td>
               <td style={{padding:'10px 10px',textAlign:'right',color:P.muted,fontSize:10,borderLeft:`3px solid ${P.amber}22`}}>{fmt(lflb)}</td>
               <td style={{padding:'10px 10px',textAlign:'center'}}>
@@ -1997,7 +2230,7 @@ function AllClinicsTable({period}) {
         </table>
       </div>
       <div style={{padding:'8px 16px 10px',borderTop:`1px solid ${P.border}`,background:'#FAFAFA'}}>
-        <span style={{fontSize:10,color:P.muted}}>FY = Full Year complet (12 luni) · YoY perioadă curentă în coloanele YoY %</span>
+        <span style={{fontSize:10,color:P.muted}}>FY = Full Year complet (12 luni) · YoY perioadă curentă în coloanele YoY % · FY YoY pe rândul LFL = doar clinicile cu 12 luni complete în ambii ani comparați (FY 25/24: {lflSet2524.join(', ')}; FY 24/23: {lflSet2423.join(', ')})</span>
       </div>
     </div>
   );
@@ -2081,20 +2314,101 @@ function FeedbackTab() {
   };
 
   return <div>
-    <div style={{marginBottom:16,background:`linear-gradient(135deg,#FFFFFF 0%,#FBF6F4 100%)`,border:`1px solid ${P.border}`,borderLeft:`3px solid ${P.primary}`,borderRadius:10,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-      <div>
-        <div style={{fontSize:14,fontWeight:700,color:P.primary,fontFamily:"'Playfair Display',serif"}}>Feedback - QA</div>
-        <div style={{fontSize:11,color:P.muted,marginTop:2}}>{MONTHS_FULL[ACT_MO-1]} 2026 · sursă: capitolul lunar "Feedback pacient" (2 slide-uri)</div>
-      </div>
-      <span style={{background:P.amber,color:P.white,fontSize:10,fontWeight:700,padding:'4px 10px',borderRadius:20,letterSpacing:0.4}}>Rețea completă</span>
-    </div>
+    {/* ── Antet Feedback: volum + satisfacție + rată de răspuns + Google, apoi analiză calculată ── */}
+    {(()=>{
+      const good='#15803D', bad=P.alert;
+      const arrow=v=>v==null?'—':`${v>=0?'▲':'▼'} ${Math.abs(v)}%`;
+      const mom=dPct(totalSeries), yoy=yoyPct(totalSeries);
+      const sat=negPctNow!=null?Math.round((100-negPctNow)*10)/10:null;
+      const last12=k=>{ const T=totalSeries.slice(Math.max(0,k-11),k+1), N=negSeries.slice(Math.max(0,k-11),k+1); const t=T.reduce((a,b)=>a+(b||0),0), n=N.reduce((a,b)=>a+(b||0),0); return t?Math.round(n/t*1000)/10:null; };
+      const neg12=last12(ei);
+      // rată de răspuns = feedback / vizite (MED_KPI, rândul «Pacienti (vizite)»), pe clinică și rețea
+      const med=MED_KPI[ACT_MO];
+      const visitsOf=code=>{ if(!med) return null; const k=med.clinics.indexOf(code); return k>=0?med.kpi[4][k]:null; };
+      const cov=clinicRows.map(r=>{ const vz=visitsOf(r.code); return {...r, vz, rate:(r.v!=null&&vz)?Math.round(r.v/vz*1000)/10:null}; });
+      const vzTot=cov.reduce((a,r)=>a+(r.vz||0),0), rateNet=vzTot&&totalNow?Math.round(totalNow/vzTot*1000)/10:null;
+      const covSorted=cov.filter(r=>r.rate!=null).sort((a,b)=>a.rate-b.rate);
+      const lowCov=covSorted.filter(r=>rateNet&&r.rate<rateNet/2);
+      const gIdx=(()=>{ for(let k=ei;k>=0;k--) if(FEEDBACK_GOOGLE_18[k]!=null) return k; return null; })();
+      const gMissing=gIdx!==ei;
+      const gVals=FEEDBACK_GOOGLE_PCT_18.filter(v=>v!=null), gAvg=gVals.length?Math.round(gVals.reduce((a,b)=>a+b,0)/gVals.length):null;
+      const m26=MONTHS.slice(0,ACT_MO).map((m,k)=>({m,tot:totalSeries[PATIENTS_OFF+k],neg:negSeries[PATIENTS_OFF+k]}));
+      const maxT=Math.max(...m26.map(x=>x.tot||0));
+      const highNeg=clinicRows.filter(r=>r.negPct!=null&&r.negPct>=2);
+      const zeroNeg=clinicRows.filter(r=>r.neg===0&&r.v>0);
+      const drops=clinicRows.filter(r=>r.mom!=null&&r.mom<=-30);
+      const msgs=(FEEDBACK_MESSAGES[ACT_MO]||[]).length;
+      const pos=[], watch=[];
+      if(sat!=null) (negPctNow<=1?pos:watch).push({t:`Satisfacție ${sat}% · ${negNow} review-uri negative din ${totalNow}`, d:`Rata negativă ${negPctNow}% vs ${neg12}% media ultimelor 12 luni${negPctNow<=neg12?' — sub medie':' — peste medie'}.`});
+      if(zeroNeg.length) pos.push({t:`${zeroNeg.length} clinici fără niciun review negativ`, d:zeroNeg.map(r=>`${r.name} (${r.v})`).join(' · ')+'.'});
+      if(!gMissing&&googlePctNow!=null&&gAvg!=null) (googlePctNow>=gAvg?pos:watch).push({t:`${googlePctNow}% din feedback-ul pozitiv ajunge pe Google`, d:`${googleNow} recenzii · media ${gAvg}%.`});
+      if(highNeg.length) watch.push({t:`Rată negativă ridicată: ${highNeg.map(r=>r.name).join(', ')}`, d:highNeg.map(r=>`${r.name} ${r.neg}/${r.v} (${r.negPct}%)`).join(' · ')+(highNeg.some(r=>r.v<20)?' — volum mic, un singur review mută mult rata.':'.')});
+      if(lowCov.length) watch.push({t:`Acoperire slabă: ${lowCov.map(r=>r.name).join(', ')}`, d:`${lowCov.map(r=>`${r.name} ${r.rate}% (${r.v} feedback / ${r.vz} vizite)`).join(' · ')} vs ${rateNet}% în rețea — satisfacția raportată acolo se bazează pe puține răspunsuri.`});
+      if(drops.length) watch.push({t:`Scădere bruscă de feedback față de ${MONTHS[i-1]}`, d:drops.map(r=>`${r.name} ${r.mom}%`).join(' · ')+' — verificați dacă solicitarea feedback-ului s-a oprit.'});
+      if(gMissing) watch.push({t:`Recenzii Google ${MONTHS[i]}: date neimportate`, d:`Puls nu are încă datele Google pentru ${MONTHS[i]} 2026 (ultima lună disponibilă: ${PATIENTS_MONTHS_18[gIdx]}).`});
+      if(msgs) watch.push({t:`${msgs} mesaje negative în ${MONTHS[i]}`, d:'Textul integral e mai jos, în secțiunea „Mesaje recente — feedback negativ".'});
+      return (<>
+      <div style={{marginBottom:16}}>
+        <div className="net-head">
+          <div className="net-hero" style={{background:`linear-gradient(145deg, ${P.primary} 0%, #5E140F 100%)`,borderRadius:14,padding:'18px 20px',color:P.white,boxShadow:'0 4px 18px rgba(123,28,22,0.22)',display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:0.9,textTransform:'uppercase',color:'rgba(255,255,255,0.7)'}}>
+              <InfoTip full="Total feedback — rețea" calc="Suma feedback-urilor (pozitiv + negativ) colectate de toate clinicile în lună — Puls (Monthly brief), tabelul «By Clinic Monthly».">Feedback pacienți · {MONTHS[i]} 2026</InfoTip>
+            </div>
+            <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+              <span style={{fontSize:42,fontWeight:700,lineHeight:1,fontFamily:"'Playfair Display',serif"}}>{totalNow!=null?totalNow.toLocaleString('en-US'):'—'}</span>
+              <span style={{fontSize:12,color:'rgba(255,255,255,0.65)'}}>răspunsuri</span>
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <span style={{background:'rgba(255,255,255,0.14)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{arrow(mom)} vs {MONTHS[i-1]||'—'}</span>
+              <span style={{background:'rgba(255,255,255,0.14)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{arrow(yoy)} vs {MONTHS[i]} 2025</span>
+              <span style={{background:negNow>0?'rgba(217,48,37,0.35)':'rgba(181,189,92,0.30)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{negNow} negative</span>
+            </div>
+            <div>
+              <div style={{display:'flex',alignItems:'flex-end',gap:4,height:46}}>
+                {m26.map((x,k)=>(
+                  <div key={x.m} title={`${x.m} 26: ${x.tot} feedback · ${x.neg} negative`} style={{flex:1,height:'100%',display:'flex',flexDirection:'column',justifyContent:'flex-end',alignItems:'center',gap:2}}>
+                    <span style={{fontSize:9,fontWeight:700,lineHeight:1,color:x.neg>0?'#FFB4AB':'rgba(255,255,255,0.35)'}}>{x.neg}</span>
+                    <div style={{width:'100%',height:`${(x.tot||0)/maxT*70}%`,background:k===i?P.wheat:'rgba(255,255,255,0.28)',borderRadius:'3px 3px 0 0'}}/>
+                  </div>))}
+              </div>
+              <div style={{display:'flex',gap:4,marginTop:4}}>
+                {m26.map((x,k)=><div key={x.m} style={{flex:1,textAlign:'center',fontSize:8.5,color:k===i?'rgba(255,255,255,0.9)':'rgba(255,255,255,0.45)'}}>{x.m}</div>)}
+              </div>
+              <div style={{fontSize:9,color:'rgba(255,255,255,0.55)',marginTop:4}}>bară = feedback total 2026 · cifra de deasupra = review-uri negative · sursă: Puls (Monthly brief)</div>
+            </div>
+          </div>
 
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:12,marginBottom:16}}>
-      <KPI hi label={<InfoTip full="Total feedback — rețea" calc="Suma feedback-urilor (pozitiv + negativ) colectate de toate clinicile în lună, digitizat din tabelul «By Clinic Monthly» al slide-ului «Feedback pacient».">Total feedback (rețea)</InfoTip>} value={totalNow!=null?totalNow.toLocaleString('en-US'):'—'} sub={dPct(totalSeries)!=null?`${dPct(totalSeries)>=0?'▲':'▼'} ${Math.abs(dPct(totalSeries))}% vs ${MONTHS[i-1]}`:'—'} subColor={dPct(totalSeries)!=null?pcol(dPct(totalSeries)):null}/>
-      <KPI label={<InfoTip full="% către Google" calc="«My Business» (recenzii Google) / #Positive, digitizat direct din tabelul «Feedback to Google» al slide-ului sursă — NU e recalculat.">% feedback → Google</InfoTip>} value={googlePctNow!=null?`${googlePctNow}%`:'—'} sub={googleNow!=null?`${googleNow.toLocaleString('en-US')} recenzii Google`:'—'}/>
-      <KPI label={<InfoTip full="Feedback negativ — rețea" calc="Suma review-urilor negative (0-3 stele) din toate clinicile în lună — puține la număr, de-aceea le vezi și distinct mai jos, per medic și ca mesaje individuale.">Feedback negativ (rețea)</InfoTip>} value={negNow!=null?negNow.toLocaleString('en-US'):'—'} sub={negNow!=null&&negNow>0?`${negPctNow}% din total`:'niciun review negativ'} subColor={negNow>0?P.alert:'#15803D'}/>
-      <KPI label="Rata feedback negativ" value={negPctNow!=null?`${negPctNow}%`:'—'} sub="din totalul feedback-ului lunii"/>
-    </div>
+          <HeadTile label={<InfoTip full="Satisfacție" calc="100% − rata de feedback negativ (review-uri 0-3 stele / total feedback), la nivel de rețea, în luna selectată.">Satisfacție</InfoTip>} value={sat!=null?`${sat}%`:'—'} valueColor={negPctNow!=null&&negPctNow<=1?good:bad} caption="feedback pozitiv">
+            <b>{negNow}</b> negative din {totalNow} ({negPctNow}%) · media 12 luni <b>{neg12}%</b>
+            <div style={{display:'flex',height:8,borderRadius:4,overflow:'hidden',gap:2,margin:'7px 0 0'}}>
+              <div style={{width:`${100-(negPctNow||0)*5}%`,background:good}}/><div style={{flex:1,background:bad}}/>
+            </div>
+            <div style={{color:P.muted,marginTop:4,fontSize:10}}>bara negativă e mărită ×5 pentru vizibilitate</div>
+          </HeadTile>
+
+          <HeadTile label={<InfoTip full="Rată de răspuns" calc="Feedback colectat / Pacienți (vizite) din luna respectivă (Ops-Med, rândul «Pacienti (vizite)»). Arată cât de reprezentativă e satisfacția raportată: o rată mică înseamnă că puțini pacienți au răspuns.">Rată de răspuns</InfoTip>} value={rateNet!=null?`${rateNet}%`:'—'} caption="din vizite">
+            {covSorted.length>0 && <div style={{display:'flex',flexDirection:'column',gap:3}}>
+              {[covSorted[covSorted.length-1],covSorted[0]].map((r,q)=>(
+                <div key={r.code} style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{width:64,flexShrink:0}}>{r.name}</span>
+                  <div style={{flex:1,height:6,background:'#F1ECE6',borderRadius:3}}><div style={{width:`${Math.min(100,r.rate/covSorted[covSorted.length-1].rate*100)}%`,height:'100%',background:q===0?P.olive:bad,borderRadius:3}}/></div>
+                  <b style={{width:34,textAlign:'right'}}>{r.rate}%</b>
+                </div>))}
+            </div>}
+            <div style={{color:P.muted,marginTop:4}}>cea mai mare vs cea mai mică acoperire · {vzTot.toLocaleString('en-US')} vizite în rețea</div>
+          </HeadTile>
+
+          <HeadTile label={<InfoTip full="% către Google" calc="«My Business» (recenzii Google) / #Positive, preluat din Puls (Monthly brief), tabelul «Feedback to Google» — NU e recalculat.">Recenzii Google</InfoTip>} value={gMissing?'—':(googleNow!=null?googleNow:'—')} caption={gMissing?'neimportat încă':`${googlePctNow}% din pozitive`}>
+            {gMissing
+              ? <div>Datele Google pentru {MONTHS[i]} nu sunt încă în Puls. Ultima lună: <b>{PATIENTS_MONTHS_18[gIdx]}</b> — {FEEDBACK_GOOGLE_18[gIdx]} recenzii ({FEEDBACK_GOOGLE_PCT_18[gIdx]}%).</div>
+              : <div>{googleNow} recenzii · media {gAvg}% din feedback-ul pozitiv</div>}
+            <div style={{color:P.muted,marginTop:3}}>medie 20 luni: {gAvg}% din pozitive ajung pe Google</div>
+          </HeadTile>
+        </div>
+      </div>
+      <InsightPanel title="Analiză feedback" sub={`${MONTHS[i]} 2026 · calculat din date`} pos={pos} watch={watch}/>
+      </>);
+    })()}
 
     <Card style={{marginBottom:16}}>
       <Sec>Feedback total vs. negativ — evoluție lunară</Sec>
@@ -2155,7 +2469,7 @@ function FeedbackTab() {
           </div>
         ))}
       </div>
-      <div style={{fontSize:10,color:P.muted,marginTop:8}}>Total = #No. feedback (pozitiv + negativ) din tabelul "By Clinic Monthly (YTD)", per clinică. Sumă = totalul cluster-ului (verificat: suma tuturor clinicilor + categoria "Null" = rândul "Grand Total" din slide-ul sursă). Negativ = #Neg din același tabel. Focșani are date doar din Mar 26 (clinică mai nouă). O mică parte din feedback (categoria "Null" din sursă, ~85 în total Iul25-Iul26) nu e atribuită niciunei clinici și nu apare defalcat aici.</div>
+      <div style={{fontSize:10,color:P.muted,marginTop:8}}>Total = #No. feedback (pozitiv + negativ) din tabelul "By Clinic Monthly (YTD)", per clinică. Sumă = totalul cluster-ului (suma tuturor clinicilor + categoria "Null" = rândul "Grand Total" din Puls). Negativ = #Neg din același tabel. Focșani are date doar din Mar 26 (clinică mai nouă). O mică parte din feedback (categoria "Null" din sursă) nu e atribuită niciunei clinici și nu apare defalcat aici.</div>
     </Card>
 
     <Card style={{marginBottom:16}}>
@@ -2178,7 +2492,7 @@ function FeedbackTab() {
     <Card style={{marginBottom:16}}>
       <Sec>Feedback negativ per medic (cumulat)</Sec>
       <div style={{fontSize:10,color:P.muted,marginBottom:10}}>{FEEDBACK_NEGATIVE_MEDICS.length} medici au cel puțin un review negativ — listați distinct mai jos ({FEEDBACK_NEGATIVE_MEDICS.filter(m=>m.inactiv).length} marcați „inactiv" nu mai lucrează activ în rețea). Fereastră cumulată (nu doar luna curentă), sursă: Puls.</div>
-      <table style={{width:'100%',borderCollapse:'collapse',fontSize:11.5}}>
+      <div style={{overflowX:"auto"}}><table style={{width:"100%",minWidth:420,borderCollapse:"collapse",fontSize:11.5}}>
         <thead><tr style={{background:'#F8F4F4'}}>
           <th style={{padding:'7px 12px',textAlign:'left',fontWeight:700,color:P.primary,borderBottom:`1px solid ${P.border}`}}>Medic</th>
           <th style={{padding:'7px 8px',textAlign:'right',fontWeight:600,color:P.muted,borderBottom:`1px solid ${P.border}`}}>Satisfacție</th>
@@ -2197,7 +2511,7 @@ function FeedbackTab() {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
       <div style={{fontSize:10,color:P.muted,marginTop:8}}>Sortat descrescător după satisfacție. Total review-uri negative în listă: {FEEDBACK_NEGATIVE_MEDICS.reduce((s,m)=>s+m.neg,0)}.</div>
     </Card>
 
@@ -2286,19 +2600,94 @@ function PatientsTab() {
   const kpiCol = (arr) => yoyPct(arr)!=null?pcol(yoyPct(arr)):dPct(arr)!=null?pcol(dPct(arr)):null;
 
   return <div>
-    <div style={{marginBottom:16,background:`linear-gradient(135deg,#FFFFFF 0%,#FBF6F4 100%)`,border:`1px solid ${P.border}`,borderLeft:`3px solid ${P.primary}`,borderRadius:10,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-      <div>
-        <div style={{fontSize:14,fontWeight:700,color:P.primary,fontFamily:"'Playfair Display',serif"}}>Pacienți — Marketing &amp; Acquisition</div>
-        <div style={{fontSize:10.5,color:P.muted,marginTop:2}}>{MONTHS_FULL[ACT_MO-1]} 2026 · sursă: capitolul lunar "Marketing &amp; Acquisition | Pacienți"</div>
-      </div>
-      <span style={{background:P.amber,color:P.white,fontSize:10,fontWeight:700,padding:'4px 10px',borderRadius:20,letterSpacing:0.4}}>Rețea completă</span>
-    </div>
 
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:12,marginBottom:16}}>
-      <KPI hi label={<InfoTip full="Rata de Atragere a Pacienților Noi — rețea" calc="P0 (pacienți înregistrați în sistem, suma pe rețea) / Pacienți Unici, digitizat direct din tabelul New_ratio. NU se confundă cu P1 (pacientul care a și efectuat prima vizită) — acela nu are total de rețea disponibil, doar per clinică (MED_KPI).">Rata de Atragere a Pacienților Noi</InfoTip>} value={noiRatio[ei]+'%'} sub={`${(100-noiRatio[ei])}% recurenți`}/>
-      <KPI label={<InfoTip full="Pacienți Înregistrați (P0) — total rețea" calc="Suma P0 (pacienți înregistrați în sistem) pe toată rețeaua, luna curentă — digitizat din tabelul New_ratio (rândul «Pacienți noi»), care e aceeași metrică cu suma P0-urilor per clinică din tabelul de mai jos (mici diferențe de rotunjire între cele două sursă/slide-uri). NU e P1 (pacientul care a și efectuat prima vizită) — acela e digitizat doar per clinică (MED_KPI), fără total de rețea în prezentări.">Pacienți Înregistrați (P0)</InfoTip>} value={noi[ei].toLocaleString('en-US')} sub={kpiSub(noi)} subColor={kpiCol(noi)}/>
-      <KPI label={<InfoTip full="Pacienți Unici — total rețea" calc="Pacienți DISTINCȚI cu ≥1 vizită în lună, la nivel de rețea (tabel New_ratio). Stadiul funnel-ului dintre Vizite și P0: VIZITE ≥ PACIENȚI UNICI ≈ P0 → P1 → P2 → Inactiv. Nu e totuna cu «Vizite» (MED_KPI, un pacient poate avea mai multe vizite/lună) și nici cu P0 (înregistrare în sistem, tabelul per-clinică de mai jos) — vezi tab-ul pentru detalii funnel complet.">Pacienți Unici (lunari)</InfoTip>} value={lunari[ei].toLocaleString('en-US')} sub={kpiSub(lunari)} subColor={kpiCol(lunari)}/>
-    </div>
+    {/* ── Antet Pacienți: volum + pacienți noi + achiziție Meta + valoare/pacient, apoi analiză calculată ── */}
+    {(()=>{
+      const good='#15803D', bad=P.alert;
+      const m26=MONTHS.slice(0,ACT_MO).map((m,k)=>({m, tot:lunari[PATIENTS_OFF+k], noi:noi[PATIENTS_OFF+k]}));
+      const maxT=Math.max(...m26.map(x=>x.tot||0));
+      const uYoy=yoyPct(lunari), nYoy=yoyPct(noi);
+      const avg12=p0Avg12(noi,ei), vsAvg=avg12?Math.round((noi[ei]-avg12)/avg12*100):null;
+      const ytdN=p0YtdPair(noi,ei), nYtdYoy=(ytdN.ytd26&&ytdN.ytd25)?Math.round((ytdN.ytd26-ytdN.ytd25)/ytdN.ytd25*100):null;
+      const ytdL=p0YtdPair(p0SumSeries(LFL),ei), lYtdYoy=(ytdL.ytd26&&ytdL.ytd25)?Math.round((ytdL.ytd26-ytdL.ytd25)/ytdL.ytd25*100):null;
+      const rev=NET.actuals[2026][i], rev25=NET.actuals[2025][i];
+      const rpp=rev&&lunari[ei]?rev/lunari[ei]:null, rpp25=rev25&&lunari[ei-12]?rev25/lunari[ei-12]:null;
+      const rppG=gr(rpp,rpp25);
+      const metaPat=fbLeads!=null&&fbConv!=null?Math.round(fbLeads*fbConv/100):null;
+      const convAvgArr=PATIENTS_FB_CONV_18.filter(v=>v!=null), convAvg=convAvgArr.length?Math.round(convAvgArr.reduce((a,b)=>a+b,0)/convAvgArr.length):null;
+      const arrow=v=>v==null?'—':`${v>=0?'▲':'▼'} ${Math.abs(v)}%`;
+      const vCol=v=>v==null?P.muted:v>=0?good:bad;
+      // contribuția volum vs valoare/pacient la creșterea vânzărilor YoY (descompunere multiplicativă, în puncte de creștere)
+      const volG=uYoy, salesG=gr(rev,rev25);
+      const p0Neg=p0Clinics.filter(c=>LFL.includes(c.code)&&c.ytdYoy!=null&&c.ytdYoy<0), p0Pos=p0Clinics.filter(c=>LFL.includes(c.code)&&c.ytdYoy!=null&&c.ytdYoy>=5); // doar clinici comparabile (TGV/FCS n-au bază 2025)
+      const top2=ch?Math.round(ch.fb+ch.ff):null;
+      const pos=[], watch=[];
+      (uYoy>=0?pos:watch).push({t:`${lunari[ei].toLocaleString('en-US')} pacienți unici · ${arrow(uYoy)} YoY`, d:`${noiRatio[ei]}% noi, ${100-noiRatio[ei]}% recurenți · vânzări ${pct(salesG)} YoY, din care volum de pacienți ${pct(volG)} și valoare/pacient ${pct(rppG)}.`});
+      (nYoy>=0?pos:watch).push({t:`Pacienți noi (P0): ${noi[ei].toLocaleString('en-US')} · ${arrow(nYoy)} YoY`, d:`${vsAvg!=null?`${vsAvg>=0?'+':''}${vsAvg}% față de media ultimelor 12 luni (${avg12})`:''}${nYtdYoy!=null?` · YTD rețea ${nYtdYoy>=0?'+':''}${nYtdYoy}% vs 2025 (inclusiv clinicile noi)`:''}.`});
+      if(lYtdYoy!=null) (lYtdYoy>=0?pos:watch).push({t:`Pacienți noi la clinicile comparabile: ${lYtdYoy>=0?'+':''}${lYtdYoy}% YTD`, d:`${ytdL.ytd26.toLocaleString('en-US')} vs ${ytdL.ytd25.toLocaleString('en-US')} în Ian–${MONTHS[i]} 2025 (${LFL.join(', ')}) — ${lYtdYoy<0?'creșterea de rețea vine din clinicile noi (TGV, FCS), nu din atragere organică':'atragere organică în creștere'}.`});
+      if(rppG!=null) (rppG>=0?pos:watch).push({t:`Venit / pacient unic: ${Math.round(rpp).toLocaleString('en-US')} RON · ${pct(rppG)} YoY`, d:`${MONTHS[i]} 2025: ${Math.round(rpp25).toLocaleString('en-US')} RON — ${rppG>=0?'pacienții cheltuie mai mult pe vizită/lună':'valoarea medie per pacient scade'}.`});
+      if(fbConv!=null&&convAvg!=null) (fbConv>=convAvg?pos:watch).push({t:`Conversie leads Meta ${fbConv}% (medie ${convAvg}%)`, d:`${fbLeads.toLocaleString('en-US')} leads${fbMom!=null?` (${arrow(fbMom)} vs ${MONTHS[i-1]})`:''} → ~${metaPat.toLocaleString('en-US')} pacienți programați.`});
+      if(p0Neg.length) watch.push({t:`${p0Neg.length} clinici cu mai puțini pacienți noi YTD`, d:`${p0Neg.map(c=>`${c.name} ${c.ytdYoy}%`).join(' · ')} — creșterea vânzărilor acolo vine din valoarea/pacient, nu din atragere.`});
+      if(p0Pos.length) pos.push({t:`Atragere în creștere YTD (clinici comparabile)`, d:p0Pos.map(c=>`${c.name} +${c.ytdYoy}%`).join(' · ')+'.'});
+      if(top2!=null&&top2>=90) watch.push({t:`${top2}% din achiziție vine din 2 canale`, d:`FB & Insta ${ch.fb.toFixed(0)}% + Friends & Family ${ch.ff.toFixed(0)}% — dependență mare de Meta și recomandări; celelalte canale ${(100-top2)}%.`});
+      return (<>
+      <div style={{marginBottom:16}}>
+        <div className="net-head">
+          <div className="net-hero" style={{background:`linear-gradient(145deg, ${P.primary} 0%, #5E140F 100%)`,borderRadius:14,padding:'18px 20px',color:P.white,boxShadow:'0 4px 18px rgba(123,28,22,0.22)',display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:0.9,textTransform:'uppercase',color:'rgba(255,255,255,0.7)'}}>
+              <InfoTip full="Pacienți Unici — total rețea" calc="Pacienți DISTINCȚI cu ≥1 vizită în lună, la nivel de rețea (tabel New_ratio). Nu e totuna cu «Vizite» (un pacient poate avea mai multe vizite/lună) și nici cu P0 (înregistrare în sistem).">Pacienți unici · {MONTHS[i]} 2026</InfoTip>
+            </div>
+            <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+              <span style={{fontSize:42,fontWeight:700,lineHeight:1,fontFamily:"'Playfair Display',serif"}}>{lunari[ei].toLocaleString('en-US')}</span>
+              <span style={{fontSize:12,color:'rgba(255,255,255,0.65)'}}>pacienți</span>
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <span style={{background:'rgba(255,255,255,0.14)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{arrow(uYoy)} vs {MONTHS[i]} 2025 · {lunari[ei-12]?.toLocaleString('en-US')}</span>
+              <span style={{background:'rgba(255,255,255,0.14)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>
+                <InfoTip full="Rata de atragere a pacienților noi" calc="P0 (pacienți înregistrați în sistem, suma pe rețea) / Pacienți Unici — tabelul New_ratio din Puls. NU se confundă cu P1 (pacientul care a și efectuat prima vizită).">{noiRatio[ei]}% noi · {100-noiRatio[ei]}% recurenți</InfoTip>
+              </span>
+            </div>
+            <div>
+              <div style={{display:'flex',alignItems:'flex-end',gap:4,height:46}}>
+                {m26.map((x,k)=>(
+                  <div key={x.m} title={`${x.m} 26: ${x.tot?.toLocaleString('en-US')} pacienți · ${x.noi?.toLocaleString('en-US')} noi`} style={{flex:1,height:`${(x.tot||0)/maxT*100}%`,display:'flex',flexDirection:'column',borderRadius:'3px 3px 0 0',overflow:'hidden',opacity:k===i?1:0.6}}>
+                    <div style={{flex:1,background:'rgba(255,255,255,0.35)'}}/>
+                    <div style={{height:`${(x.noi||0)/(x.tot||1)*100}%`,background:P.wheat}}/>
+                  </div>))}
+              </div>
+              <div style={{display:'flex',gap:4,marginTop:4}}>
+                {m26.map((x,k)=><div key={x.m} style={{flex:1,textAlign:'center',fontSize:8.5,color:k===i?'rgba(255,255,255,0.9)':'rgba(255,255,255,0.45)'}}>{x.m}</div>)}
+              </div>
+              <div style={{fontSize:9,color:'rgba(255,255,255,0.55)',marginTop:4,display:'flex',gap:10}}>
+                <span><span style={{display:'inline-block',width:7,height:7,borderRadius:2,background:P.wheat,marginRight:4}}/>noi (P0)</span>
+                <span><span style={{display:'inline-block',width:7,height:7,borderRadius:2,background:'rgba(255,255,255,0.35)',marginRight:4}}/>recurenți</span>
+                <span>sursă: Puls (Monthly brief)</span>
+              </div>
+            </div>
+          </div>
+
+          <HeadTile label={<InfoTip full="Pacienți Înregistrați (P0) — total rețea" calc="Suma P0 (pacienți înregistrați în sistem) pe toată rețeaua, luna curentă — Puls (Monthly brief), tabelul New_ratio. NU e P1 (pacientul care a și efectuat prima vizită).">Pacienți noi (P0)</InfoTip>} value={noi[ei].toLocaleString('en-US')} valueColor={P.primary} caption={<span style={{color:vCol(nYoy),fontWeight:600}}>{arrow(nYoy)} YoY</span>}>
+            {vsAvg!=null&&<div>media 12 luni <b>{avg12?.toLocaleString('en-US')}</b> · luna {vsAvg>=0?'peste':'sub'} medie cu <b style={{color:vCol(vsAvg)}}>{Math.abs(vsAvg)}%</b></div>}
+            {nYtdYoy!=null&&<div style={{color:P.muted,marginTop:3}}>YTD Ian–{MONTHS[i]}: {ytdN.ytd26.toLocaleString('en-US')} · rețea {nYtdYoy>=0?'+':''}{nYtdYoy}%{lYtdYoy!=null&&<span> · clinici comparabile <b style={{color:vCol(lYtdYoy)}}>{lYtdYoy>=0?'+':''}{lYtdYoy}%</b></span>}</div>}
+          </HeadTile>
+
+          <HeadTile label="Achiziție Meta (FB & Insta)" value={fbLeads!=null?fbLeads.toLocaleString('en-US'):'—'} caption="leads">
+            conversie <b>{fbConv!=null?fbConv+'%':'—'}</b> (medie {convAvg}%) → ~<b>{metaPat!=null?metaPat.toLocaleString('en-US'):'—'}</b> pacienți
+            <div style={{display:'flex',height:8,borderRadius:4,overflow:'hidden',gap:2,margin:'7px 0 4px'}} title={`FB & Insta ${ch.fb}% · Friends & Family ${ch.ff}% · ${ch.third.name} ${ch.third.val}% · altele ${ch.alt}%`}>
+              <div style={{width:`${ch.fb}%`,background:P.primary}}/><div style={{width:`${ch.ff}%`,background:P.amber}}/><div style={{flex:1,background:'#D9D2CB'}}/>
+            </div>
+            <div style={{color:P.muted}}>canale: FB & Insta <b style={{color:P.text}}>{ch.fb.toFixed(0)}%</b> · F&F <b style={{color:P.text}}>{ch.ff.toFixed(0)}%</b> · restul {(100-ch.fb-ch.ff).toFixed(0)}%</div>
+          </HeadTile>
+
+          <HeadTile label={<InfoTip full="Venit per pacient unic" calc="Vânzări rețea facturate în lună (tab Rețea) / Pacienți unici cu vizită în lună. Arată câtă valoare aduce în medie fiecare pacient activ; comparat cu aceeași lună din 2025.">Venit / pacient unic</InfoTip>} value={rpp!=null?Math.round(rpp).toLocaleString('en-US'):'—'} caption={<span>RON · <span style={{color:vCol(rppG),fontWeight:600}}>{pct(rppG)} YoY</span></span>}>
+            {MONTHS[i]} 2025: <b>{rpp25!=null?Math.round(rpp25).toLocaleString('en-US'):'—'} RON</b>
+            <div style={{color:P.muted,marginTop:3}}>vânzări {pct(salesG)} YoY = pacienți {pct(volG)} × valoare/pacient {pct(rppG)}</div>
+          </HeadTile>
+        </div>
+      </div>
+      <InsightPanel title="Analiză pacienți" sub={`${MONTHS[i]} 2026 · calculat din date`} pos={pos} watch={watch}/>
+      </>);
+    })()}
 
     <Card style={{marginBottom:16}}>
       <Sec>Evoluție lunară — Pacienți totali vs. Pacienți noi ({PATIENTS_MONTHS_18.length} luni, incl. YoY Ian–{MONTHS[ACT_MO-1]})</Sec>
@@ -2354,7 +2743,7 @@ function PatientsTab() {
                 {(() => { const t = p0ClusterTotal(codes); return (
                   <tr style={{background:'#F3EDEA',borderTop:`2px solid ${P.border}`}}>
                     <td style={{padding:'7px 12px',fontWeight:700,color:P.primary}}>
-                      <InfoTip full="Total = medie lunară pe clinicile din cluster" calc="Nu e sumă, e media aritmetică a P0-ului clinicilor din cluster acea lună (așa e definit «Total» în slide-ul sursă) — comparabilă direct cu media ultimelor 12 luni de mai jos.">Total</InfoTip>
+                      <InfoTip full="Total = medie lunară pe clinicile din cluster" calc="Nu e sumă, e media aritmetică a P0-ului clinicilor din cluster acea lună (așa e definit «Total» în sursă) — comparabilă direct cu media ultimelor 12 luni de mai jos.">Total</InfoTip>
                     </td>
                     <td style={{padding:'7px 8px',textAlign:'right',fontWeight:700,color:P.primary}}>
                       {t.v!=null?t.v.toLocaleString('en-US'):'—'}
@@ -2408,7 +2797,7 @@ function PatientsTab() {
           </div>
         </div>
       );})()}
-      <div style={{fontSize:10,color:P.muted,marginTop:8}}>P0 = pacienți înregistrați în sistem în lună, per clinică. Total (per cluster) și Total rețea = media aritmetică lunară a clinicilor cu dată digitizată acea lună (nu sumă) — aceeași definiție ca «Total»/«Grand Total» din slide-ul sursă, verificată direct pe tabel. Sumă (per cluster) și Sumă rețea = totalul real (nu media) al P0-urilor clinicilor cu dată digitizată acea lună — Suma rețea corespunde (cu mici diferențe de rotunjire) cardului "Pacienți Înregistrați (P0)" de la începutul tab-ului, digitizat direct din New_ratio (sursă mai fiabilă pentru totalul de rețea decât resumarea aici). Medie 12L = media ultimelor 12 luni (inclusiv luna curentă), pentru a vedea dacă luna e peste/sub trend. YTD YoY = suma ultimelor N luni până în luna curentă, N = câte luni sunt disponibile din 2025 (Ian 25 absent din nicio prezentare, deci N ≤ 11) — comparat pe FERESTRE EGALE în ambii ani (ex. Iun 26: compară Feb–Iun 26 cu Feb–Iun 25, nu Ian–Iun 26 cu doar Feb–Iun 25, ca să nu infleze artificial creșterea cu o lună fără corespondent). YoY/YTD YoY indisponibile pentru Târgoviște/Focșani în lunile fără date digitizate în 2025 (clinici mai noi / fereastră insuficientă) și YoY lunar indisponibil pentru toate clinicile în Ianuarie. YoY/YTD YoY pe rândul Total/Sumă al Cluster 2 e inflat artificial (~+138-140%) în lunile Feb26+ — Focșani intră în calcul abia din Feb26, deci compară 3 clinici (Iul 25) cu 4 clinici (Iul 26), nu doar creștere organică. Sursă P0: aceeași ca mai sus.</div>
+      <div style={{fontSize:10,color:P.muted,marginTop:8}}>P0 = pacienți înregistrați în sistem în lună, per clinică. Total (per cluster) și Total rețea = media aritmetică lunară a clinicilor cu date în acea lună (nu sumă) — aceeași definiție ca «Total»/«Grand Total» din sursă. Sumă (per cluster) și Sumă rețea = totalul real (nu media) al P0-urilor clinicilor — corespunde (cu mici diferențe de rotunjire) cardului "Pacienți Înregistrați (P0)" de la începutul tab-ului (tabelul New_ratio). Medie 12L = media ultimelor 12 luni (inclusiv luna curentă), pentru a vedea dacă luna e peste/sub trend. YTD YoY = Ian–luna curentă 2026 vs Ian–aceeași lună 2025 (ferestre egale). YoY/YTD YoY indisponibile pentru Târgoviște/Focșani în lunile fără date în 2025 (clinici mai noi). YoY/YTD YoY pe rândul Total/Sumă al Cluster 2 e inflat de expansiune — Focșani intră în calcul din Feb 26 și Târgoviște din Iul 25, deci nu reflectă creștere organică. Sursă P0: Puls (Monthly brief), serie Ian 25 – {MONTHS[ACT_MO-1]} 26.</div>
     </Card>
 
     <Card style={{marginBottom:16}}>
@@ -2534,7 +2923,7 @@ const IND_TIP = {
   "Productivitate/pacient": {full:"Rata de productivitate / încasări per pacient", calc:"Încasări / Pacienți (vizite)."},
   "Pacienți înregistrați": {full:"Pacienți înregistrați în sistem"},
   "Ture realizate": {full:"Rata de Realizare a turelor medicale", calc:"Ture lucrate / Ture planificate."},
-  "Achizitie pacienti": {full:"Achiziție pacienți", calc:"Pacienți înregistrați / Pacienți (vizite) — valoare digitizată din slide."},
+  "Achizitie pacienti": {full:"Achiziție pacienți", calc:"Pacienți înregistrați / Pacienți (vizite) — valoare preluată din sursă (Puls)."},
   "Retentie Efectiva": {full:"Rata de Retenție Medicală efectivă la P2 (din pacienții noi)", calc:"P2 - pacienți activi / P1 - pacienți noi. P2 efectiv = pacientul a venit confirmat în clinică în lună."},
   "Plan tratament": {full:"Rata de realizare a planurilor de tratament raportata la P1", calc:"Plan de tratament (etapizat) / P1 - pacienți noi. Obiectiv medical: cel mai târziu la P2, toți pacienții să aibă un plan de tratament etapizat prezentat și discutat cu ei."},
   "RX": {full:"Rata de Efectuare a RX la P1", calc:"RX / P1 - pacienți noi. Obiectiv: toți pacienții noi de la P1 să aibă radiografii (cu excepții — copii, cei cu RX deja efectuat la alte clinici etc.)."},
@@ -2543,7 +2932,7 @@ const IND_TIP = {
   "P2 activi potențiali": {full:"P2 - pacienți activi potențiali"},
   "Upsell potențiali": {full:"P2 - upsell potențiali"},
   "Pacienti (vizite)": {full:"Pacienți (vizite)"},
-  "Achiziție pacienți": {full:"Rata de achiziție a pacienților noi", calc:"Pacienți înregistrați / Pacienți (vizite) — valoare digitizată din slide (nu recalcul live, ca să păstreze media Y-1/YTD corectă)."},
+  "Achiziție pacienți": {full:"Rata de achiziție a pacienților noi", calc:"Pacienți înregistrați / Pacienți (vizite) — valoare preluată din sursă — Puls (nu recalcul live, ca să păstreze media Y-1/YTD corectă)."},
   "Anulate/nepr. (rată)": {full:"Anulate / neprezentări (rată)", calc:"Anulate / nepr. / Programări totale."},
   "Reprogramări (din anulate)": {full:"Reprogramări din anulate / neprezentări"},
   "Reprogramari": {calc:"Reprogramări (din anulate) / Anulate / nepr."},
@@ -2594,6 +2983,23 @@ function IndicatorLabel({label,fs,suppress,override}) {
 // Urmează luna selectată în raport (ACT_MO), la fel ca restul tab-urilor — nu are picker propriu.
 // Un tabel per cluster: rândul de agregat (Y-1 AVG / YTD AVG / MTD) urmat de clinicile din cluster —
 // exact structura slide-ului sursă, cu bugetul de citire concentrat într-un singur tabel per cluster.
+// Evidențiere ca în Puls: o valoare e marcată doar dacă abaterea față de referință e MARE —
+// ≥10 pp pentru indicatorii în % sau ≥40% relativ (indicatori în RON / rate mici). Verde = direcția bună,
+// roșu = direcția slabă (invert = mai mic e mai bine, ex. Programări pierdute).
+//  · clinica se compară cu MTD-ul clusterului (doar rânduri-rată/medie — nu și unde MTD e suma clinicilor);
+//  · MTD-ul clusterului se colorează doar dacă se abate în aceeași direcție față de AMBELE medii Y-1 și YTD.
+const DEV_PP = 10, DEV_REL = 0.40;
+const bigDev = (v, ref, isPct, pp) => {
+  if (v==null || ref==null) return 0;
+  const d = v - ref;
+  if (pp!=null) return Math.abs(d) >= pp ? Math.sign(d) : 0;   // prag fix în pp (reguli de consimțământ)
+  const big = (isPct && Math.abs(d) >= DEV_PP) || (ref!==0 && Math.abs(d)/Math.abs(ref) >= DEV_REL);
+  return big ? Math.sign(d) : 0;
+};
+// Reguli speciale (ca în Puls) pentru indicatorii de consimțământ: prag minim absolut sau abatere ±5pp.
+const CONSENT_RULES = {'CNP':{min:100}, 'Email':{min:95}, 'Acord date':{pp:5}, 'CESGS - Anamneza':{pp:5}, 'API':{pp:5}, 'Olograf/Digital':{pp:5}};
+const CONSENT_NOTE = 'CNP sub 100% și Email sub 95% = roșu; Acord date / CESGS / API / Olograf: abatere la ±5pp';
+const DEV_STYLE = { good:{c:'#15803D',bg:'#DCFCE7'}, bad:{c:'#B91C1C',bg:'#FEE2E2'} };
 function MedClusterTable({clusterLabel,clusterNote,color,rows,aggRows,clinicCodes,clinicRows,outliers,compact,hiddenRows,groupToggle,openGroupRows,tipOverrides}) {
   const hasYtd = aggRows.some(r=>r && r[1]!=null);
   const sub = hasYtd ? ['Y-1 AVG','YTD AVG','MTD'] : ['Y-1 AVG','MTD'];
@@ -2634,7 +3040,7 @@ function MedClusterTable({clusterLabel,clusterNote,color,rows,aggRows,clinicCode
               const isPct=pctFlag!==undefined?pctFlag:label.startsWith('%');
               const fmtv = v => v==null ? '—' : isPct ? v+'%' : v.toLocaleString('en-US');
               const agg=aggRows[ri]||[];
-              const out=isPct?outliers?.[ri]:null;
+              const out=outliers?.[ri]||null;
               const inOpenGroup = openGroupRows?.has(ri);
               const rowBg = inOpenGroup ? '#FBF3E4' : (ri%2===0?P.white:'#FAFAFA');
               const toggle = groupToggle?.[ri];
@@ -2656,24 +3062,23 @@ function MedClusterTable({clusterLabel,clusterNote,color,rows,aggRows,clinicCode
                     </button>
                   )}
                 </td>
-                {idx.map((vi,i)=>(
-                  <td key={'a'+i} style={{padding:cellPad,textAlign:'right',fontSize:fs,fontWeight:600,color:P.muted,borderLeft:i===0?`3px solid ${color}22`:'none'}}>{fmtv(agg[vi])}</td>
-                ))}
+                {idx.map((vi,i)=>{
+                  const st = (out && vi===2 && out.mtd) ? DEV_STYLE[out.mtd] : null;
+                  return (
+                  <td key={'a'+i} style={{padding:cellPad,textAlign:'right',fontSize:fs,fontWeight:600,color:P.muted,borderLeft:i===0?`3px solid ${color}22`:'none'}}>
+                    {st ? <span style={{display:'inline-block',padding:'2px 6px',borderRadius:20,fontSize:compact?11:11.5,fontWeight:700,color:st.c,background:st.bg}}>{fmtv(agg[vi])}</span> : fmtv(agg[vi])}
+                  </td>);
+                })}
                 {clinicCodes.map((c,ci)=>{
                   const v=clinicRows[ri]?.[ci];
-                  const isMax = out && v!=null && v===out.max;
-                  const isMin = out && v!=null && v===out.min;
-                  // implicit: mai mare = mai bine (amber=cel mai mare, roșu=cel mai mic)
-                  // invert: mai mare = mai rău (roșu=cel mai mare, verde=cel mai mic)
-                  const maxStyle = out?.invert ? {c:'#B91C1C',bg:'#FEE2E2'} : {c:'#92400E',bg:'#FEF3C7'};
-                  const minStyle = out?.invert ? {c:'#15803D',bg:'#DCFCE7'} : {c:'#B91C1C',bg:'#FEE2E2'};
+                  const st = out && out.cells[ci] ? DEV_STYLE[out.cells[ci]] : null;
                   return (
                     <td key={c} style={{padding:compact?'5px 4px':'5px 7px',textAlign:'right',borderLeft:ci===0?`3px solid ${P.border}`:'none'}}>
                       <span style={{
-                        display:'inline-block',padding:isMax||isMin?'2px 6px':0,borderRadius:20,
-                        fontSize:isMax||isMin?(compact?11:11.5):fs,fontWeight:700,
-                        color:isMax?maxStyle.c:isMin?minStyle.c:P.text,
-                        background:isMax?maxStyle.bg:isMin?minStyle.bg:'transparent',
+                        display:'inline-block',padding:st?'2px 6px':0,borderRadius:20,
+                        fontSize:st?(compact?11:11.5):fs,fontWeight:700,
+                        color:st?st.c:P.text,
+                        background:st?st.bg:'transparent',
                       }}>{fmtv(v)}</span>
                     </td>
                   );
@@ -2707,20 +3112,30 @@ function SectionBanner({title,note}) {
 }
 
 function MedIndicatorSection({title,note,rows,agg,c1codes,c2codes,groups,invertRows,compact,tipOverrides}) {
+  const hasConsentRule = rows.some(r=>CONSENT_RULES[r[0]]);
   const [openGroups,setOpenGroups] = useState(()=>new Set());
-  // Outlier-ii se calculează separat per cluster (nu across ambele) — fiecare tabel își semnalează
-  // propriul cel mai mare/mic, indiferent de valorile celuilalt cluster.
-  const outliersFor = (clinicRows) => rows.map((row,ri)=>{
+  // Evidențiere pe abatere mare (regula Puls, vezi bigDev): fiecare clinică vs MTD-ul propriului cluster;
+  // MTD vs ambele medii Y-1/YTD. Doar rânduri-rată (%) sau medii (F) — rândurile D fără % sunt sume.
+  const outliersFor = (clinicRows, aggRows) => rows.map((row,ri)=>{
     const [label,type,pctFlag]=row;
     const isPct=pctFlag!==undefined?pctFlag:label.startsWith('%');
-    if(!isPct) return null;
-    const vals=(clinicRows[ri]||[]).filter(v=>v!=null);
-    if(vals.length<2) return null;
-    const max=Math.max(...vals), min=Math.min(...vals);
-    return max===min ? null : {max,min,invert:invertRows?.has(ri)};
+    const a=aggRows[ri]||[], ref=a[2], sgn=invertRows?.has(ri)?-1:1;
+    const tag = d => d===0 ? null : (d*sgn>0 ? 'good' : 'bad');
+    const rule = CONSENT_RULES[label];
+    if (rule && rule.min!=null) {
+      const low = v => (v!=null && v<rule.min) ? 'bad' : null;
+      return {cells:(clinicRows[ri]||[]).map(low), mtd:low(ref)};
+    }
+    const pp = rule?.pp;
+    // clinici: doar rânduri-rată (%) sau medii (F) — la rândurile-sumă compararea cu MTD n-are sens
+    const cells = (isPct || type==='F') ? (clinicRows[ri]||[]).map(v=>tag(bigDev(v,ref,isPct,pp))) : [];
+    // MTD: pe orice rând, dacă se abate în aceeași direcție față de ambele medii Y-1 și YTD
+    const dY1=bigDev(ref,a[0],isPct,pp), dYtd=a[1]!=null?bigDev(ref,a[1],isPct,pp):dY1;
+    const mtd = (a[0]!=null && dY1!==0 && dY1===dYtd) ? tag(dY1) : null;
+    return {cells, mtd};
   });
-  const outliersC1 = outliersFor(agg.rowsC1);
-  const outliersC2 = outliersFor(agg.rowsC2);
+  const outliersC1 = outliersFor(agg.rowsC1, agg.c1);
+  const outliersC2 = outliersFor(agg.rowsC2, agg.c2);
   const hiddenRows = new Set();
   const openGroupRows = new Set();
   const groupToggle = {};
@@ -2733,7 +3148,6 @@ function MedIndicatorSection({title,note,rows,agg,c1codes,c2codes,groups,invertR
       onToggle:()=>setOpenGroups(prev=>{ const next=new Set(prev); next.has(g.id)?next.delete(g.id):next.add(g.id); return next; }),
     };
   });
-  const hasInvert = invertRows && invertRows.size>0;
   return (
     <div style={{marginBottom:18}}>
       <SectionBanner title={title} note={note||"Y-1 AVG = medie an trecut · YTD AVG = medie de la începutul anului · MTD = luna curentă"}/>
@@ -2744,13 +3158,11 @@ function MedIndicatorSection({title,note,rows,agg,c1codes,c2codes,groups,invertR
           rows={rows} aggRows={agg.c2} clinicCodes={c2codes} clinicRows={agg.rowsC2} outliers={outliersC2} hiddenRows={hiddenRows} groupToggle={groupToggle} openGroupRows={openGroupRows} compact={compact} tipOverrides={tipOverrides}/>
       </div>
       <div style={{display:'flex',gap:16,flexWrap:'wrap',marginTop:8,padding:'6px 2px'}}>
-        {hasInvert ? <React.Fragment>
-          <span style={{fontSize:9.5,color:P.muted,display:'flex',alignItems:'center',gap:5}}><span style={{padding:'1px 6px',borderRadius:10,background:'#FEE2E2',color:'#B91C1C',fontWeight:800,fontSize:9.5}}>val</span>cea mai mare valoare (nefavorabil)</span>
-          <span style={{fontSize:9.5,color:P.muted,display:'flex',alignItems:'center',gap:5}}><span style={{padding:'1px 6px',borderRadius:10,background:'#DCFCE7',color:'#15803D',fontWeight:800,fontSize:9.5}}>val</span>cea mai mică valoare (favorabil)</span>
-        </React.Fragment> : <React.Fragment>
-          <span style={{fontSize:9.5,color:P.muted,display:'flex',alignItems:'center',gap:5}}><span style={{padding:'1px 6px',borderRadius:10,background:'#FEF3C7',color:'#92400E',fontWeight:800,fontSize:9.5}}>val</span>cea mai mare valoare din rând (în cadrul clusterului)</span>
-          <span style={{fontSize:9.5,color:P.muted,display:'flex',alignItems:'center',gap:5}}><span style={{padding:'1px 6px',borderRadius:10,background:'#FEE2E2',color:'#B91C1C',fontWeight:800,fontSize:9.5}}>val</span>cea mai mică valoare din rând (în cadrul clusterului)</span>
-        </React.Fragment>}
+        <span style={{fontSize:9.5,color:P.muted,display:'flex',alignItems:'center',gap:5}}><span style={{padding:'1px 6px',borderRadius:10,background:DEV_STYLE.good.bg,color:DEV_STYLE.good.c,fontWeight:800,fontSize:9.5}}>val</span>abatere mare în direcția bună</span>
+        <span style={{fontSize:9.5,color:P.muted,display:'flex',alignItems:'center',gap:5}}><span style={{padding:'1px 6px',borderRadius:10,background:DEV_STYLE.bad.bg,color:DEV_STYLE.bad.c,fontWeight:800,fontSize:9.5}}>val</span>abatere mare în direcția slabă</span>
+        <span style={{fontSize:9.5,color:P.muted}} title={`Abatere mare = ≥${DEV_PP} pp la indicatorii în % sau ≥${Math.round(DEV_REL*100)}% relativ`}>pe clinică față de MTD-ul clusterului (nu și unde MTD e suma clinicilor); MTD colorat = abatere față de ambele medii Y-1 și YTD{hasConsentRule?` · ${CONSENT_NOTE}`:''}</span>
+      </div>
+      <div style={{display:'flex',gap:16,flexWrap:'wrap',padding:'0 2px 6px'}}>
         {groups && groups.length>0 && <span style={{fontSize:9.5,color:P.muted,display:'flex',alignItems:'center',gap:5}}><span style={{width:11,height:11,borderRadius:3,background:'#FBF3E4',border:`1px solid ${P.amber}66`,display:'inline-block'}}/>rânduri desfăcute dintr-un grup colapsat</span>}
       </div>
     </div>
@@ -2787,7 +3199,7 @@ function OpsMedTab() {
   if(!m) return (
     <Card>
       <Sec>Indicatori de performanță — Medical</Sec>
-      <div style={{fontSize:12,color:P.muted}}>Date indisponibile pentru {MONTHS_FULL[ACT_MO-1]} 2026 — slide-ul nu a fost încă digitizat pentru această lună.</div>
+      <div style={{fontSize:12,color:P.muted}}>Date indisponibile pentru {MONTHS_FULL[ACT_MO-1]} 2026 — datele nu sunt încă disponibile în Puls pentru această lună.</div>
     </Card>
   );
   const c1codes = m.clinics.filter(c=>C1.includes(c));
@@ -2811,7 +3223,7 @@ function OpsMedTab() {
   // "Pacienti inregistrati in sistem" și "Achizitie pacienti" (idx 6,7) sunt scoase — tot blocul
   // "Rata de achiziție a pacienților noi" a fost mutat în Ops-Sales. "Pacienti (vizite)" (idx4) rămâne —
   // e folosit mai jos în blocul "Productivitate/pacient".
-  const dropIdxs = new Set([6,7]);
+  const dropIdxs = new Set([6,7,11]); // 11 = Plan tratament — ca în Puls, doar la KPI Generaliști
   const dropRows = (arr) => arr.filter((_,i)=>!dropIdxs.has(i));
   const kpiRowsDropped = dropRows(kpiRowsOrdered);
   const kpiAggDropped = {
@@ -2839,12 +3251,6 @@ function OpsMedTab() {
     kpiAggBuild.c1.splice(pos,0,vC1); kpiAggBuild.c2.splice(pos,0,vC2);
     kpiAggBuild.rowsC1.splice(pos,0,rC1); kpiAggBuild.rowsC2.splice(pos,0,rC2);
   };
-
-  let planPos = kpiRows.findIndex(r=>r[0]==="Plan tratament");
-  insertAt(planPos, p1Row, p1ValC1, p1ValC2, p1RowC1, p1RowC2); // P1 (context) înainte de rândul brut
-  planPos += 1; // "Plan tratament" brut, shiftat de inserarea de mai sus
-  insertAt(planPos+1, ["Plan tratament","F",true], rataPlanC1, rataPlanC2, rataPlanR1, rataPlanR2); // ancora
-  const kpiPlanGroup = {id:'kpiPlan', hideIndices:[planPos-1,planPos], anchorIndex:planPos+1}; // P1 + Plan tratament (brut) → rata de realizare (vs P1)
 
   let rxPos = kpiRows.findIndex(r=>r[0]==="RX");
   insertAt(rxPos, p1Row, p1ValC1, p1ValC2, p1RowC1, p1RowC2);
@@ -2932,17 +3338,21 @@ function OpsMedTab() {
   const genRxGroup = {id:'genRx', hideIndices:[genRxPos-1,genRxPos], anchorIndex:genRxPos+1}; // P1 + RX (brut) → rata de efectuare RX (vs P1)
 
   return <div>
-    <div style={{marginBottom:16,background:`linear-gradient(135deg,#FFFFFF 0%,#FBF6F4 100%)`,border:`1px solid ${P.border}`,borderLeft:`3px solid ${P.primary}`,borderRadius:10,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-      <div>
-        <div style={{fontSize:14,fontWeight:700,color:P.primary,fontFamily:"'Playfair Display',serif"}}>Indicatori de performanță — Medical</div>
-        <div style={{fontSize:10.5,color:P.muted,marginTop:2}}>{m.week} · {MONTHS_FULL[ACT_MO-1]} 2026 · sursă: slide lunar "Indicatori de performanță - Medical"</div>
-      </div>
-      <span style={{background:P.amber,color:P.white,fontSize:10,fontWeight:700,padding:'4px 10px',borderRadius:20,letterSpacing:0.4}}>{m.clinics.length} clinici active</span>
-    </div>
-    <MedIndicatorSection title="KPI Clinică" rows={kpiRowsExt} agg={kpiAggExt} c1codes={c1codes} c2codes={c2codes} groups={[kpiTureGroup,kpiProdPacientGroup,kpiRetentieGroup,kpiPlanGroup,kpiRxGroup]}/>
+    <MedIndicatorSection title="KPI Clinică" note={`${m.week} · ${MONTHS_FULL[ACT_MO-1]} 2026 · ${m.clinics.length} clinici active · sursă: Puls (Monthly brief) · Y-1 AVG = medie an trecut · YTD AVG = medie de la începutul anului · MTD = luna curentă`} rows={kpiRowsExt} agg={kpiAggExt} c1codes={c1codes} c2codes={c2codes} groups={[kpiTureGroup,kpiProdPacientGroup,kpiRetentieGroup,kpiRxGroup]}/>
     <MedIndicatorSection title="KPI Generaliști" rows={genRows} agg={genAggBuild} c1codes={c1codes} c2codes={c2codes} groups={[genTureGroup,genProdPacientGroup,genRealizataGroup,genPlanGroup,genRxGroup]}
       tipOverrides={GEN_TIP_OVERRIDES}/>
     <GenPotentialaNote rows={genPotRows} agg={genPotAgg} c1codes={c1codes} c2codes={c2codes} group={genPotGroup}/>
+    {(()=>{ // Consimțământ & Date Pacient (ca în Puls): API, Olograf/Digital din Sales & OPS + Plan tratament (KPI Clinică) / P1
+      const ops = OPS_KPI[ACT_MO];
+      const hasOps = ops && ops.clinics.join()===m.clinics.join() && (ops.agg.c1.slice(23).some(r=>r!=null)||ops.agg.c2.slice(23).some(r=>r!=null));
+      const rows=[...(hasOps?OPS_ROWS.slice(23,25):[]), ["Plan tratament","F",true]];
+      const agg={
+        c1:[...(hasOps?ops.agg.c1.slice(23,25):[]), rataPlanC1], c2:[...(hasOps?ops.agg.c2.slice(23,25):[]), rataPlanC2],
+        rowsC1:[...(hasOps?ops.rowsC1.slice(23,25):[]), rataPlanR1], rowsC2:[...(hasOps?ops.rowsC2.slice(23,25):[]), rataPlanR2],
+      };
+      return <MedIndicatorSection title="Consimțământ &amp; Date Pacient" rows={rows} agg={agg} c1codes={c1codes} c2codes={c2codes}
+        note={`${hasOps?'API și Olograf/Digital (din Sales & OPS) · ':''}Plan tratament = planuri de tratament etapizate / P1 · Y-1 AVG = medie an trecut · YTD AVG = medie de la începutul anului · MTD = luna curentă`}/>;
+    })()}
   </div>;
 }
 
@@ -2974,9 +3384,9 @@ function FunnelSection({m,c1codes,c2codes}) {
   const funnelGroup = {id:'funnel', hideIndices:rows.slice(0,pctRowIdx).map((_,i)=>i), anchorIndex:pctRowIdx};
 
   return (
-    <MedIndicatorSection title="Funnel Programări · Pierdute" note="Programări → Anulate → Reprogramate → Pierdute"
+    <MedIndicatorSection title="Funnel Programări · Pierdute" note={`Programări → Anulate → Reprogramate → Pierdute · ${m.week} · ${MONTHS_FULL[ACT_MO-1]} 2026 · ${m.clinics.length} clinici active · sursă: Puls (Monthly brief)`}
       rows={rows} agg={agg} c1codes={c1codes} c2codes={c2codes}
-      groups={[funnelGroup]} invertRows={new Set([pctRowIdx])} compact/>
+      groups={[funnelGroup]} invertRows={new Set([3,pctRowIdx])} compact/>
   );
 }
 
@@ -2985,7 +3395,7 @@ function OpsSalesTab() {
   if(!m) return (
     <Card>
       <Sec>Indicatori de performanță — Sales &amp; OPS</Sec>
-      <div style={{fontSize:12,color:P.muted}}>Date indisponibile pentru {MONTHS_FULL[ACT_MO-1]} 2026 — slide-ul nu a fost încă digitizat pentru această lună.</div>
+      <div style={{fontSize:12,color:P.muted}}>Date indisponibile pentru {MONTHS_FULL[ACT_MO-1]} 2026 — datele nu sunt încă disponibile în Puls pentru această lună.</div>
     </Card>
   );
   const c1codes = m.clinics.filter(c=>C1.includes(c));
@@ -3048,16 +3458,9 @@ function OpsSalesTab() {
   const creditAgg = {c1:m.agg.c1.slice(6,7),c2:m.agg.c2.slice(6,7),rowsC1:m.rowsC1.slice(6,7),rowsC2:m.rowsC2.slice(6,7)};
 
   return <div>
-    <div style={{marginBottom:16,background:`linear-gradient(135deg,#FFFFFF 0%,#FBF6F4 100%)`,border:`1px solid ${P.border}`,borderLeft:`3px solid ${P.primary}`,borderRadius:10,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-      <div>
-        <div style={{fontSize:14,fontWeight:700,color:P.primary,fontFamily:"'Playfair Display',serif"}}>Indicatori de performanță — Sales &amp; OPS</div>
-        <div style={{fontSize:10.5,color:P.muted,marginTop:2}}>{m.week} · {MONTHS_FULL[ACT_MO-1]} 2026 · sursă: slide lunar "Indicatori de performanță - Sales &amp; OPS"</div>
-      </div>
-      <span style={{background:P.amber,color:P.white,fontSize:10,fontWeight:700,padding:'4px 10px',borderRadius:20,letterSpacing:0.4}}>{m.clinics.length} clinici active</span>
-    </div>
     <FunnelSection m={m} c1codes={c1codes} c2codes={c2codes}/>
     <MedIndicatorSection title="Achiziție și Retenție Pacienți" rows={mainRows} agg={mainAgg} c1codes={c1codes} c2codes={c2codes} groups={patientGroups}/>
-    {hasConsent && <MedIndicatorSection title="Consimțământ &amp; Date Pacient" rows={OPS_ROWS.slice(19)} agg={{c1:m.agg.c1.slice(19),c2:m.agg.c2.slice(19),rowsC1:m.rowsC1.slice(19),rowsC2:m.rowsC2.slice(19)}} c1codes={c1codes} c2codes={c2codes}/>}
+    {hasConsent && <MedIndicatorSection title="Consimțământ &amp; Date Pacient" rows={OPS_ROWS.slice(19,23)} agg={{c1:m.agg.c1.slice(19,23),c2:m.agg.c2.slice(19,23),rowsC1:m.rowsC1.slice(19,23),rowsC2:m.rowsC2.slice(19,23)}} c1codes={c1codes} c2codes={c2codes}/>}
     <MedIndicatorSection title="Credite" rows={creditRows} agg={creditAgg} c1codes={c1codes} c2codes={c2codes}/>
   </div>;
 }
@@ -3114,34 +3517,112 @@ function ClusterTab({num,period}) {
   });
 
   return <div>
-    {/* ── Cluster Banner ── */}
-    <div style={{background:`linear-gradient(135deg, ${clColor}12 0%, #ffffff 65%)`,border:`1px solid ${clColor}44`,borderRadius:14,padding:'20px 26px',display:'flex',alignItems:'center',gap:22,marginBottom:18,boxShadow:'0 1px 6px rgba(0,0,0,0.05)'}}>
-      <div style={{width:54,height:54,borderRadius:13,background:`${clColor}20`,border:`2px solid ${clColor}55`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,flexShrink:0,fontWeight:700,color:clColor}}>
-        {num===1?'①':'②'}
-      </div>
-      <div style={{flex:1}}>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:clColor,lineHeight:1}}>{label}</div>
-        <div style={{fontSize:11,color:P.muted,marginTop:5,letterSpacing:0.2}}>{note}</div>
-      </div>
-      <div style={{textAlign:'right',borderLeft:`1px solid ${P.border}`,paddingLeft:22}}>
-        <div style={{fontSize:10,fontWeight:600,color:P.muted,textTransform:'uppercase',letterSpacing:0.8}}>Regional Manager</div>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:700,color:clColor,marginTop:3}}>{manager}</div>
-        <div style={{fontSize:10,color:P.muted,marginTop:2}}>{managerTitle}</div>
-      </div>
-      <div style={{textAlign:'center',background:`${clColor}14`,border:`1px solid ${clColor}40`,borderRadius:11,padding:'10px 20px',minWidth:115,flexShrink:0}}>
-        <div style={{fontSize:10,fontWeight:600,color:P.muted,textTransform:'uppercase',letterSpacing:0.7}}>Revenue</div>
-        <div style={{fontFamily:"'Playfair Display',serif",fontSize:21,fontWeight:700,color:clColor,marginTop:3,lineHeight:1}}>{fmt(t26)}</div>
-        <div style={{fontSize:11,fontWeight:600,color:pcol(gr(t26,t25)),marginTop:4}}>{pct(gr(t26,t25))} YoY</div>
-      </div>
-    </div>
+    {/* ── Antet cluster: cifra principală + 3 indicatori explicați + analiză calculată din date ── */}
+    {(()=>{
+      const mi=ACT_MO-1, isM=period==='Month', good='#15803D', bad=P.alert;
+      const heroBg = num===1 ? `linear-gradient(145deg, ${P.primary} 0%, #5E140F 100%)` : 'linear-gradient(145deg, #7C8431 0%, #555B1F 100%)';
+      const kRON=v=>(v>=0?'+':'−')+fmt(Math.abs(v));
+      const mA=MONTHS.slice(0,ACT_MO).map((m,k)=>codes.reduce((x,c)=>x+(CD[c].actuals[2026]?.[k]||0),0));
+      const mB=MONTHS.slice(0,ACT_MO).map((m,k)=>codes.reduce((x,c)=>x+(CD[c].budget[2026]?.[k]||0),0));
+      const m25=MONTHS.slice(0,ACT_MO).map((m,k)=>codes.reduce((x,c)=>x+(CD[c].actuals[2025]?.[k]||0),0));
+      const sMax=Math.max(...mA,...mB);
+      const yoy=gr(t26,t25), vb=tb>0?gr(t26,tb):null;
+      const lflC=codes.filter(c=>LFL.includes(c)), newC=codes.filter(c=>!LFL.includes(c));
+      const l26=lflC.reduce((x,c)=>x+(val(CD[c],2026,period)||0),0), l25=lflC.reduce((x,c)=>x+(val(CD[c],2025,period)||0),0);
+      const dNet=t26-t25, dL=l26-l25, dN=dNet-dL, lflG=gr(l26,l25);
+      const bMonths=MONTHS.slice(0,ACT_MO).map((m,k)=>({m,d:mA[k]-mB[k]}));
+      const bBelow=bMonths.filter(x=>x.d<0).map(x=>x.m);
+      const share=rows.map((r,k)=>({...r,sh:t26?r.v26/t26*100:0,col:SC[codes.indexOf(r.code)]})).sort((x,y)=>y.v26-x.v26);
+      const netShare=netv(period)?t26/netv(period)*100:null;
+      // analiză
+      const pos=[], watch=[];
+      (yoy>=0?pos:watch).push({t:`Cluster ${pct(yoy)} YoY (${kRON(dNet)} RON)`, d: newC.length?`Clinici comparabile (${lflC.join(', ')}) ${kRON(dL)} (${pct(lflG)}) · clinici noi (${newC.join(', ')}) ${kRON(dN)}.`:`Toate clinicile sunt comparabile — creștere organică. ${netShare!=null?`Cluster-ul reprezintă ${netShare.toFixed(0)}% din vânzările rețelei.`:''}`});
+      if(vb!=null) (vb>=0?pos:watch).push({t:`${pct(vb)} față de buget${isM?` în ${MONTHS[mi]}`:''} (${kRON(t26-tb)} RON)`, d:`Peste buget în ${ACT_MO-bBelow.length} din ${ACT_MO} luni${bBelow.length?` (sub buget: ${bBelow.join(', ')})`:''}.`});
+      rows.filter(r=>r.vsBgt!=null&&r.vsBgt>=10).forEach(r=>pos.push({t:`${r.name}: ${pct(r.vsBgt)} peste buget`, d:`${fmt(r.v26)} vs buget ${fmt(r.bv)} · ${r.yoy!=null&&r.v25?`${pct(r.yoy)} YoY`:'fără bază YoY'}.`}));
+      rows.filter(r=>r.vsBgt!=null&&r.vsBgt<0).forEach(r=>watch.push({t:`${r.name}: ${pct(r.vsBgt)} sub buget`, d:`${kRON(r.v26-r.bv)} RON (${fmt(r.v26)} vs ${fmt(r.bv)}) · ${r.yoy!=null&&r.v25&&LFL.includes(r.code)?`${pct(r.yoy)} YoY`:'clinică nouă, fără bază YoY comparabilă'}.`}));
+      rows.filter(r=>LFL.includes(r.code)&&r.yoy!=null&&r.yoy<5&&!(r.vsBgt<0)).forEach(r=>watch.push({t:`${r.name}: creștere lentă ${pct(r.yoy)} YoY`, d:`${fmt(r.v26)} vs ${fmt(r.v25)} în aceeași perioadă 2025.`}));
+      if(isM) codes.forEach(c=>{ const a25=CD[c].actuals[2025]; if(!a25||mi<1||!a25[mi]||!a25[mi-1]) return; const y=gr(CD[c].actuals[2026][mi],a25[mi]), dip=gr(a25[mi],a25[mi-1]); if(y>=25&&dip<=-20) watch.push({t:`${CD[c].name}: efect de bază în ${MONTHS[mi]}`, d:`${pct(y)} YoY, dar ${MONTHS[mi]} 25 a scăzut ${pct(dip)} față de ${MONTHS[mi-1]} 25 — nu e accelerare reală.`}); });
+      const p0Neg=p0Ytd.filter(x=>LFL.includes(x.code)&&x.yoy!=null&&x.yoy<0);
+      if(p0Neg.length) watch.push({t:`Pacienți noi YTD în scădere: ${p0Neg.map(x=>x.name).join(', ')}`, d:`${p0Neg.map(x=>`${x.name} ${x.yoy}%`).join(' · ')} — creșterea vânzărilor vine din valoarea/pacient, nu din atragere.`});
+      return (<>
+      <div style={{marginBottom:16}}>
+        <div className="net-head">
+          <div className="net-hero" style={{background:heroBg,borderRadius:14,padding:'18px 20px',color:P.white,boxShadow:`0 4px 18px ${num===1?'rgba(123,28,22,0.22)':'rgba(85,91,31,0.25)'}`,display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{display:'flex',justifyContent:'space-between',gap:10,alignItems:'flex-start'}}>
+              <div>
+                <div style={{fontSize:10,fontWeight:700,letterSpacing:0.9,textTransform:'uppercase',color:'rgba(255,255,255,0.7)'}}>Cluster {num} · {pLabel(period)}</div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:700,marginTop:3}}>{num===1?'Zona de Sud':'București + Zona Centru'}</div>
+              </div>
+              <div style={{textAlign:'right',fontSize:10,color:'rgba(255,255,255,0.75)',lineHeight:1.35}}>
+                <div style={{textTransform:'uppercase',letterSpacing:0.7,fontSize:9,color:'rgba(255,255,255,0.55)'}}>Regional Manager</div>
+                <div style={{fontWeight:700,fontSize:12,color:P.white}}>{manager}</div>
+              </div>
+            </div>
+            <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+              <span style={{fontSize:42,fontWeight:700,lineHeight:1,fontFamily:"'Playfair Display',serif"}}>{fmt(t26)}</span>
+              <span style={{fontSize:12,color:'rgba(255,255,255,0.65)'}}>RON{netShare!=null?` · ${netShare.toFixed(0)}% din rețea`:''}</span>
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <span style={{background:'rgba(255,255,255,0.16)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{pct(yoy)} vs {isM?`${MONTHS[mi]} 2025`:'2025'} · {fmt(t25)}</span>
+              {vb!=null&&<span style={{background:vb>=0?'rgba(255,255,255,0.16)':'rgba(217,48,37,0.4)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{kRON(t26-tb)} vs buget ({pct(vb)})</span>}
+            </div>
+            <div>
+              <div style={{display:'flex',alignItems:'flex-end',gap:4,height:46}}>
+                {mA.map((v,k)=>{ const on=isM?k===mi:true; return (
+                  <div key={k} title={`${MONTHS[k]} 26: ${fmt(v)} · buget ${fmt(mB[k])} (${pct(gr(v,mB[k]))}) · YoY ${pct(gr(v,m25[k]))}`} style={{flex:1,position:'relative',height:'100%',display:'flex',alignItems:'flex-end'}}>
+                    <div style={{width:'100%',height:`${v/sMax*100}%`,background:on?P.wheat:'rgba(255,255,255,0.28)',borderRadius:'3px 3px 0 0'}}/>
+                    {mB[k]>0&&<div style={{position:'absolute',left:-1,right:-1,bottom:mB[k]/sMax*46-1,height:2,background:v>=mB[k]?'#D9F99D':'#FF8A80',borderRadius:1}}/>}
+                  </div>); })}
+              </div>
+              <div style={{display:'flex',gap:4,marginTop:4}}>
+                {MONTHS.slice(0,ACT_MO).map((m,k)=><div key={m} style={{flex:1,textAlign:'center',fontSize:8.5,color:(isM?k===mi:true)?'rgba(255,255,255,0.85)':'rgba(255,255,255,0.45)'}}>{m}</div>)}
+              </div>
+              <div style={{fontSize:9,color:'rgba(255,255,255,0.6)',marginTop:4}}>bară = vânzări 2026 · linie = buget (verde peste, roșu sub)</div>
+            </div>
+          </div>
 
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(138px,1fr))',gap:12,marginBottom:16}}>
-      <KPI hi label={`Cluster ${num} Total`} value={fmt(t26)} sub={pLabel(period)}/>
-      <KPI label="YoY vs 2024" value={pct0(gr(t26,t24))} subColor={pcol(gr(t26,t24))} sub={`2024: ${fmt(t24)}`}/>
-      <KPI label="YoY vs 2025" value={pct0(gr(t26,t25))} subColor={pcol(gr(t26,t25))} sub={`2025: ${fmt(t25)}`}/>
-      {tb>0&&<KPI label="vs Budget" value={pct(gr(t26,tb))} subColor={pcol(gr(t26,tb))} sub={`Budget: ${fmt(tb)}`}/>}
-      {tb>0&&<KPI label="Δ Actual vs Buget" value={(t26-tb>=0?'+':'')+fmt(t26-tb)} subColor={t26-tb>=0?'#15803D':P.alert} sub="RON" delta={t26-tb>=0}/>}
-    </div>
+          <HeadTile label="Creștere YoY" value={pct0(yoy)} valueColor={yoy>=0?good:bad} caption={`vs 2024: ${pct0(gr(t26,t24))}`}>
+            {newC.length ? <>
+              <div style={{display:'flex',height:8,borderRadius:4,overflow:'hidden',gap:2,margin:'2px 0 6px'}}>
+                <div style={{width:`${dNet?Math.max(0,Math.min(1,dL/dNet))*100:0}%`,background:P.primary}}/><div style={{flex:1,background:P.wheat}}/>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',gap:6}}>
+                <span><span style={{display:'inline-block',width:7,height:7,borderRadius:2,background:P.primary,marginRight:4}}/>comparabile <b>{kRON(dL)}</b></span>
+                <span><span style={{display:'inline-block',width:7,height:7,borderRadius:2,background:P.wheat,marginRight:4}}/>noi <b>{kRON(dN)}</b></span>
+              </div>
+              <div style={{color:P.muted,marginTop:3}}>LFL ({lflC.join(', ')}) <b style={{color:pcol(lflG)}}>{pct(lflG)}</b></div>
+            </> : <>
+              <b>{kRON(dNet)} RON</b> vs {fmt(t25)} în aceeași perioadă 2025
+              <div style={{color:P.muted,marginTop:3}}>toate cele {codes.length} clinici sunt comparabile (LFL)</div>
+            </>}
+          </HeadTile>
+
+          <HeadTile label="Contribuție pe clinici" value={share[0]?share[0].name:'—'} valueColor={P.primary} caption={share[0]?`${share[0].sh.toFixed(0)}% din cluster`:''}>
+            <div style={{display:'flex',flexDirection:'column',gap:4}}>
+              {share.map(r=>(
+                <div key={r.code} style={{display:'flex',alignItems:'center',gap:6}} title={`${r.name}: ${fmt(r.v26)} · ${r.sh.toFixed(1)}% · YoY ${pct(r.yoy)}`}>
+                  <span style={{width:62,flexShrink:0,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{r.name}</span>
+                  <div style={{flex:1,height:6,background:'#F1ECE6',borderRadius:3}}><div style={{width:`${r.sh/share[0].sh*100}%`,height:'100%',background:r.col,borderRadius:3}}/></div>
+                  <b style={{width:30,textAlign:'right'}}>{r.sh.toFixed(0)}%</b>
+                  <span style={{width:44,textAlign:'right',color:r.v25&&LFL.includes(r.code)?pcol(r.yoy):P.muted,fontSize:10}}>{r.v25&&LFL.includes(r.code)?pct0(r.yoy):'nou'}</span>
+                </div>))}
+            </div>
+          </HeadTile>
+
+          <HeadTile label="Față de buget" value={vb!=null?pct(vb):'—'} valueColor={vb==null?P.muted:vb>=0?good:bad} caption={pLabel(period)}>
+            {vb!=null ? <>
+              <b>{kRON(t26-tb)} RON</b> · buget {fmt(tb)}
+              <div style={{display:'flex',gap:3,margin:'7px 0 4px'}}>
+                {bMonths.map((x,k)=><div key={x.m} title={`${x.m}: ${kRON(x.d)} vs buget`} style={{flex:1,height:14,borderRadius:3,background:x.d>=0?'#DCFCE7':'#FEE2E2',border:`1px solid ${x.d>=0?'#86EFAC':'#FCA5A5'}`,outline:isM&&k===mi?`2px solid ${P.primary}`:'none',outlineOffset:1}}/>)}
+              </div>
+              <div style={{color:P.muted}}>peste buget în <b style={{color:P.text}}>{ACT_MO-bBelow.length} din {ACT_MO}</b> luni{bBelow.length?` · sub: ${bBelow.join(', ')}`:''}</div>
+            </> : 'Fără buget pentru perioadă.'}
+          </HeadTile>
+        </div>
+      </div>
+      <InsightPanel title={`Analiză Cluster ${num}`} sub={`${pLabel(period)} · calculat din date`} pos={pos} watch={watch}/>
+      </>);
+    })()}
 
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
       <Card>
@@ -3178,7 +3659,7 @@ function ClusterTab({num,period}) {
 
     <Card style={{marginBottom:16}}>
       <Sec>Performance per Clinică — {pLabel(period)}</Sec>
-      <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+      <div style={{overflowX:'auto'}}><table style={{width:'100%',minWidth:520,borderCollapse:'collapse',fontSize:12}}>
         <thead>
           <tr style={{borderBottom:`2px solid ${P.primary}`}}>
             {['Clinică','2024','2025','2026 Actual','YoY 26/25','Budget 2026','vs Budget'].map((h,i)=>(
@@ -3212,7 +3693,7 @@ function ClusterTab({num,period}) {
             })()}
           </tr>
         </tbody>
-      </table>
+      </table></div>
     </Card>
 
     <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:14}}>
@@ -3310,6 +3791,8 @@ function ClinicTab({code,period}) {
   const p0Yoy = (p0YtdEq.ytd26!=null&&p0YtdEq.ytd25!=null&&p0YtdEq.ytd25>=10) ? Math.round((p0YtdEq.ytd26-p0YtdEq.ytd25)/p0YtdEq.ytd25*100) : null;
 
   return <div>
+    {BUDGET_FLAGS[code]&&<div style={{marginBottom:12}}><Pill type="amber"><b>Buget de confirmat:</b> {BUDGET_FLAGS[code]}</Pill></div>}
+    {v26==null ? <>{/* clinică fără vânzări încă — antetul simplu */}
     <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
       <div style={{background:P.primary,color:P.white,fontWeight:800,fontSize:14,borderRadius:8,padding:'7px 14px'}}>{c.code}</div>
       <div>
@@ -3334,6 +3817,121 @@ function ClinicTab({code,period}) {
       {bv&&<KPI label="vs Budget" value={pct(vb)} subColor={pcol(vb)} sub={`Budget: ${fmt(bv)}`}/>}
       {bv&&v26!=null&&<KPI label="Δ Actual vs Budget" value={(v26-bv>=0?'+':'')+fmt(v26-bv)} subColor={v26-bv>=0?'#15803D':P.alert} sub="RON" delta={v26-bv>=0}/>}
     </div>
+    </> : (()=>{
+      const mi=ACT_MO-1, isM=period==='Month', good='#15803D', bad=P.alert;
+      const kRON=v=>(v>=0?'+':'−')+fmt(Math.abs(v));
+      const a26=c.actuals[2026]||[], a25=c.actuals[2025]||[], b26=c.budget[2026]||[];
+      const mA=MONTHS.slice(0,ACT_MO).map((m,k)=>a26[k]), mB=MONTHS.slice(0,ACT_MO).map((m,k)=>b26[k]||0);
+      const sMax=Math.max(...mA.map(v=>v||0),...mB);
+      const isLFL=LFL.includes(code);
+      const p25=a25.slice(0,ACT_MO), cmp25 = isM ? a25[mi]!=null : (p25.length===ACT_MO&&p25.every(x=>x!=null));
+      const yoyOk = isLFL && cmp25 && v25;
+      const clCodes=c.cluster===1?C1:C2;
+      const clTot=clCodes.reduce((x,k)=>x+(val(CD[k],2026,period)||0),0);
+      const shCl=clTot?v26/clTot*100:null, shNet=netv(period)?v26/netv(period)*100:null;
+      const bMonths=MONTHS.slice(0,ACT_MO).map((m,k)=>({m,d:(a26[k]||0)-(b26[k]||0),has:a26[k]!=null&&b26[k]>0})).filter(x=>x.has);
+      const bBelow=bMonths.filter(x=>x.d<0).map(x=>x.m);
+      const vbYtd=gr(val(c,2026,'YTD'),bval(c,2026,'YTD'));
+      const dip = (mi>=1&&a25[mi]&&a25[mi-1]) ? gr(a25[mi],a25[mi-1]) : null;
+      const baseFx = isM && yoyOk && yoy>=25 && dip!=null && dip<=-20;
+      // pacienți & calitate (luna selectată)
+      const ei=PATIENTS_OFF+mi;
+      const p0Now=p0Arr18?.[ei];
+      const fbN=FEEDBACK_CLINICS_NO_18[code]?.[ei], fbNeg=FEEDBACK_CLINICS_NEG_18[code]?.[ei];
+      const med=MED_KPI[ACT_MO], mk=med?med.clinics.indexOf(code):-1;
+      const visits=mk>=0?med.kpi[4]?.[mk]:null, prodPac=mk>=0?med.kpi[5]?.[mk]:null;
+      const fbRate=(fbN!=null&&visits)?Math.round(fbN/visits*1000)/10:null;
+      // indicatori operaționali cu abatere mare vs MTD-ul clusterului (regula Puls — vezi bigDev)
+      const opsFlags=[];
+      const ops=OPS_KPI[ACT_MO], clKey=c.cluster===1?'c1':'c2';
+      const flag=(name,v,ref,isPct,invert,fmtv)=>{ const d=bigDev(v,ref,isPct); if(!d) return; opsFlags.push({name,v,ref,good:(d*(invert?-1:1))>0,fmtv}); };
+      const pctF=v=>v+'%', numF=v=>Math.round(v).toLocaleString('en-US');
+      if(ops){ const cl=ops.clinics.filter(x=>clCodes.includes(x)), ci=cl.indexOf(code), R=ops[c.cluster===1?'rowsC1':'rowsC2']||[], A=ops.agg[clKey]||[];
+        if(ci>=0&&R.length&&A.length){
+          const lost=(r)=>{ const t=r[0],an=r[2],rp=r[4]; return (t&&an!=null&&rp!=null)?Math.round((an-rp)/t*100):null; };
+          flag('Programări pierdute', lost(R.map(r=>r?.[ci])), lost(A.map(r=>r?.[2])), true, true, pctF);
+          [[15,'Conversie leads'],[12,'Retenție recall'],[18,'Retenție Birthday']].forEach(([ri,n])=>flag(n,R[ri]?.[ci],A[ri]?.[2],true,false,pctF));
+        } }
+      if(med&&mk>=0){ const A=med.aggKpi[clKey]||[], K=(r)=>med.kpi[r]?.[mk], G=(r)=>A[r]?.[2]; const rate=(num,den)=>(num!=null&&den)?Math.round(num/den*100):null;
+        flag('Ture realizate',K(2),G(2),true,false,pctF);
+        flag('Productivitate/tură',K(3),G(3),false,false,numF);
+        flag('Productivitate/pacient',K(5),G(5),false,false,numF);
+        flag('Retenție efectivă',K(10),G(10),true,false,pctF);
+        flag('RX (vs P1)',rate(K(13),K(8)),rate(G(13),G(8)),true,false,pctF);
+      }
+      const pos=[], watch=[];
+      if(yoyOk) ((yoy>=5&&!baseFx)?pos:watch).push({t:`${pct(yoy)} YoY (${kRON(v26-v25)} RON)`, d: baseFx?`Efect de bază: ${MONTHS[mi]} 25 a scăzut ${pct(dip)} față de ${MONTHS[mi-1]} 25 — nu e accelerare reală; YTD: ${pct(gr(val(c,2026,'YTD'),val(c,2025,'YTD')))}.`:`${fmt(v26)} vs ${fmt(v25)} în aceeași perioadă 2025${yoy<5?' — creștere lentă':''}.`});
+      else pos.push({t:`Clinică nouă — fără bază YoY comparabilă`, d:`${fmt(v26)} RON în ${pLabel(period)} · ${shCl!=null?`${shCl.toFixed(0)}% din Cluster ${c.cluster}`:''}.`});
+      if(bv) (vb>=0?pos:watch).push({t:`${pct(vb)} față de buget${isM?` în ${MONTHS[mi]}`:''} (${kRON(v26-bv)} RON)`, d:`${isM?`YTD ${pct(vbYtd)} · `:''}peste buget în ${bMonths.length-bBelow.length} din ${bMonths.length} luni${bBelow.length?` (sub buget: ${bBelow.join(', ')})`:''}.`});
+      if(isM&&bv&&vbYtd!=null&&vbYtd<0) watch.push({t:`YTD sub buget: ${pct(vbYtd)}`, d:`${kRON(val(c,2026,'YTD')-bval(c,2026,'YTD'))} RON în Ian–${MONTHS[mi]} (${fmt(val(c,2026,'YTD'))} vs buget ${fmt(bval(c,2026,'YTD'))}) — luna curentă nu recuperează încă decalajul.`});
+      if(p0Yoy!=null&&isLFL) (p0Yoy>=0?pos:watch).push({t:`Pacienți noi YTD ${p0Yoy>=0?'+':''}${p0Yoy}% vs 2025`, d:`${p0Ytd26?.toLocaleString('en-US')} înregistrați Ian–${MONTHS[mi]}${p0Yoy<0&&yoyOk&&yoy>0?' — vânzările cresc din valoarea/pacient, nu din atragere':''}.`});
+      const og=opsFlags.filter(x=>x.good), ob=opsFlags.filter(x=>!x.good);
+      if(og.length) pos.push({t:`Operațional peste cluster: ${og.map(x=>x.name).join(', ')}`, d:og.map(x=>`${x.name} ${x.fmtv(x.v)} vs ${x.fmtv(x.ref)} cluster`).join(' · ')+'.'});
+      if(ob.length) watch.push({t:`Operațional sub cluster: ${ob.map(x=>x.name).join(', ')}`, d:ob.map(x=>`${x.name} ${x.fmtv(x.v)} vs ${x.fmtv(x.ref)} cluster`).join(' · ')+' — detalii în Ops-Sales / Ops-Med.'});
+      if(fbN!=null&&fbNeg>0) watch.push({t:`${fbNeg} review-uri negative în ${MONTHS[mi]}`, d:`din ${fbN} feedback (${Math.round(fbNeg/fbN*1000)/10}%) — mesajele sunt în tab-ul Feedback - QA.`});
+      if(fbRate!=null&&fbRate<9) watch.push({t:`Rată de răspuns la feedback scăzută: ${fbRate}%`, d:`${fbN} feedback la ${visits} vizite — satisfacția raportată se bazează pe puține răspunsuri.`});
+      return (<>
+      <div style={{marginBottom:16}}>
+        <div className="net-head">
+          <div className="net-hero" style={{background:c.cluster===1?`linear-gradient(145deg, ${P.primary} 0%, #5E140F 100%)`:'linear-gradient(145deg, #7C8431 0%, #555B1F 100%)',borderRadius:14,padding:'18px 20px',color:P.white,boxShadow:'0 4px 18px rgba(0,0,0,0.18)',display:'flex',flexDirection:'column',gap:10}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <span style={{background:'rgba(255,255,255,0.18)',fontWeight:800,fontSize:12,borderRadius:6,padding:'4px 9px',letterSpacing:0.5}}>{c.code}</span>
+              <div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:17,fontWeight:700,lineHeight:1.1}}>{c.name}</div>
+                <div style={{fontSize:9.5,color:'rgba(255,255,255,0.65)',marginTop:2,textTransform:'uppercase',letterSpacing:0.7}}>Cluster {c.cluster} · activ din {Math.min(...Object.keys(c.actuals).map(Number))} · {pLabel(period)}</div>
+              </div>
+            </div>
+            <div style={{display:'flex',alignItems:'baseline',gap:8,flexWrap:'wrap'}}>
+              <span style={{fontSize:42,fontWeight:700,lineHeight:1,fontFamily:"'Playfair Display',serif"}}>{fmt(v26)}</span>
+              <span style={{fontSize:12,color:'rgba(255,255,255,0.65)'}}>RON{shCl!=null?` · ${shCl.toFixed(0)}% din cluster · ${shNet.toFixed(1)}% din rețea`:''}</span>
+            </div>
+            <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+              <span style={{background:'rgba(255,255,255,0.16)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{yoyOk?`${pct(yoy)} vs ${isM?`${MONTHS[mi]} 2025`:'2025'} · ${fmt(v25)}`:'clinică nouă · fără bază YoY'}</span>
+              {bv>0&&<span style={{background:vb>=0?'rgba(255,255,255,0.16)':'rgba(217,48,37,0.4)',borderRadius:20,padding:'3px 9px',fontSize:11,fontWeight:600}}>{kRON(v26-bv)} vs buget ({pct(vb)})</span>}
+            </div>
+            <div>
+              <div style={{display:'flex',alignItems:'flex-end',gap:4,height:46}}>
+                {mA.map((v,k)=>{ const on=isM?k===mi:true; return (
+                  <div key={k} title={`${MONTHS[k]} 26: ${fmt(v)}${mB[k]?` · buget ${fmt(mB[k])} (${pct(gr(v,mB[k]))})`:''}${a25[k]?` · YoY ${pct(gr(v,a25[k]))}`:''}`} style={{flex:1,position:'relative',height:'100%',display:'flex',alignItems:'flex-end'}}>
+                    <div style={{width:'100%',height:`${(v||0)/sMax*100}%`,background:on?P.wheat:'rgba(255,255,255,0.28)',borderRadius:'3px 3px 0 0'}}/>
+                    {mB[k]>0&&<div style={{position:'absolute',left:-1,right:-1,bottom:mB[k]/sMax*46-1,height:2,background:(v||0)>=mB[k]?'#D9F99D':'#FF8A80',borderRadius:1}}/>}
+                  </div>); })}
+              </div>
+              <div style={{display:'flex',gap:4,marginTop:4}}>
+                {MONTHS.slice(0,ACT_MO).map((m,k)=><div key={m} style={{flex:1,textAlign:'center',fontSize:8.5,color:(isM?k===mi:true)?'rgba(255,255,255,0.85)':'rgba(255,255,255,0.45)'}}>{m}</div>)}
+              </div>
+              <div style={{fontSize:9,color:'rgba(255,255,255,0.6)',marginTop:4}}>bară = vânzări 2026 · linie = buget (verde peste, roșu sub)</div>
+            </div>
+          </div>
+
+          <HeadTile label="Creștere YoY" value={yoyOk?pct0(yoy):'—'} valueColor={!yoyOk?P.muted:yoy>=0?good:bad} caption={yoyOk&&v24?`vs 2024: ${pct0(gr(v26,v24))}`:(yoyOk?`vs ${isM?MONTHS[mi]+' 2025':'2025'}`:'clinică nouă')}>
+            {yoyOk ? <>
+              <b>{kRON(v26-v25)} RON</b> · {fmt(v26)} vs {fmt(v25)}
+              {baseFx&&<div style={{color:'#B45309',marginTop:4}}>efect de bază: {MONTHS[mi]} 25 {pct(dip)} vs {MONTHS[mi-1]} 25</div>}
+              {isM&&<div style={{color:P.muted,marginTop:3}}>YTD: {pct(gr(val(c,2026,'YTD'),val(c,2025,'YTD')))} vs 2025</div>}
+            </> : <div>Fără perioadă comparabilă completă în 2025 — urmăriți evoluția față de buget.</div>}
+          </HeadTile>
+
+          <HeadTile label="Față de buget" value={bv?pct(vb):'—'} valueColor={!bv?P.muted:vb>=0?good:bad} caption={pLabel(period)}>
+            {bv ? <>
+              <b>{kRON(v26-bv)} RON</b> · buget {fmt(bv)}
+              <div style={{display:'flex',gap:3,margin:'7px 0 4px'}}>
+                {bMonths.map(x=><div key={x.m} title={`${x.m}: ${kRON(x.d)} vs buget`} style={{flex:1,height:14,borderRadius:3,background:x.d>=0?'#DCFCE7':'#FEE2E2',border:`1px solid ${x.d>=0?'#86EFAC':'#FCA5A5'}`,outline:isM&&x.m===MONTHS[mi]?`2px solid ${P.primary}`:'none',outlineOffset:1}}/>)}
+              </div>
+              <div style={{color:P.muted}}>peste buget în <b style={{color:P.text}}>{bMonths.length-bBelow.length} din {bMonths.length}</b> luni{bBelow.length?` · sub: ${bBelow.join(', ')}`:''}</div>
+            </> : 'Fără buget pentru perioadă.'}
+          </HeadTile>
+
+          <HeadTile label={`Pacienți & calitate · ${MONTHS[mi]}`} value={p0Now!=null?p0Now.toLocaleString('en-US'):'—'} caption="pacienți noi (P0)">
+            {p0Yoy!=null&&<div>YTD <b>{p0Ytd26?.toLocaleString('en-US')}</b> · <b style={{color:pcol(p0Yoy)}}>{p0Yoy>=0?'+':''}{p0Yoy}%</b> vs 2025</div>}
+            {prodPac!=null&&<div style={{marginTop:3}}>productivitate/pacient <b>{prodPac.toLocaleString('en-US')} RON</b></div>}
+            {fbN!=null&&<div style={{color:P.muted,marginTop:3}}>feedback {fbN}{fbRate!=null?` (${fbRate}% din vizite)`:''} · <span style={{color:fbNeg>0?bad:good,fontWeight:600}}>{fbNeg||0} negative</span></div>}
+          </HeadTile>
+        </div>
+      </div>
+      <InsightPanel title={`Analiză ${c.name}`} sub={`${pLabel(period)} · calculat din date`} pos={pos} watch={watch}/>
+      </>);
+    })()}
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
       <Card>
         <Sec>Evoluție Lunară Multi-An</Sec>
@@ -3425,9 +4023,12 @@ function App() {
         .da-link{color:#F2DAB7;text-decoration:none;border-bottom:1px solid rgba(242,218,183,0.32);transition:all .18s ease;}
         .da-link:hover{color:#FFFFFF;border-bottom-color:#FFFFFF;}
         .da-info{position:relative;}
-        .da-info-tip{visibility:hidden;opacity:0;position:absolute;left:0;top:calc(100% + 7px);z-index:60;
+        .net-head{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:12px;}
+        @media(max-width:1000px){.net-head{grid-template-columns:repeat(3,minmax(0,1fr));}.net-head .net-hero{grid-column:1/-1;}}
+        @media(max-width:680px){.net-head{grid-template-columns:minmax(0,1fr);}}
+        .da-info-tip{display:none;visibility:hidden;opacity:0;position:absolute;left:0;top:calc(100% + 7px);z-index:60;
           width:max-content;max-width:240px;white-space:normal;pointer-events:none;transition:opacity .12s ease;}
-        .da-info:hover .da-info-tip{visibility:visible;opacity:1;}
+        /* tooltip-ul inline rămâne doar ca sursă de conținut; afișarea se face în stratul fix #da-tip-layer (vezi scriptul de la final) */
       `}</style>
 
       {/* Sticky header group: brand header + tabs + period toggle */}
@@ -3605,6 +4206,40 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(mount,350);});
   else setTimeout(mount,350);
+})();
+</script>
+<script>
+// Strat unic pentru definițiile la hover (.da-info): tooltip-ul e desenat în <body>, cu position:fixed,
+// deasupra tuturor casetelor — nu mai poate fi tăiat de overflow:hidden / scroll-ul tabelelor sau acoperit de
+// casetele vecine. Se poziționează sub element și se întoarce deasupra / se lipește de margini când nu încape.
+(function(){
+  var layer=null, cur=null, M=8, GAP=7;
+  function ensure(){ if(!layer){ layer=document.createElement('div'); layer.id='da-tip-layer';
+    layer.setAttribute('role','tooltip');
+    layer.style.cssText='position:fixed;z-index:10000;pointer-events:none;visibility:hidden;opacity:0;transition:opacity .12s ease;max-width:260px;width:max-content;white-space:normal;';
+    document.body.appendChild(layer);} return layer; }
+  function show(el){
+    var src=el.querySelector('.da-info-tip'); if(!src) return;
+    var L=ensure(); cur=el;
+    L.innerHTML=src.innerHTML;
+    L.style.background=src.style.background; L.style.color=src.style.color; L.style.fontSize=src.style.fontSize;
+    L.style.lineHeight=src.style.lineHeight; L.style.padding=src.style.padding; L.style.borderRadius=src.style.borderRadius;
+    L.style.boxShadow=src.style.boxShadow; L.style.fontWeight='400'; L.style.textAlign='left'; L.style.textTransform='none'; L.style.letterSpacing='normal';
+    L.style.left='0px'; L.style.top='0px'; L.style.visibility='hidden'; L.style.opacity='0';
+    var r=el.getBoundingClientRect(), t=L.getBoundingClientRect(), vw=document.documentElement.clientWidth, vh=window.innerHeight;
+    var left=Math.min(Math.max(M, r.left), vw-t.width-M);
+    var top=r.bottom+GAP;
+    if(top+t.height>vh-M && r.top-GAP-t.height>=M) top=r.top-GAP-t.height;
+    L.style.left=Math.max(M,left)+'px'; L.style.top=Math.max(M,top)+'px';
+    L.style.visibility='visible'; L.style.opacity='1';
+  }
+  function hide(){ cur=null; if(layer){ layer.style.visibility='hidden'; layer.style.opacity='0'; } }
+  document.addEventListener('mouseover',function(e){ var el=e.target.closest&&e.target.closest('.da-info'); if(el&&el!==cur) show(el); else if(!el&&cur) hide(); });
+  document.addEventListener('mouseleave',hide);
+  window.addEventListener('scroll',hide,true);
+  window.addEventListener('resize',hide);
+  // atingere pe telefon/tabletă: tap pe definiție o arată, tap în altă parte o ascunde
+  document.addEventListener('touchstart',function(e){ var el=e.target.closest&&e.target.closest('.da-info'); if(el){ show(el); } else hide(); },{passive:true});
 })();
 </script>
 </body>
