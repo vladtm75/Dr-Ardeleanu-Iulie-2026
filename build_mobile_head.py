@@ -4,13 +4,14 @@ din sales-desktop.html (CD / NET / ACT_MO) — aceeași logică ca antetul tab-u
 card principal cu evoluția lunară, 3 indicatori (creștere, LFL, buget), split comparabile vs noi,
 progres față de bugetul anual și analiza „Puncte forte / De urmărit".
 
-Rulare (din rădăcina repo-ului):  python3 build_mobile_head.py
+Rulare (din rădăcina repo-ului):  python3 build_mobile_head.py [sales-desktop.html] [sales-mobile.html]
 Idempotent: înlocuiește doar blocurile dintre markerii <!-- NET-HEAD:month --> / <!-- NET-HEAD:ytd -->
 (la prima rulare înlocuiește highlight-bar + lfl-bar din fiecare vedere).
 """
 import re, html, sys
 
-DESK, MOB = 'sales-desktop.html', 'sales-mobile.html'
+DESK = sys.argv[1] if len(sys.argv) > 1 else 'sales-desktop.html'
+MOB = sys.argv[2] if len(sys.argv) > 2 else 'sales-mobile.html'
 MONTHS = ['Ian','Feb','Mar','Apr','Mai','Iun','Iul','Aug','Sep','Oct','Nov','Dec']
 MONTHS_FULL = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie','Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie']
 LFL = ['OLT','GRG','SLB','CLR','DRB','CTR']
@@ -31,7 +32,8 @@ gr = lambda a, b: (a - b) / b * 100 if b else None
 def K(v):  # 4141413 -> "4.141K"
     return f"{round(v/1000):,}".replace(',', '.') + 'K'
 def KS(v): return ('+' if v >= 0 else '−') + K(abs(v))
-def P(v, dec=1): return '—' if v is None else (('+' if v > 0 else '−' if v < 0 else '') + f"{abs(v):.{dec}f}%")
+DEC = '.'  # separator zecimal — detectat mai jos din cardul mobil (șablonul skill-ului folosește virgulă)
+def P(v, dec=1): return '—' if v is None else (('+' if v > 0 else '−' if v < 0 else '') + f"{abs(v):.{dec}f}".replace('.', DEC) + '%')
 def P0(v): return P(v, 0)
 esc = html.escape
 
@@ -185,6 +187,8 @@ CSS = '''
 '''
 
 m = open(MOB, encoding='utf-8').read()
+_body = re.sub(r'<!-- NET-HEAD:.*?<!-- /NET-HEAD:\w+ -->', '', m, flags=re.S)
+DEC = ',' if len(re.findall(r'\d,\d%', _body)) > len(re.findall(r'\d\.\d%', _body)) else '.'
 for per in ('month', 'ytd'):
     new = build(per)
     mk = re.compile(r'<!-- NET-HEAD:%s .*?<!-- /NET-HEAD:%s -->' % (per, per), re.S)
