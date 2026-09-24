@@ -37,3 +37,7 @@ Pe fiecare card, cele două link-uri (`.btn-main` = desktop, `.btn-mobile` = mob
 - **<760px** (telefon): rămân stivuite ca înainte, cu `.btn-mobile` promovat vizual (`order:-1`, fundal olive) și `.btn-main` demotat la contur — comportamentul original, neschimbat.
 
 Butonul `.share-btn` stă mereu sub `.actions-row`, pe rândul lui, indiferent de lățimea ecranului.
+
+## Antetul de rețea din `sales-mobile.html` — generat
+
+Blocul de sus din fiecare vedere a cardului mobil (Lună / YTD: card rețea cu evoluția lunară, 3 indicatori, split comparabile vs noi, progres față de bugetul anual, analiza „Puncte forte / De urmărit") este **generat** din datele din `sales-desktop.html` (`CD`, `NET`, `ACT_MO`) de scriptul `build_mobile_head.py`, între markerii `<!-- NET-HEAD:month -->` / `<!-- NET-HEAD:ytd -->`. Nu edita manual acel bloc: după actualizarea datelor în desktop, rulează `python3 build_mobile_head.py` (idempotent). Restul cardului (rândurile per clinică, hero-ul/OG) rămâne pe fluxul skill-ului `dr-ardeleanu-sales-mobile`.

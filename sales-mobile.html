@@ -140,6 +140,57 @@ body{
 .footer-main{font-size:11px;font-weight:600;color:#7B1C16;}
 .footer-sub{font-size:9.5px;color:#b09080;margin-top:3px;letter-spacing:0.04em;}
 
+/* ── ANTET REȚEA (generat de build_mobile_head.py) ── */
+.nh{padding:4px 12px 0;}
+.nh-hero{background:linear-gradient(145deg,#7B1C16 0%,#5E140F 100%);border-radius:14px;padding:14px 16px 12px;color:#fff;}
+.nh-lbl{font-size:9px;font-weight:600;color:rgba(242,218,183,0.78);letter-spacing:0.10em;text-transform:uppercase;}
+.nh-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:3px;}
+.nh-val{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;line-height:1;}
+.nh-row .hl-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid;white-space:nowrap;}
+.nh-sub{font-size:10.5px;color:#F2DAB7;margin-top:5px;}
+.nh-spark{display:flex;align-items:flex-end;gap:4px;height:40px;margin-top:10px;}
+.nh-b{flex:1;height:100%;position:relative;display:flex;align-items:flex-end;}
+.nh-b i{display:block;width:100%;background:rgba(255,255,255,0.28);border-radius:3px 3px 0 0;}
+.nh-b.on i{background:#F2DAB7;}
+.nh-b s{position:absolute;left:-1px;right:-1px;height:2px;border-radius:1px;text-decoration:none;}
+.nh-b s.up{background:#B5BD5C;} .nh-b s.dn{background:#FF8A80;}
+.nh-ml{display:flex;gap:4px;margin-top:3px;}
+.nh-ml span{flex:1;text-align:center;font-size:8px;color:rgba(255,255,255,0.45);}
+.nh-ml span.on{color:rgba(255,255,255,0.88);}
+.nh-note{font-size:8.5px;color:rgba(255,255,255,0.5);margin-top:4px;}
+.nh-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px;}
+.nh-t{background:#fff;border:1px solid #ecddd4;border-radius:11px;padding:9px 9px 8px;}
+.nh-tl{font-size:8px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#a08070;}
+.nh-tv{font-family:'Playfair Display',serif;font-size:19px;font-weight:700;line-height:1.05;margin-top:3px;}
+.nh-tv.g,.nh-ps b.g{color:#4a7c3f;} .nh-tv.r,.nh-ps b.r{color:#b33030;}
+.nh-ts{font-size:9px;color:#a08070;margin-top:3px;line-height:1.3;}
+.nh-sq{display:flex;gap:2px;margin-top:5px;}
+.nh-sq i{flex:1;height:8px;border-radius:2px;}
+.nh-sq i.up{background:#cfe8c9;} .nh-sq i.dn{background:#f5c2bb;}
+.nh-sq i.cur{outline:1.5px solid #7B1C16;outline-offset:1px;}
+.nh-box{background:#fff;border:1px solid #ecddd4;border-radius:11px;padding:9px 12px;margin-top:6px;}
+.nh-bl{font-size:8.5px;font-weight:700;letter-spacing:0.09em;text-transform:uppercase;color:#a08070;margin-bottom:6px;}
+.nh-split{display:flex;gap:2px;height:7px;border-radius:4px;overflow:hidden;}
+.nh-split i{background:#7B1C16;} .nh-split s{flex:1;background:#F2DAB7;}
+.nh-leg{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:#6b5448;margin-top:5px;}
+.nh-leg em{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:4px;vertical-align:0;}
+.nh-leg em.a{background:#7B1C16;} .nh-leg em.b{background:#F2DAB7;}
+.nh-prog{position:relative;height:8px;background:#F1ECE6;border-radius:4px;}
+.nh-prog i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#7B1C16,#A0352C);border-radius:4px;}
+.nh-prog s{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:#1e0e0b;border-radius:1px;}
+.nh-ps{font-size:9.5px;color:#6b5448;margin-top:5px;line-height:1.35;}
+.ins{padding:0 12px;}
+.ins-h{font-size:9px;font-weight:700;letter-spacing:0.10em;text-transform:uppercase;margin:4px 2px 5px;display:flex;align-items:center;gap:6px;}
+.ins-h::before{content:'';width:7px;height:7px;border-radius:4px;}
+.ins-h em{font-style:normal;font-weight:500;color:#a08070;}
+.ins-h.pos{color:#4a7c3f;} .ins-h.pos::before{background:#4a7c3f;}
+.ins-h.watch{color:#B45309;margin-top:10px;} .ins-h.watch::before{background:#B45309;}
+.ins-i{border-radius:0 9px 9px 0;padding:7px 10px;margin-bottom:5px;border-left:3px solid;}
+.ins-i.pos{background:#F3FBF5;border-color:#4a7c3f;} .ins-i.watch{background:#FFFAEB;border-color:#B45309;}
+.ins-i b{display:block;font-size:11px;color:#1e0e0b;font-weight:700;margin-bottom:1px;}
+.ins-i span{display:block;font-size:10px;color:#6b5448;line-height:1.45;}
+/* ── /ANTET REȚEA ── */
+
 /* ── VIEW SWITCHING ── */
 .view{display:none;}
 .view.active{display:block;}
@@ -185,22 +236,39 @@ body{padding-top:52px !important;}
     <div class="view active" id="view-month">
 
       <div class="slabel"><span>Rețea · August 2026</span></div>
-      <div class="highlight-bar">
-        <div class="hl-left">
-          <div class="hl-label">Vânzări Rețea · August</div>
-          <div class="hl-val">4.141K</div>
-          <div class="hl-margin">YoY +53.7% · vs Aug 2025 2.694K</div>
+      <!-- NET-HEAD:month (generat de build_mobile_head.py — nu edita manual) -->
+      <div class="nh">
+        <div class="nh-hero">
+          <div class="nh-lbl">Vânzări rețea · August 2026</div>
+          <div class="nh-row"><span class="nh-val">4.141K</span><span class="hl-badge pos">+378K · +10.1%</span></div>
+          <div class="nh-sub">YoY +53.7% · vs Aug 2025 2.694K · buget 3.763K</div>
+          <div class="nh-spark"><div class="nh-b" title="Ian 26: 3.296K · buget 3.225K"><i style="height:72.4%"></i><s class="up" style="bottom:70.9%"></s></div><div class="nh-b" title="Feb 26: 3.355K · buget 3.498K"><i style="height:73.8%"></i><s class="dn" style="bottom:76.9%"></s></div><div class="nh-b" title="Mar 26: 4.196K · buget 3.749K"><i style="height:92.2%"></i><s class="up" style="bottom:82.4%"></s></div><div class="nh-b" title="Apr 26: 3.593K · buget 3.336K"><i style="height:79.0%"></i><s class="up" style="bottom:73.3%"></s></div><div class="nh-b" title="Mai 26: 3.931K · buget 3.907K"><i style="height:86.4%"></i><s class="up" style="bottom:85.9%"></s></div><div class="nh-b" title="Iun 26: 4.151K · buget 3.715K"><i style="height:91.3%"></i><s class="up" style="bottom:81.7%"></s></div><div class="nh-b" title="Iul 26: 4.549K · buget 4.137K"><i style="height:100.0%"></i><s class="up" style="bottom:90.9%"></s></div><div class="nh-b on" title="Aug 26: 4.141K · buget 3.763K"><i style="height:91.0%"></i><s class="up" style="bottom:82.7%"></s></div></div>
+          <div class="nh-ml"><span>Ian</span><span>Feb</span><span>Mar</span><span>Apr</span><span>Mai</span><span>Iun</span><span>Iul</span><span class=on>Aug</span></div>
+          <div class="nh-note">bară = vânzări 2026 · linie = buget (verde peste, roșu sub)</div>
         </div>
-        <div class="hl-right">
-          <div class="hl-budg">Buget: 3.763K</div>
-          <div class="hl-badge pos">+378K · +10.1%</div>
+        <div class="nh-tiles">
+          <div class="nh-t"><div class="nh-tl">Creștere YoY</div><div class="nh-tv g">+54%</div><div class="nh-ts">+1.447K RON</div></div>
+          <div class="nh-t"><div class="nh-tl">Organic (LFL)</div><div class="nh-tv g">+21%</div><div class="nh-ts">6 clinici comparabile</div></div>
+          <div class="nh-t"><div class="nh-tl">Față de buget</div><div class="nh-tv g">+10.1%</div><div class="nh-sq"><i class="up"></i><i class="dn"></i><i class="up"></i><i class="up"></i><i class="up"></i><i class="up"></i><i class="up"></i><i class="up cur"></i></div><div class="nh-ts">7 din 8 luni peste</div></div>
+        </div>
+        <div class="nh-box">
+          <div class="nh-bl">Din ce vine creșterea</div>
+          <div class="nh-split"><i style="width:37.6%"></i><s></s></div>
+          <div class="nh-leg"><span><em class="a"></em>comparabile <b>+544K</b></span><span><em class="b"></em>noi (TGV, FCS) <b>+903K</b></span></div>
+        </div>
+        <div class="nh-box">
+          <div class="nh-bl">Progres față de bugetul anual 2026</div>
+          <div class="nh-prog"><i style="width:70.3%"></i><s style="left:66.7%"></s></div>
+          <div class="nh-ps"><b>31.212K</b> din 44.422K (70%) · timp scurs 8/12 (67%)</div>
+          <div class="nh-ps">Estimare an: <b class="g">46.303K</b> (+1.881K vs buget) · realizat + buget rămas</div>
         </div>
       </div>
-
-      <div class="lfl-bar">
-        <div><div class="lfl-label">LFL · 6 clinici comparabile</div><div class="lfl-sub">3.149K vs Aug 2025 2.605K · fără TGV, FCS</div></div>
-        <div class="lfl-chip">YoY +20.9%</div>
+      <div class="slabel"><span>Analiză · August 2026</span></div>
+      <div class="ins">
+        <div class="ins-h pos">Puncte forte <em>(3)</em></div><div class="ins-i pos"><b>Rețea +53.7% YoY (+1.447K RON)</b><span>38% din creștere vine din clinicile comparabile, restul din clinicile noi (TGV, FCS).</span></div><div class="ins-i pos"><b>Creștere organică +20.9%</b><span>La clinicile cu minimum 1 an complet de activitate (Cluster 1 + DRB + CTR).</span></div><div class="ins-i pos"><b>+10.1% față de buget în Aug</b><span>YTD +6.4% · peste buget în 7 din 8 luni (sub: Feb).</span></div>
+        <div class="ins-h watch">De urmărit <em>(4)</em></div><div class="ins-i watch"><b>Oltenița sub buget YTD: −61K</b><span>−1.5% vs buget · +0.4% YoY.</span></div><div class="ins-i watch"><b>Cotroceni sub buget YTD: −55K</b><span>−4.5% vs buget · +24.2% YoY.</span></div><div class="ins-i watch"><b>Târgoviște sub buget YTD: −18K</b><span>−0.5% vs buget · clinică nouă, fără bază YoY.</span></div><div class="ins-i watch"><b>Efect de bază în Aug</b><span>Oltenița +43.4% (Aug 25 −34.3% vs Iul 25) · Dorobanți +42.5% (Aug 25 −30.0% vs Iul 25) · Cotroceni +59.8% (Aug 25 −24.9% vs Iul 25) — creștere din baza slabă, nu accelerare; urmăriți YTD.</span></div>
       </div>
+      <!-- /NET-HEAD:month -->
 
       <div class="slabel"><span>Clinici · August 2026</span></div>
       <div class="clinics">
@@ -255,22 +323,39 @@ body{padding-top:52px !important;}
     <div class="view" id="view-ytd">
 
       <div class="slabel"><span>Rețea · YTD Ian–Aug 2026</span></div>
-      <div class="highlight-bar">
-        <div class="hl-left">
-          <div class="hl-label">Vânzări Rețea · YTD</div>
-          <div class="hl-val">31.212K</div>
-          <div class="hl-margin">YoY +44.7% · vs YTD 2025 21.568K</div>
+      <!-- NET-HEAD:ytd (generat de build_mobile_head.py — nu edita manual) -->
+      <div class="nh">
+        <div class="nh-hero">
+          <div class="nh-lbl">Vânzări rețea · YTD Ian–Aug 2026</div>
+          <div class="nh-row"><span class="nh-val">31.212K</span><span class="hl-badge pos">+1.881K · +6.4%</span></div>
+          <div class="nh-sub">YoY +44.7% · vs YTD 2025 21.568K · buget 29.331K</div>
+          <div class="nh-spark"><div class="nh-b on" title="Ian 26: 3.296K · buget 3.225K"><i style="height:72.4%"></i><s class="up" style="bottom:70.9%"></s></div><div class="nh-b on" title="Feb 26: 3.355K · buget 3.498K"><i style="height:73.8%"></i><s class="dn" style="bottom:76.9%"></s></div><div class="nh-b on" title="Mar 26: 4.196K · buget 3.749K"><i style="height:92.2%"></i><s class="up" style="bottom:82.4%"></s></div><div class="nh-b on" title="Apr 26: 3.593K · buget 3.336K"><i style="height:79.0%"></i><s class="up" style="bottom:73.3%"></s></div><div class="nh-b on" title="Mai 26: 3.931K · buget 3.907K"><i style="height:86.4%"></i><s class="up" style="bottom:85.9%"></s></div><div class="nh-b on" title="Iun 26: 4.151K · buget 3.715K"><i style="height:91.3%"></i><s class="up" style="bottom:81.7%"></s></div><div class="nh-b on" title="Iul 26: 4.549K · buget 4.137K"><i style="height:100.0%"></i><s class="up" style="bottom:90.9%"></s></div><div class="nh-b on" title="Aug 26: 4.141K · buget 3.763K"><i style="height:91.0%"></i><s class="up" style="bottom:82.7%"></s></div></div>
+          <div class="nh-ml"><span class=on>Ian</span><span class=on>Feb</span><span class=on>Mar</span><span class=on>Apr</span><span class=on>Mai</span><span class=on>Iun</span><span class=on>Iul</span><span class=on>Aug</span></div>
+          <div class="nh-note">bară = vânzări 2026 · linie = buget (verde peste, roșu sub)</div>
         </div>
-        <div class="hl-right">
-          <div class="hl-budg">Buget: 29.331K</div>
-          <div class="hl-badge pos">+1.881K · +6.4%</div>
+        <div class="nh-tiles">
+          <div class="nh-t"><div class="nh-tl">Creștere YoY</div><div class="nh-tv g">+45%</div><div class="nh-ts">+9.644K RON</div></div>
+          <div class="nh-t"><div class="nh-tl">Organic (LFL)</div><div class="nh-tv g">+15%</div><div class="nh-ts">6 clinici comparabile</div></div>
+          <div class="nh-t"><div class="nh-tl">Față de buget</div><div class="nh-tv g">+6.4%</div><div class="nh-sq"><i class="up"></i><i class="dn"></i><i class="up"></i><i class="up"></i><i class="up"></i><i class="up"></i><i class="up"></i><i class="up"></i></div><div class="nh-ts">7 din 8 luni peste</div></div>
+        </div>
+        <div class="nh-box">
+          <div class="nh-bl">Din ce vine creșterea</div>
+          <div class="nh-split"><i style="width:32.6%"></i><s></s></div>
+          <div class="nh-leg"><span><em class="a"></em>comparabile <b>+3.147K</b></span><span><em class="b"></em>noi (TGV, FCS) <b>+6.497K</b></span></div>
+        </div>
+        <div class="nh-box">
+          <div class="nh-bl">Progres față de bugetul anual 2026</div>
+          <div class="nh-prog"><i style="width:70.3%"></i><s style="left:66.7%"></s></div>
+          <div class="nh-ps"><b>31.212K</b> din 44.422K (70%) · timp scurs 8/12 (67%)</div>
+          <div class="nh-ps">Estimare an: <b class="g">46.303K</b> (+1.881K vs buget) · realizat + buget rămas</div>
         </div>
       </div>
-
-      <div class="lfl-bar">
-        <div><div class="lfl-label">LFL · 6 clinici comparabile</div><div class="lfl-sub">24.625K vs YTD 2025 21.479K · fără TGV, FCS</div></div>
-        <div class="lfl-chip">YoY +14.7%</div>
+      <div class="slabel"><span>Analiză · YTD Ian–Aug 2026</span></div>
+      <div class="ins">
+        <div class="ins-h pos">Puncte forte <em>(3)</em></div><div class="ins-i pos"><b>Rețea +44.7% YoY (+9.644K RON)</b><span>33% din creștere vine din clinicile comparabile, restul din clinicile noi (TGV, FCS).</span></div><div class="ins-i pos"><b>Creștere organică +14.7%</b><span>La clinicile cu minimum 1 an complet de activitate (Cluster 1 + DRB + CTR).</span></div><div class="ins-i pos"><b>+6.4% față de buget</b><span>peste buget în 7 din 8 luni (sub: Feb).</span></div>
+        <div class="ins-h watch">De urmărit <em>(3)</em></div><div class="ins-i watch"><b>Oltenița sub buget YTD: −61K</b><span>−1.5% vs buget · +0.4% YoY.</span></div><div class="ins-i watch"><b>Cotroceni sub buget YTD: −55K</b><span>−4.5% vs buget · +24.2% YoY.</span></div><div class="ins-i watch"><b>Târgoviște sub buget YTD: −18K</b><span>−0.5% vs buget · clinică nouă, fără bază YoY.</span></div>
       </div>
+      <!-- /NET-HEAD:ytd -->
 
       <div class="slabel"><span>Clinici · YTD Ian–Aug 2026</span></div>
       <div class="clinics">
