@@ -1,6 +1,6 @@
 # CLAUDE.md — Rezultate Financiare Iulie 2026
 
-Repo static, publicat prin GitHub Pages (`https://biancabajenaru.github.io/Dr.Ardeleanu-Overview/`), fără build step — fiecare `.html` e servit ca atare. Vezi [README.md](README.md) pentru harta fișier→raport.
+Repo static (`vladtm75/Dr-Ardeleanu-Iulie-2026`, branch `main`), publicat prin GitHub Pages (`https://vladtm75.github.io/Dr-Ardeleanu-Iulie-2026/`), fără build step — fiecare `.html` e servit ca atare. Vezi [README.md](README.md) pentru harta fișier→raport.
 
 ## Autentificare — două nivele
 
@@ -41,3 +41,24 @@ Butonul `.share-btn` stă mereu sub `.actions-row`, pe rândul lui, indiferent d
 ## Antetul de rețea din `sales-mobile.html` — generat
 
 Blocul de sus din fiecare vedere a cardului mobil (Lună / YTD: card rețea cu evoluția lunară, 3 indicatori, split comparabile vs noi, progres față de bugetul anual, analiza „Puncte forte / De urmărit") este **generat** din datele din `sales-desktop.html` (`CD`, `NET`, `ACT_MO`) de scriptul `build_mobile_head.py`, între markerii `<!-- NET-HEAD:month -->` / `<!-- NET-HEAD:ytd -->`. Nu edita manual acel bloc: după actualizarea datelor în desktop, rulează `python3 build_mobile_head.py` (idempotent). Restul cardului (rândurile per clinică, hero-ul/OG) rămâne pe fluxul skill-ului `dr-ardeleanu-sales-mobile`.
+
+## `sales-desktop.html` — convenții introduse în Sept 2026 (raportul de August)
+
+**Comentarii calculate din date, nu text fix.** Analiza de pe Rețea, Categorii, Pacienți, Feedback, Clustere și Clinici („Puncte forte / De urmărit") se construiește la randare din `CD`, `NET`, `CAT_DATA`, `PATIENTS_*`, `FEEDBACK_*`, `OPS_KPI`, `MED_KPI`. La o lună nouă nu se rescrie niciun text — se actualizează doar datele și `ACT_MO`. Nu reintroduce alerte cu nume de clinici scrise de mână.
+
+**Componente comune de antet** (definite înainte de `NetworkTab`): `HeadTile` (indicator cu explicație), `InsightCol` / `InsightPanel` (analiza pe două coloane). Layout-ul card principal + 3 indicatori folosește clasele CSS `.net-head` / `.net-hero` (4 coloane desktop, card pe tot rândul + 3 indicatori sub 1000px, o coloană sub 680px). Paginile noi de antet trebuie să le refolosească, ca aspectul să rămână unitar.
+
+**Tooltip-uri (`.da-info`).** Conținutul stă în `.da-info-tip` (ascuns, `display:none`), dar e desenat de scriptul de la finalul paginii într-un strat unic `#da-tip-layer` cu `position:fixed` — ca să nu fie tăiat de `overflow` sau acoperit de casete vecine. Nu schimba `.da-info-tip` înapoi în poziționare absolută vizibilă.
+
+**Evidențiere Ops-Sales / Ops-Med = regula Puls** (dedusă din valorile afișate în Puls — codul Puls nu e accesibil): funcția `bigDev` + constantele `DEV_PP = 10` (pp la indicatori %) și `DEV_REL = 0.40` (relativ). Clinica se compară cu MTD-ul clusterului (doar rânduri-rată/medie, nu sume); MTD se colorează doar dacă deviază în aceeași direcție față de AMBELE medii Y-1 și YTD (pe orice rând). Consimțământ: `CONSENT_RULES` (CNP < 100% și Email < 95% = roșu; Acord date / CESGS / API / Olograf la ±5pp). „Plan tratament" nu mai e în KPI Clinică — e în secțiunea „Consimțământ & Date Pacient" din Ops-Med, lângă API și Olograf. Aceeași regulă alimentează „indicatorii operaționali" din analiza fiecărei clinici.
+
+**LFL.** Creșterea LFL pe an complet (FY 24/23, FY 25/24) se calculează doar pe clinicile cu 12 luni complete în AMBII ani comparați (altfel o clinică deschisă în anul de bază umflă creșterea). Clinicile noi (TGV, FCS) sunt excluse din orice comparație YoY pe clinică (afișate „nou").
+
+**Ramp-up.** Rândurile Dr. Ardeleanu se recalculează din `CD`: 2026 = estimare (realizat Ian–luna curentă + buget pentru lunile rămase, marcat „e"); o clinică fără vânzări încă (Brăila) = doar buget (marcat „b"); CA/unit = vânzări ultimele 12 luni / unituri. Rândurile concurenței rămân valori fixe din bilanțuri.
+
+**`BUDGET_FLAGS`** — obiect pentru a semnala un buget de confirmat (apare pe Buget, Rețea și pagina clinicii). E gol: bugetul TGV (Apr–Dec identic cu OLT) a fost verificat pe 2026-09-24 contra fișierului de buget (rândul Budget 2026, total 5.659.125) și e corect.
+
+## De știut (neactualizat încă)
+
+- **Copia din Puls** (`script.google.com/.../exec?page=monthlynew`) încorporează o versiune mai veche a raportului de vânzări, fără corecțiile și designul de mai sus (ex. încă afișează „OLT — presiune YoY +43.4%" și LFL greșit). Trebuie actualizată în Apps Script de cine îl întreține — nu se actualizează din acest repo.
+- **Actuals 2025 Târgoviște (Sep–Dec)** diferă ușor între Puls (sursa raportului), raportul P&L și fișierul de buget (~3K, 0,2%). De stabilit o sursă unică.
