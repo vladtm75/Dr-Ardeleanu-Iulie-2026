@@ -1481,8 +1481,7 @@ function sxOutliers(cards){
   // sev = de câte ori abaterea depășește pragul Puls (pp/10 la %, relativ/40%) — ierarhizare pe aceeași scară
   const push=(o)=>{ if(o.v==null||o.ref==null) return;
     const r=o.ref?(o.v-o.ref)/Math.abs(o.ref):0; o.rel=Math.max(-1,Math.min(1,r));
-    const isPct=String(o.fmtv(1)).endsWith('%');
-    if(o.sev==null) o.sev=Math.max(isPct?Math.abs(o.v-o.ref)/DEV_PP:0, Math.abs(r)/DEV_REL);
+    if(o.sev==null) o.sev=sxSev(o);
     out.push(o); };
   // 1) clinici vs MTD-ul clusterului (Ops-Sales / Ops-Med)
   cards.forEach(x=>clinicOpsFlags(x.code).forEach(f=>push({dom:SX_SALES_KPI.has(f.name)?'sales':'med', scope:x.c.name, code:x.code, kpi:f.name, v:f.v, ref:f.ref, refL:'cluster', good:f.good, fmtv:f.fmtv, invert:f.name==='Programări pierdute'})));
@@ -1525,18 +1524,14 @@ function sxOutliers(cards){
   return out;
 }
 
-function SxOutliers({cards, onOpen}){
-  const all=sxOutliers(cards);
-  const bad=all.filter(o=>!o.good).sort((a,b)=>b.sev-a.sev);
-  const good=all.filter(o=>o.good).sort((a,b)=>b.sev-a.sev);
-  const Row=({o,i})=>{ const d=SX_DOM[o.dom], col=o.good?'#15803D':'#B91C1C', w=Math.min(1,o.sev/3)*50, left=o.v<o.ref;
+function SxOutRow({o,i,onOpen,hideScope}){ const d=SX_DOM[o.dom], col=o.good?'#15803D':'#B91C1C', w=Math.min(1,o.sev/3)*50, left=o.v<o.ref;
     const pp=(o.fmtv&&String(o.fmtv(1)).endsWith('%')&&!o.isYoY)?` (${o.v-o.ref>=0?'+':''}${(o.v-o.ref).toFixed(0)}pp)`:'';
     return (
-      <div className="sx-fade" onClick={()=>onOpen(o.code||d.tab)} title={`Deschide ${o.code?o.scope:d.l}`} style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) 110px',gap:10,alignItems:'center',padding:'7px 8px',borderBottom:`1px solid ${P.border}`,cursor:'pointer',animationDelay:`${0.1+i*0.05}s`}}>
+      <div className="sx-fade" onClick={()=>onOpen&&onOpen(o.code||d.tab)} title={onOpen?`Deschide ${o.code?o.scope:d.l}`:undefined} style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) 110px',gap:10,alignItems:'center',padding:'7px 8px',borderBottom:`1px solid ${P.border}`,cursor:onOpen?'pointer':'default',animationDelay:`${0.1+i*0.05}s`}}>
         <div style={{minWidth:0}}>
           <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0}}>
             <span style={{flexShrink:0,fontSize:8.5,fontWeight:800,letterSpacing:0.5,color:'#fff',background:d.c,borderRadius:4,padding:'1px 5px',textTransform:'uppercase'}}>{d.l}</span>
-            <span style={{fontSize:12,fontWeight:700,color:P.text,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{o.scope} · {o.kpi}</span>
+            <span style={{fontSize:12,fontWeight:700,color:P.text,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{hideScope?o.kpi:`${o.scope} · ${o.kpi}`}</span>
           </div>
           <div style={{fontSize:10.5,color:'#6b5448',marginTop:2}}><b style={{color:col}}>{o.fmtv(o.v)}</b> vs {o.isYoY?`aceeași perioadă ${o.refL}`:`${o.fmtv(o.ref)} ${o.refL}`}{pp}</div>
         </div>
@@ -1546,7 +1541,45 @@ function SxOutliers({cards, onOpen}){
           <rect className="sx-growx" x={left?55-w:55} y="5" width={Math.max(2,w)} height="8" rx="3" fill={col} style={{transformOrigin:left?'right':'left',animationDelay:`${0.2+i*0.05}s`}}/>
           <circle className="sx-pop" cx={left?55-w:55+w} cy="9" r="3.5" fill="#fff" stroke={col} strokeWidth="2" style={{animationDelay:`${0.5+i*0.05}s`}}/>
         </svg>
-      </div>); };
+      </div>); }
+
+// sev = de câte ori abaterea depășește pragul Puls (pp/DEV_PP la %, relativ/DEV_REL)
+const sxSev = o => { const r=o.ref?(o.v-o.ref)/Math.abs(o.ref):0; const isPct=String(o.fmtv(1)).endsWith('%');
+  return Math.max(isPct?Math.abs(o.v-o.ref)/DEV_PP:0, Math.abs(r)/DEV_REL); };
+
+// Semnale operaționale pe pagina clinicii — DOAR indicatorii Ops-Sales / Ops-Medical cu abatere mare vs cluster
+function ClinicOpsSignals({code,onOpen}){
+  const c=CD[code];
+  const flags=clinicOpsFlags(code).map(f=>{ const o={dom:SX_SALES_KPI.has(f.name)?'sales':'med', scope:c.name, code:null, kpi:f.name, v:f.v, ref:f.ref, refL:`Cluster ${c.cluster}`, good:f.good, fmtv:f.fmtv};
+    o.rel=o.ref?Math.max(-1,Math.min(1,(o.v-o.ref)/Math.abs(o.ref))):0; o.sev=sxSev(o); return o; }).sort((a,b)=>b.sev-a.sev);
+  const hasData=!!(OPS_KPI[ACT_MO]||MED_KPI[ACT_MO]);
+  if(!hasData) return null;
+  if(!flags.length) return (
+    <div style={{fontSize:11.5,color:P.muted,background:P.white,border:`1px solid ${P.border}`,borderRadius:12,padding:'10px 14px',marginBottom:16}}>
+      <b style={{color:P.text}}>Semnale operaționale · {MONTHS_FULL[ACT_MO-1]}:</b> niciun indicator Ops-Sales / Ops-Medical cu abatere mare față de Cluster {c.cluster}.
+    </div>);
+  const bad=flags.filter(o=>!o.good), good=flags.filter(o=>o.good);
+  const Col=({title,color,items})=>(
+    <div style={{minWidth:0}}>
+      <div style={{fontSize:10.5,fontWeight:700,color,textTransform:'uppercase',letterSpacing:0.8,margin:'2px 0 2px'}}>{title} ({items.length})</div>
+      {items.map((o,i)=><SxOutRow key={o.kpi} o={o} i={i} onOpen={onOpen} hideScope/>)}
+    </div>);
+  return (
+    <Card style={{borderRadius:14,marginBottom:16}}>
+      <Sec>Semnale operaționale · doar abaterile mari vs Cluster {c.cluster} · {MONTHS_FULL[ACT_MO-1]} 2026</Sec>
+      <div className="sx-row2" style={{display:'grid',gridTemplateColumns:bad.length&&good.length?'minmax(0,1fr) minmax(0,1fr)':'minmax(0,1fr)',gap:18}}>
+        {bad.length>0&&<Col title="Sub cluster" color="#B91C1C" items={bad}/>}
+        {good.length>0&&<Col title="Peste cluster" color="#15803D" items={good}/>}
+      </div>
+      <div style={{fontSize:9.5,color:P.muted,marginTop:7}}>Doar indicatorii cu abatere mare față de MTD-ul clusterului (regula Puls: ≥10pp la % sau ≥40% relativ); ordinea și lungimea barei = de câte ori abaterea depășește pragul. Click pe rând → tab-ul Ops-Sales / Ops-Med.</div>
+    </Card>);
+}
+
+function SxOutliers({cards, onOpen}){
+  const all=sxOutliers(cards);
+  const bad=all.filter(o=>!o.good).sort((a,b)=>b.sev-a.sev);
+  const good=all.filter(o=>o.good).sort((a,b)=>b.sev-a.sev);
+  const Row=({o,i})=><SxOutRow o={o} i={i} onOpen={onOpen}/>;
   return (
     <Card style={{borderRadius:14,marginBottom:14}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
@@ -4101,7 +4134,7 @@ function ClusterTab({num,period}) {
 }
 
 // ─── Clinic Tab ───────────────────────────────────────────────────────────────
-function ClinicTab({code,period}) {
+function ClinicTab({code,period,onOpen}) {
   const c=CD[code];
   const v26=val(c,2026,period), v25=val(c,2025,period), v24=val(c,2024,period), bv=bval(c,2026,period);
   const yoy=gr(v26,v25), vb=gr(v26,bv);
@@ -4192,17 +4225,13 @@ function ClinicTab({code,period}) {
       const visits=mk>=0?med.kpi[4]?.[mk]:null, prodPac=mk>=0?med.kpi[5]?.[mk]:null;
       const fbRate=(fbN!=null&&visits)?Math.round(fbN/visits*1000)/10:null;
       // indicatori operaționali cu abatere mare vs MTD-ul clusterului (regula Puls — vezi bigDev)
-      const opsFlags=clinicOpsFlags(code);
       const pos=[], watch=[];
       if(yoyOk) ((yoy>=5&&!baseFx)?pos:watch).push({t:`${pct(yoy)} YoY (${kRON(v26-v25)} RON)`, d: baseFx?`Efect de bază: ${MONTHS[mi]} 25 a scăzut ${pct(dip)} față de ${MONTHS[mi-1]} 25 — nu e accelerare reală; YTD: ${pct(gr(val(c,2026,'YTD'),val(c,2025,'YTD')))}.`:`${fmt(v26)} vs ${fmt(v25)} în aceeași perioadă 2025${yoy<5?' — creștere lentă':''}.`});
       else pos.push({t:`Clinică nouă — fără bază YoY comparabilă`, d:`${fmt(v26)} RON în ${pLabel(period)} · ${shCl!=null?`${shCl.toFixed(0)}% din Cluster ${c.cluster}`:''}.`});
       if(bv) (vb>=0?pos:watch).push({t:`${pct(vb)} față de buget${isM?` în ${MONTHS[mi]}`:''} (${kRON(v26-bv)} RON)`, d:`${isM?`YTD ${pct(vbYtd)} · `:''}peste buget în ${bMonths.length-bBelow.length} din ${bMonths.length} luni${bBelow.length?` (sub buget: ${bBelow.join(', ')})`:''}.`});
       if(isM&&bv&&vbYtd!=null&&vbYtd<0) watch.push({t:`YTD sub buget: ${pct(vbYtd)}`, d:`${kRON(val(c,2026,'YTD')-bval(c,2026,'YTD'))} RON în Ian–${MONTHS[mi]} (${fmt(val(c,2026,'YTD'))} vs buget ${fmt(bval(c,2026,'YTD'))}) — luna curentă nu recuperează încă decalajul.`});
       if(p0Yoy!=null&&isLFL) (p0Yoy>=0?pos:watch).push({t:`Pacienți noi YTD ${p0Yoy>=0?'+':''}${p0Yoy}% vs 2025`, d:`${p0Ytd26?.toLocaleString('en-US')} înregistrați Ian–${MONTHS[mi]}${p0Yoy<0&&yoyOk&&yoy>0?' — vânzările cresc din valoarea/pacient, nu din atragere':''}.`});
-      const og=opsFlags.filter(x=>x.good), ob=opsFlags.filter(x=>!x.good);
-      if(og.length) pos.push({t:`Operațional peste cluster: ${og.map(x=>x.name).join(', ')}`, d:og.map(x=>`${x.name} ${x.fmtv(x.v)} vs ${x.fmtv(x.ref)} cluster`).join(' · ')+'.'});
-      if(ob.length) watch.push({t:`Operațional sub cluster: ${ob.map(x=>x.name).join(', ')}`, d:ob.map(x=>`${x.name} ${x.fmtv(x.v)} vs ${x.fmtv(x.ref)} cluster`).join(' · ')+' — detalii în Ops-Sales / Ops-Med.'});
-      if(fbN!=null&&fbNeg>0) watch.push({t:`${fbNeg} review-uri negative în ${MONTHS[mi]}`, d:`din ${fbN} feedback (${Math.round(fbNeg/fbN*1000)/10}%) — mesajele sunt în tab-ul Feedback - QA.`});
+      if(fbN!=null&&fbNeg>=3&&fbNeg/fbN>=0.02) watch.push({t:`${fbNeg} review-uri negative în ${MONTHS[mi]}`, d:`din ${fbN} feedback (${Math.round(fbNeg/fbN*1000)/10}%) — mesajele sunt în tab-ul Feedback - QA.`});
       if(fbRate!=null&&fbRate<9) watch.push({t:`Rată de răspuns la feedback scăzută: ${fbRate}%`, d:`${fbN} feedback la ${visits} vizite — satisfacția raportată se bazează pe puține răspunsuri.`});
       return (<>
       <div style={{marginBottom:16}}>
@@ -4264,6 +4293,7 @@ function ClinicTab({code,period}) {
         </div>
       </div>
       <InsightPanel title={`Analiză ${c.name}`} sub={`${pLabel(period)} · calculat din date`} pos={pos} watch={watch}/>
+      <ClinicOpsSignals code={code} onOpen={onOpen}/>
       </>);
     })()}
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
@@ -4462,7 +4492,7 @@ function App() {
         {tab==='rampup'      && <RampupTab/>}
         {tab==='cluster1'    && <ClusterTab num={1} period={period}/>}
         {tab==='cluster2'    && <ClusterTab num={2} period={period}/>}
-        {Object.keys(CD).includes(tab) && <ClinicTab code={tab} period={period}/>}
+        {Object.keys(CD).includes(tab) && <ClinicTab code={tab} period={period} onOpen={(t)=>{setTab(t); try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}}}/>}
       </div>
 
       {/* Footer */}
