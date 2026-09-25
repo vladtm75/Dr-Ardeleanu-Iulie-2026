@@ -1231,6 +1231,7 @@ function RampupTab() {
 
 // ─── App Shell ────────────────────────────────────────────────────────────────
 const TABS=[
+  {id:'summary',    label:'Sinteză'},
   {id:'overview',   label:'Rețea'},
   {id:'comparative',label:'Buget'},
   {id:'category',   label:'Categorii'},
@@ -1246,6 +1247,32 @@ const TABS=[
   {id:'TGV',label:'Târgoviște'},{id:'FCS',label:'Focșani'},
   {id:'rampup',     label:'Ramp-up & Concurență'},
 ];
+
+// Indicatori operaționali ai unei clinici cu abatere MARE față de MTD-ul clusterului (regula Puls — bigDev).
+// Folosit de pagina clinicii și de tab-ul Sinteză. Returnează [{name,v,ref,good,fmtv}].
+function clinicOpsFlags(code){
+  const c=CD[code]; if(!c) return [];
+  const clCodes=c.cluster===1?C1:C2;
+  const med=MED_KPI[ACT_MO], mk=med?med.clinics.indexOf(code):-1;
+  const opsFlags=[];
+  const ops=OPS_KPI[ACT_MO], clKey=c.cluster===1?'c1':'c2';
+  const flag=(name,v,ref,isPct,invert,fmtv)=>{ const d=bigDev(v,ref,isPct); if(!d) return; opsFlags.push({name,v,ref,good:(d*(invert?-1:1))>0,fmtv}); };
+  const pctF=v=>v+'%', numF=v=>Math.round(v).toLocaleString('en-US');
+  if(ops){ const cl=ops.clinics.filter(x=>clCodes.includes(x)), ci=cl.indexOf(code), R=ops[c.cluster===1?'rowsC1':'rowsC2']||[], A=ops.agg[clKey]||[];
+    if(ci>=0&&R.length&&A.length){
+      const lost=(r)=>{ const t=r[0],an=r[2],rp=r[4]; return (t&&an!=null&&rp!=null)?Math.round((an-rp)/t*100):null; };
+      flag('Programări pierdute', lost(R.map(r=>r?.[ci])), lost(A.map(r=>r?.[2])), true, true, pctF);
+      [[15,'Conversie leads'],[12,'Retenție recall'],[18,'Retenție Birthday']].forEach(([ri,n])=>flag(n,R[ri]?.[ci],A[ri]?.[2],true,false,pctF));
+    } }
+  if(med&&mk>=0){ const A=med.aggKpi[clKey]||[], K=(r)=>med.kpi[r]?.[mk], G=(r)=>A[r]?.[2]; const rate=(num,den)=>(num!=null&&den)?Math.round(num/den*100):null;
+    flag('Ture realizate',K(2),G(2),true,false,pctF);
+    flag('Productivitate/tură',K(3),G(3),false,false,numF);
+    flag('Productivitate/pacient',K(5),G(5),false,false,numF);
+    flag('Retenție efectivă',K(10),G(10),true,false,pctF);
+    flag('RX (vs P1)',rate(K(13),K(8)),rate(G(13),G(8)),true,false,pctF);
+  }
+  return opsFlags;
+}
 
 // ─── Componente comune pentru antetul tab-urilor (Rețea, Categorii) ─────────────
 const HeadTile=({label,value,valueColor,caption,children})=>(
@@ -1281,6 +1308,329 @@ const InsightPanel=({title,sub,pos,watch})=>(
       <InsightCol title="De urmărit" color="#B45309" bg="#FFFAEB" items={watch} empty="Nimic de semnalat în perioadă."/>
     </div>
   </Card>);
+
+// ─── Sinteză (CEO) — un ecran: cum stăm, unde e rețeaua, cine a adus creșterea, unde intervin ─────────
+// Totul e calculat din date (CD, NET, PATIENTS_*, FEEDBACK_*, OPS_KPI/MED_KPI prin clinicOpsFlags).
+// Animațiile (contor, inel, pulsuri, bare, sparkline) sunt CSS/SVG și se opresc la prefers-reduced-motion.
+const SX_GEO = { // lat, lon reale (aprox.) — poziționare schematică pe hartă
+  OLT:[44.086,26.636], GRG:[43.904,25.969], SLB:[44.564,27.366], CLR:[44.205,27.330],
+  DRB:[44.462,26.112], CTR:[44.425,26.048], TGV:[44.925,25.456], FCS:[45.696,27.184], BRL:[45.269,27.957],
+};
+const SX_DANUBE = [[43.70,25.10],[43.88,25.60],[43.87,25.97],[43.97,26.30],[44.05,26.64],[44.12,27.00],[44.17,27.33],[44.26,27.70],[44.36,28.02],[44.70,27.96],[45.05,27.93],[45.27,27.98],[45.45,28.10]];
+const SX_W=460, SX_H=380, SX_LON=[24.55,28.95], SX_LAT=[43.62,45.92];
+const sxX = lon => (lon-SX_LON[0])/(SX_LON[1]-SX_LON[0])*SX_W;
+const sxY = lat => (SX_LAT[1]-lat)/(SX_LAT[1]-SX_LAT[0])*SX_H;
+const sxReduced = () => { try { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e) { return false; } };
+
+function useCountUp(target, dur=1200){
+  const [v,setV]=useState(sxReduced()?target:0);
+  React.useEffect(()=>{
+    if(sxReduced()||target==null){ setV(target); return; }
+    let raf, t0;
+    const step=t=>{ if(!t0) t0=t; const k=Math.min(1,(t-t0)/dur); setV(target*(1-Math.pow(1-k,3))); if(k<1) raf=requestAnimationFrame(step); };
+    raf=requestAnimationFrame(step);
+    return ()=>cancelAnimationFrame(raf);
+  },[target]);
+  return v;
+}
+
+// semnal: 'g' verde · 'a' atenție · 'r' roșu · 'n' neaplicabil
+const SX_SIG = { g:{c:'#15803D',bg:'#DCFCE7'}, a:{c:'#B45309',bg:'#FEF3C7'}, r:{c:'#B91C1C',bg:'#FEE2E2'}, n:{c:'#A8A29E',bg:'#F1ECE6'} };
+
+function sxClinicCard(code, period){
+  const c=CD[code], mi=ACT_MO-1, isLFL=LFL.includes(code);
+  const v26=val(c,2026,period)||0, v25=val(c,2025,period)||0, bv=bval(c,2026,period)||0;
+  const vb=bv?gr(v26,bv):null;
+  const y26=val(c,2026,'YTD')||0, y25=val(c,2025,'YTD')||0, yb=bval(c,2026,'YTD')||0;
+  const vbY=yb?gr(y26,yb):null, yoyY=isLFL&&y25?gr(y26,y25):null;
+  const ei=PATIENTS_OFF+mi, p0=PATIENTS_P0_CLINICS_18[code];
+  const pair=p0?p0YtdPair(p0,ei):{}, p0Y=(isLFL&&pair.ytd25)?Math.round((pair.ytd26-pair.ytd25)/pair.ytd25*100):null;
+  const ops=clinicOpsFlags(code), opsBad=ops.filter(x=>!x.good), opsGood=ops.filter(x=>x.good);
+  const fbN=FEEDBACK_CLINICS_NO_18[code]?.[ei], fbNeg=FEEDBACK_CLINICS_NEG_18[code]?.[ei];
+  const med=MED_KPI[ACT_MO], mk=med?med.clinics.indexOf(code):-1, visits=mk>=0?med.kpi[4]?.[mk]:null;
+  const fbRate=(fbN!=null&&visits)?Math.round(fbN/visits*1000)/10:null, negPct=fbN?Math.round((fbNeg||0)/fbN*1000)/10:null;
+  const sig=[
+    {k:'Buget YTD', s:vbY==null?'n':vbY>=0?'g':vbY>=-5?'a':'r', t:vbY==null?'fără buget':`${pct(vbY)} vs buget YTD`},
+    {k:'Creștere', s:yoyY==null?'n':yoyY>=10?'g':yoyY>=0?'a':'r', t:yoyY==null?'clinică nouă — fără bază YoY':`${pct(yoyY)} YoY YTD`},
+    {k:'Pacienți noi', s:p0Y==null?'n':p0Y>=0?'g':p0Y>=-5?'a':'r', t:p0Y==null?'fără bază YoY':`${p0Y>=0?'+':''}${p0Y}% pacienți noi YTD`},
+    {k:'Operațional', s:!med&&!OPS_KPI[ACT_MO]?'n':opsBad.length===0?'g':opsBad.length===1?'a':'r', t:opsBad.length?`sub cluster: ${opsBad.map(x=>`${x.name} ${x.fmtv(x.v)} vs ${x.fmtv(x.ref)}`).join(', ')}`:(opsGood.length?`peste cluster: ${opsGood.map(x=>x.name).join(', ')}`:'în linie cu clusterul')},
+    {k:'Feedback', s:fbN==null?'n':(negPct>=2?'r':(fbRate!=null&&fbRate<9)?'a':'g'), t:fbN==null?'fără date':`${fbN} feedback${fbRate!=null?` (${fbRate}% din vizite)`:''} · ${fbNeg||0} negative`},
+  ];
+  const score=sig.filter(x=>x.s==='g').length, scored=sig.filter(x=>x.s!=='n').length;
+  const months=MONTHS.slice(0,ACT_MO).map((m,k)=>({a:c.actuals[2026]?.[k]||0, b:c.budget[2026]?.[k]||0}));
+  return {code,c,isLFL,v26,v25,bv,vb,y26,yb,vbY,yoyY,p0Y,opsBad,opsGood,fbRate,negPct,fbNeg,sig,score,scored,months};
+}
+
+function SxRing({pctDone, elapsed, size=150}){
+  const r=58, cx=size/2, cy=size/2;
+  const ang=elapsed*360-90, tx=cx+Math.cos(ang*Math.PI/180)*r, ty=cy+Math.sin(ang*Math.PI/180)*r;
+  const tx2=cx+Math.cos(ang*Math.PI/180)*(r+13), ty2=cy+Math.sin(ang*Math.PI/180)*(r+13);
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${Math.round(pctDone*100)}% din bugetul anual realizat`}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="12"/>
+      <circle className="sx-ring" cx={cx} cy={cy} r={r} fill="none" stroke="url(#sxRingGrad)" strokeWidth="12" strokeLinecap="round"
+        pathLength="100" strokeDasharray={`${Math.min(pctDone,1)*100} 100`} transform={`rotate(-90 ${cx} ${cy})`}/>
+      <defs><linearGradient id="sxRingGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#F2DAB7"/><stop offset="100%" stopColor="#C9A227"/></linearGradient></defs>
+      <line x1={tx} y1={ty} x2={tx2} y2={ty2} stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+      <text x={cx} y={cy-2} textAnchor="middle" fill="#fff" style={{fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:700}}>{Math.round(pctDone*100)}%</text>
+      <text x={cx} y={cy+17} textAnchor="middle" fill="rgba(255,255,255,0.7)" style={{fontSize:9.5,letterSpacing:0.6}}>DIN BUGETUL ANUAL</text>
+    </svg>);
+}
+
+function SxMap({cards, period, onOpen}){
+  const [hov,setHov]=useState(null);
+  const all=[...cards.map(x=>({code:x.code,v:x.v26,vb:x.vb,name:x.c.name})), {code:'BRL',v:0,vb:null,name:CD.BRL.name,future:true}];
+  const maxV=Math.max(...all.map(x=>x.v||0));
+  const hub=[(SX_GEO.DRB[0]+SX_GEO.CTR[0])/2,(SX_GEO.DRB[1]+SX_GEO.CTR[1])/2];
+  const hx=sxX(hub[1]), hy=sxY(hub[0]);
+  const river='M'+SX_DANUBE.map(([la,lo])=>`${sxX(lo).toFixed(1)},${sxY(la).toFixed(1)}`).join(' L');
+  const h=hov&&all.find(x=>x.code===hov);
+  return (
+    <div style={{position:'relative'}}>
+      <svg viewBox={`0 0 ${SX_W} ${SX_H}`} style={{width:'100%',height:'auto',display:'block'}} role="img" aria-label="Harta schematică a rețelei de clinici">
+        <defs>
+          <radialGradient id="sxGlow"><stop offset="0%" stopColor="#F2DAB7" stopOpacity="0.55"/><stop offset="100%" stopColor="#F2DAB7" stopOpacity="0"/></radialGradient>
+          <pattern id="sxDots" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="1" fill="#7B1C16" opacity="0.07"/></pattern>
+        </defs>
+        <rect width={SX_W} height={SX_H} fill="url(#sxDots)"/>
+        <path d={river} fill="none" stroke="#9CC3D5" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" opacity="0.35"/>
+        <path className="sx-flow" d={river} fill="none" stroke="#6FA8C2" strokeWidth="1.6" strokeDasharray="6 8" strokeLinecap="round" opacity="0.8"/>
+        <text x={sxX(26.25)} y={sxY(43.83)+18} fill="#6FA8C2" style={{fontSize:9,fontStyle:'italic',letterSpacing:1}}>Dunărea</text>
+        <circle cx={hx} cy={hy} r="46" fill="url(#sxGlow)"/>
+        {all.filter(x=>!['DRB','CTR'].includes(x.code)).map(x=>{ const [la,lo]=SX_GEO[x.code]; return (
+          <line key={'l'+x.code} className="sx-flow" x1={hx} y1={hy} x2={sxX(lo)} y2={sxY(la)} stroke="#7B1C16" strokeOpacity={x.future?0.15:0.28} strokeWidth="1.2" strokeDasharray="3 6"/>); })}
+        {all.map((x,i)=>{
+          const [la,lo]=SX_GEO[x.code], cx=sxX(lo), cy=sxY(la);
+          const r=x.future?7:7+17*Math.sqrt((x.v||0)/maxV);
+          const col=x.future?'#A8A29E':x.vb==null?'#A8A29E':x.vb>=0?'#15803D':'#B91C1C';
+          const pos=({TGV:'l',GRG:'l',CTR:'l',OLT:'b'})[x.code]||'r';
+          const lx=pos==='b'?cx:pos==='l'?cx-r-5:cx+r+5, ly=pos==='b'?cy+r+11:cy+3, anc=pos==='b'?'middle':pos==='l'?'end':'start';
+          return (
+            <g key={x.code} style={{cursor:x.future?'default':'pointer'}} onMouseEnter={()=>setHov(x.code)} onMouseLeave={()=>setHov(null)} onClick={()=>!x.future&&onOpen(x.code)}>
+              {!x.future&&<circle className="sx-pulse" cx={cx} cy={cy} r={r} fill={col} opacity="0.35" style={{animationDelay:`${i*0.35}s`}}/>}
+              <circle className="sx-pop" cx={cx} cy={cy} r={r} fill={x.future?'#fff':col} fillOpacity={x.future?1:0.9} stroke={x.future?'#A8A29E':'#fff'} strokeWidth={x.future?1.5:2} strokeDasharray={x.future?'3 3':'none'} style={{animationDelay:`${0.15+i*0.07}s`}}/>
+              <text x={lx} y={ly} textAnchor={anc} style={{fontSize:10.5,fontWeight:700,fill:'#3b2a24'}}>{x.name}</text>
+              <text x={lx} y={ly+12} textAnchor={anc} style={{fontSize:9,fill:x.future?'#A8A29E':col,fontWeight:600}}>{x.future?'deschidere Nov 26':`${fmt(x.v)} · ${x.vb==null?'—':pct(x.vb)}`}</text>
+            </g>); })}
+        <text x={hx} y={hy+44} textAnchor="middle" style={{fontSize:9,fill:'#7B1C16',letterSpacing:1.5,fontWeight:700,opacity:0.6}}>BUCUREȘTI</text>
+      </svg>
+      {h&&!h.future&&<div style={{position:'absolute',top:8,left:8,background:'rgba(43,20,16,0.92)',color:'#fff',borderRadius:8,padding:'7px 10px',fontSize:11,pointerEvents:'none'}}>
+        <b>{h.name}</b> · {fmt(h.v)} RON · {h.vb==null?'fără buget':`${pct(h.vb)} vs buget`} <span style={{opacity:0.6}}>· click pentru detalii</span></div>}
+      <div style={{display:'flex',gap:12,flexWrap:'wrap',fontSize:9.5,color:P.muted,marginTop:4}}>
+        <span><span style={{display:'inline-block',width:8,height:8,borderRadius:4,background:'#15803D',marginRight:4}}/>peste buget</span>
+        <span><span style={{display:'inline-block',width:8,height:8,borderRadius:4,background:'#B91C1C',marginRight:4}}/>sub buget</span>
+        <span>mărimea cercului = vânzări {pLabel(period)} · poziții geografice aproximative</span>
+      </div>
+    </div>);
+}
+
+function SxBridge({cards, period}){
+  const n25=cards.reduce((a,x)=>a+x.v25,0), n26=cards.reduce((a,x)=>a+x.v26,0);
+  const steps=cards.map(x=>({code:x.code,name:x.c.name,d:x.v26-x.v25,isNew:!x.isLFL})).sort((a,b)=>b.d-a.d);
+  const W=560, H=250, pad={l:8,r:8,t:26,b:34};
+  const cols=steps.length+2, bw=(W-pad.l-pad.r)/cols;
+  let run=n25; const bars=[{lbl:'2025',y0:0,y1:n25,kind:'tot',d:n25}];
+  steps.forEach(s=>{ bars.push({lbl:s.code,y0:run,y1:run+s.d,kind:s.isNew?'new':s.d>=0?'up':'dn',d:s.d,name:s.name}); run+=s.d; });
+  bars.push({lbl:'2026',y0:0,y1:n26,kind:'tot26',d:n26});
+  const hiY=Math.max(...bars.map(b=>Math.max(b.y0,b.y1))), loRaw=Math.min(...bars.slice(1,-1).map(b=>Math.min(b.y0,b.y1)));
+  const minY=Math.max(0,loRaw-(hiY-loRaw)*0.35), maxY=hiY+(hiY-minY)*0.08;   // axă trunchiată: pune în evidență contribuțiile
+  const Y=v=>pad.t+(H-pad.t-pad.b)*(1-(Math.max(v,minY)-minY)/(maxY-minY));
+  const col={tot:'#D9C9BD',tot26:P.primary,up:'#A0352C',dn:'#B91C1C',new:'#C9A227'};
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:'auto',display:'block'}} role="img" aria-label="Contribuția fiecărei clinici la creșterea vânzărilor">
+        <line x1={pad.l} x2={W-pad.r} y1={Y(minY)} y2={Y(minY)} stroke={P.border}/>
+        {bars.map((b,i)=>{ const x=pad.l+i*bw+bw*0.16, w=bw*0.68, top=Y(Math.max(b.y0,b.y1)), hgt=Math.max(1.5,Math.abs(Y(b.y0)-Y(b.y1)));
+          const isTot=b.kind==='tot'||b.kind==='tot26';
+          return (<g key={b.lbl}>
+            <rect className="sx-grow" x={x} y={top} width={w} height={hgt} rx="3" fill={col[b.kind]} style={{animationDelay:`${i*0.08}s`}}>
+              <title>{isTot?`${b.lbl}: ${fmt(b.d)} RON`:`${b.name}: ${b.d>=0?'+':'−'}${fmt(Math.abs(b.d))} RON`}</title></rect>
+            {i<bars.length-1&&!isTot&&<line x1={x+w} x2={x+w+bw*0.32} y1={Y(b.y1)} y2={Y(b.y1)} stroke="#B8A89C" strokeDasharray="2 2"/>}
+            {i===0&&<line x1={x+w} x2={x+w+bw*0.32} y1={Y(b.y1)} y2={Y(b.y1)} stroke="#B8A89C" strokeDasharray="2 2"/>}
+            <text className="sx-fade" x={x+w/2} y={top-5} textAnchor="middle" style={{fontSize:isTot?11:9.5,fontWeight:700,fill:isTot?P.primary:b.d<0?'#B91C1C':'#3b2a24',animationDelay:`${0.4+i*0.08}s`}}>{isTot?fmt(b.d):`${b.d>=0?'+':'−'}${fmt(Math.abs(b.d))}`}</text>
+            <text x={x+w/2} y={H-pad.b+14} textAnchor="middle" style={{fontSize:10,fontWeight:isTot?800:600,fill:isTot?P.primary:'#6b5448'}}>{b.lbl}</text>
+            {isTot&&minY>0&&<path d={`M${x-2},${Y(minY)-7} l${w/4+1},-4 l${w/4},4 l${w/4},-4 l${w/4+1},4`} fill="none" stroke="#fff" strokeWidth="2.5"/>}
+            {b.kind==='new'&&<text x={x+w/2} y={H-pad.b+26} textAnchor="middle" style={{fontSize:8,fill:'#B8860B',fontWeight:700}}>NOU</text>}
+          </g>); })}
+      </svg>
+      <div style={{display:'flex',gap:12,flexWrap:'wrap',fontSize:9.5,color:P.muted,marginTop:2}}>
+        <span><span style={{display:'inline-block',width:8,height:8,borderRadius:2,background:'#A0352C',marginRight:4}}/>clinici comparabile</span>
+        <span><span style={{display:'inline-block',width:8,height:8,borderRadius:2,background:'#C9A227',marginRight:4}}/>clinici noi (fără bază 2025)</span>
+        <span>{pLabel(period)} vs aceeași perioadă 2025 · axă trunchiată (baza nu pornește de la zero)</span>
+      </div>
+    </div>);
+}
+
+function SxSpark({months}){
+  const W=150,H=38, mx=Math.max(...months.map(m=>Math.max(m.a,m.b)),1);
+  const pts=k=>months.map((m,i)=>`${(i/(months.length-1||1))*W},${H-3-(m[k]/mx)*(H-8)}`).join(' ');
+  const last=months[months.length-1];
+  return (<svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:38,display:'block'}} aria-hidden="true">
+    <polyline points={pts('b')} fill="none" stroke="#C9A227" strokeWidth="1.3" strokeDasharray="3 3" opacity="0.8"/>
+    <polyline className="sx-draw" pathLength="1" points={pts('a')} fill="none" stroke={P.primary} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+    <circle className="sx-fade" cx={W} cy={H-3-(last.a/mx)*(H-8)} r="3" fill={P.primary} style={{animationDelay:'1s'}}/>
+  </svg>);
+}
+
+// ── Semnale operaționale: DOAR abaterile mari (regula Puls — bigDev) din Pacienți, Feedback, Ops-Sales, Ops-Med ──
+const SX_DOM = { sales:{l:'Ops-Sales',c:'#7B1C16',tab:'opssales'}, med:{l:'Ops-Medical',c:'#7C8431',tab:'opsmed'}, pac:{l:'Pacienți',c:'#C9A227',tab:'patients'}, fb:{l:'Feedback',c:'#6FA8C2',tab:'feedback'} };
+const SX_SALES_KPI = new Set(['Programări pierdute','Conversie leads','Retenție recall','Retenție Birthday']);
+function sxOutliers(cards){
+  const out=[], mi=ACT_MO-1, ei=PATIENTS_OFF+mi;
+  const pctF=v=>`${Math.round(v)}%`, numF=v=>Math.round(v).toLocaleString('en-US');
+  // sev = de câte ori abaterea depășește pragul Puls (pp/10 la %, relativ/40%) — ierarhizare pe aceeași scară
+  const push=(o)=>{ if(o.v==null||o.ref==null) return;
+    const r=o.ref?(o.v-o.ref)/Math.abs(o.ref):0; o.rel=Math.max(-1,Math.min(1,r));
+    const isPct=String(o.fmtv(1)).endsWith('%');
+    if(o.sev==null) o.sev=Math.max(isPct?Math.abs(o.v-o.ref)/DEV_PP:0, Math.abs(r)/DEV_REL);
+    out.push(o); };
+  // 1) clinici vs MTD-ul clusterului (Ops-Sales / Ops-Med)
+  cards.forEach(x=>clinicOpsFlags(x.code).forEach(f=>push({dom:SX_SALES_KPI.has(f.name)?'sales':'med', scope:x.c.name, code:x.code, kpi:f.name, v:f.v, ref:f.ref, refL:'cluster', good:f.good, fmtv:f.fmtv, invert:f.name==='Programări pierdute'})));
+  // 2) rețea: MTD vs AMBELE medii Y-1 și YTD (aceeași direcție)
+  const ops=OPS_KPI[ACT_MO], med=MED_KPI[ACT_MO];
+  const net=(A,fn)=>[0,1,2].map(k=>{ try{ return fn(A.c1,A.c2,k); }catch(e){ return null; } });
+  const S=(a,b,r,k)=>(a[r]?.[k]??null)==null||(b[r]?.[k]??null)==null?null:a[r][k]+b[r][k];
+  const ratio=(n,d)=>(n==null||!d)?null:n/d*100;
+  const wavg=(a,b,r,w,k)=>{ const x1=a[r]?.[k],x2=b[r]?.[k],w1=a[w]?.[k],w2=b[w]?.[k]; return [x1,x2,w1,w2].some(v=>v==null)||!(w1+w2)?null:(x1*w1+x2*w2)/(w1+w2); };
+  const netK=[];
+  if(ops){ const A=ops.agg;
+    netK.push({dom:'sales',kpi:'Programări pierdute',isPct:true,inv:true,f:pctF,vals:net(A,(a,b,k)=>ratio(S(a,b,2,k)-S(a,b,4,k),S(a,b,0,k)))});
+    netK.push({dom:'sales',kpi:'Conversie leads',isPct:true,f:pctF,vals:net(A,(a,b,k)=>ratio(S(a,b,14,k),S(a,b,13,k)))});
+    netK.push({dom:'sales',kpi:'Retenție recall',isPct:true,f:pctF,vals:net(A,(a,b,k)=>ratio(S(a,b,11,k),S(a,b,10,k)))});
+    netK.push({dom:'sales',kpi:'Retenție Birthday',isPct:true,f:pctF,vals:net(A,(a,b,k)=>ratio(S(a,b,17,k),S(a,b,16,k)))});
+    netK.push({dom:'sales',kpi:'Credite TBI / BT',isPct:false,f:numF,vals:net(A,(a,b,k)=>S(a,b,6,k))});
+  }
+  if(med){ const A=med.aggKpi;
+    netK.push({dom:'med',kpi:'Ture realizate',isPct:true,f:pctF,vals:net(A,(a,b,k)=>ratio(S(a,b,1,k),S(a,b,0,k)))});
+    netK.push({dom:'med',kpi:'Productivitate/tură',isPct:false,f:numF,vals:net(A,(a,b,k)=>wavg(a,b,3,1,k))});
+    netK.push({dom:'med',kpi:'Productivitate/pacient',isPct:false,f:numF,vals:net(A,(a,b,k)=>wavg(a,b,5,4,k))});
+    netK.push({dom:'med',kpi:'Retenție efectivă',isPct:true,f:pctF,vals:net(A,(a,b,k)=>wavg(a,b,10,8,k))});
+    netK.push({dom:'med',kpi:'RX (vs P1)',isPct:true,f:pctF,vals:net(A,(a,b,k)=>ratio(S(a,b,13,k),S(a,b,8,k)))});
+  }
+  netK.forEach(n=>{ const [y1,yt,mt]=n.vals; if(mt==null||y1==null) return;
+    const d1=bigDev(mt,y1,n.isPct), d2=yt!=null?bigDev(mt,yt,n.isPct):d1;
+    if(d1&&d1===d2) push({dom:n.dom, scope:'Rețea', code:null, kpi:n.kpi, v:mt, ref:yt??y1, refL:'medie YTD', good:(d1*(n.inv?-1:1))>0, fmtv:n.f, invert:n.inv}); });
+  // 3) Pacienți: clinici comparabile cu variație mare a pacienților noi YTD; conversie Meta vs medie
+  cards.forEach(x=>{ if(x.p0Y!=null&&Math.abs(x.p0Y)>=10) out.push({dom:'pac', scope:x.c.name, code:x.code, kpi:'Pacienți noi YTD', v:x.p0Y, ref:0, refL:'2025', good:x.p0Y>0, fmtv:v=>`${v>0?'+':''}${Math.round(v)}%`, rel:Math.max(-1,Math.min(1,x.p0Y/100)), sev:Math.abs(x.p0Y)/10, isYoY:true}); });
+  const lp=p0YtdPair(p0SumSeries(LFL),ei), lp0=(lp.ytd26&&lp.ytd25)?Math.round((lp.ytd26-lp.ytd25)/lp.ytd25*100):null;
+  if(lp0!=null&&Math.abs(lp0)>=5) out.push({dom:'pac', scope:'Clinici comparabile', code:'patients', kpi:'Pacienți noi YTD', v:lp0, ref:0, refL:'2025', good:lp0>0, fmtv:v=>`${v>0?'+':''}${Math.round(v)}%`, rel:Math.max(-1,Math.min(1,lp0/100)), sev:Math.abs(lp0)/5, isYoY:true});
+  const conv=PATIENTS_FB_CONV_18[ei], cv=PATIENTS_FB_CONV_18.filter(v=>v!=null), cAvg=cv.length?cv.reduce((a,b)=>a+b,0)/cv.length:null;
+  if(conv!=null&&cAvg!=null&&bigDev(conv,cAvg,true)) push({dom:'pac', scope:'Rețea', code:null, kpi:'Conversie leads Meta', v:conv, ref:cAvg, refL:'medie 20 luni', good:conv>cAvg, fmtv:pctF});
+  // 4) Feedback: acoperire foarte slabă (< jumătate din rețea) sau rată negativă ridicată
+  const cov=cards.map(x=>{ const n=FEEDBACK_CLINICS_NO_18[x.code]?.[ei]; const mk=med?med.clinics.indexOf(x.code):-1; const vz=mk>=0?med.kpi[4]?.[mk]:null; return {x,n,vz,r:(n!=null&&vz)?n/vz*100:null}; });
+  const tn=cov.reduce((a,c)=>a+(c.n||0),0), tv=cov.reduce((a,c)=>a+(c.vz||0),0), netR=tv?tn/tv*100:null;
+  cov.forEach(c=>{ if(c.r!=null&&netR&&c.r<netR/2) push({dom:'fb', scope:c.x.c.name, code:c.x.code, kpi:'Rată de răspuns', v:c.r, ref:netR, refL:'rețea', good:false, fmtv:v=>`${v.toFixed(1)}%`, sev:(1-c.r/netR)/0.5}); });
+  const tneg=cards.reduce((a,x)=>a+(FEEDBACK_CLINICS_NEG_18[x.code]?.[ei]||0),0), netNeg=tn?tneg/tn*100:null;
+  cards.forEach(x=>{ if(x.negPct!=null&&x.negPct>=2&&(x.fbNeg||0)>=3&&netNeg!=null) push({dom:'fb', scope:x.c.name, code:x.code, kpi:'Feedback negativ', v:x.negPct, ref:netNeg, refL:'rețea', good:false, fmtv:v=>`${v.toFixed(1)}%`, invert:true, sev:x.negPct/2}); });
+  return out;
+}
+
+function SxOutliers({cards, onOpen}){
+  const all=sxOutliers(cards);
+  const bad=all.filter(o=>!o.good).sort((a,b)=>b.sev-a.sev);
+  const good=all.filter(o=>o.good).sort((a,b)=>b.sev-a.sev);
+  const Row=({o,i})=>{ const d=SX_DOM[o.dom], col=o.good?'#15803D':'#B91C1C', w=Math.min(1,o.sev/3)*50, left=o.v<o.ref;
+    const pp=(o.fmtv&&String(o.fmtv(1)).endsWith('%')&&!o.isYoY)?` (${o.v-o.ref>=0?'+':''}${(o.v-o.ref).toFixed(0)}pp)`:'';
+    return (
+      <div className="sx-fade" onClick={()=>onOpen(o.code||d.tab)} title={`Deschide ${o.code?o.scope:d.l}`} style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) 110px',gap:10,alignItems:'center',padding:'7px 8px',borderBottom:`1px solid ${P.border}`,cursor:'pointer',animationDelay:`${0.1+i*0.05}s`}}>
+        <div style={{minWidth:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0}}>
+            <span style={{flexShrink:0,fontSize:8.5,fontWeight:800,letterSpacing:0.5,color:'#fff',background:d.c,borderRadius:4,padding:'1px 5px',textTransform:'uppercase'}}>{d.l}</span>
+            <span style={{fontSize:12,fontWeight:700,color:P.text,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{o.scope} · {o.kpi}</span>
+          </div>
+          <div style={{fontSize:10.5,color:'#6b5448',marginTop:2}}><b style={{color:col}}>{o.fmtv(o.v)}</b> vs {o.isYoY?`aceeași perioadă ${o.refL}`:`${o.fmtv(o.ref)} ${o.refL}`}{pp}</div>
+        </div>
+        <svg viewBox="0 0 110 18" style={{width:110,height:18}} aria-hidden="true">
+          <rect x="0" y="7" width="110" height="4" rx="2" fill="#F1ECE6"/>
+          <line x1="55" x2="55" y1="2" y2="16" stroke="#B8A89C" strokeWidth="1.2"/>
+          <rect className="sx-growx" x={left?55-w:55} y="5" width={Math.max(2,w)} height="8" rx="3" fill={col} style={{transformOrigin:left?'right':'left',animationDelay:`${0.2+i*0.05}s`}}/>
+          <circle className="sx-pop" cx={left?55-w:55+w} cy="9" r="3.5" fill="#fff" stroke={col} strokeWidth="2" style={{animationDelay:`${0.5+i*0.05}s`}}/>
+        </svg>
+      </div>); };
+  return (
+    <Card style={{borderRadius:14,marginBottom:14}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:8,marginBottom:6}}>
+        <Sec>Unde intervin · doar abaterile mari · {MONTHS_FULL[ACT_MO-1]} 2026</Sec>
+      </div>
+      <div className="sx-row2" style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)',gap:18}}>
+        <div>
+          <div style={{fontSize:10.5,fontWeight:700,color:'#B91C1C',textTransform:'uppercase',letterSpacing:0.8,margin:'4px 0'}}>Probleme ({bad.length})</div>
+          {bad.length?bad.slice(0,8).map((o,i)=><Row key={'b'+i} o={o} i={i}/>):<div style={{fontSize:11.5,color:P.muted,padding:8}}>Nicio abatere mare negativă.</div>}
+          {bad.length>8&&<div style={{fontSize:10,color:P.muted,padding:'5px 8px'}}>+{bad.length-8} alte abateri — vezi Ops-Sales / Ops-Med</div>}
+        </div>
+        <div>
+          <div style={{fontSize:10.5,fontWeight:700,color:'#15803D',textTransform:'uppercase',letterSpacing:0.8,margin:'4px 0'}}>Puncte forte ({good.length})</div>
+          {good.length?good.slice(0,8).map((o,i)=><Row key={'g'+i} o={o} i={i}/>):<div style={{fontSize:11.5,color:P.muted,padding:8}}>—</div>}
+          {good.length>8&&<div style={{fontSize:10,color:P.muted,padding:'5px 8px'}}>+{good.length-8} alte abateri</div>}
+        </div>
+      </div>
+      <div style={{fontSize:9.5,color:P.muted,marginTop:8}}>Doar abaterile mari (regula Puls: ≥10pp la % sau ≥40% relativ) — clinica vs MTD-ul clusterului, rețeaua vs media Y-1 și YTD. Pacienți noi: variație ≥10% YTD pe clinică / ≥5% pe total comparabile. Feedback: răspuns sub jumătate din rețea sau ≥2% negative (min. 3). Ordinea și lungimea barei = de câte ori abaterea depășește pragul. Click pe rând → clinica sau tab-ul.</div>
+    </Card>);
+}
+
+function SummaryTab({period, onOpen}){
+  const mi=ACT_MO-1, isM=period==='Month';
+  const n26=netv(period), nb=netb(period);
+  const n25=period==='Month'?NET.actuals[2025][mi]:sum(NET.actuals[2025].slice(0,ACT_MO));
+  const yoy=gr(n26,n25), vb=gr(n26,nb);
+  const l26=LFL.reduce((a,c)=>a+(val(CD[c],2026,period)||0),0), l25=LFL.reduce((a,c)=>a+(val(CD[c],2025,period)||0),0), lfl=gr(l26,l25);
+  const ytd26=netv('YTD'), fyB=sum(NET.budget[2026]), est=ytd26+sum(NET.budget[2026].slice(ACT_MO));
+  const cards=[...C1,...C2].filter(c=>(CD[c].actuals[2026]||[]).some(x=>x!=null)).map(c=>sxClinicCard(c,period));
+  const cnt=useCountUp(n26);
+  const ei=PATIENTS_OFF+mi, uniq=PATIENTS_MONTHLY.lunari[ei], uniq25=PATIENTS_MONTHLY.lunari[ei-12];
+  const rpp=NET.actuals[2026][mi]&&uniq?NET.actuals[2026][mi]/uniq:null, rpp25=NET.actuals[2025][mi]&&uniq25?NET.actuals[2025][mi]/uniq25:null;
+  const kRON=v=>(v>=0?'+':'−')+fmt(Math.abs(v));
+  return <div key={period+ACT_MO}>
+    {/* ── 1. Cum stăm ── */}
+    <div className="sx-hero" style={{background:'linear-gradient(120deg,#7B1C16 0%,#5E140F 55%,#3E0D0A 100%)',borderRadius:16,padding:'20px 24px',color:'#fff',display:'grid',gridTemplateColumns:'minmax(0,1.3fr) auto minmax(0,1fr)',gap:22,alignItems:'center',position:'relative',overflow:'hidden',marginBottom:14,boxShadow:'0 8px 30px rgba(94,20,15,0.25)'}}>
+      <svg aria-hidden="true" style={{position:'absolute',right:-40,top:-60,opacity:0.12}} width="360" height="360" viewBox="0 0 360 360">
+        {[60,100,140,180].map((r,i)=><circle key={r} className="sx-spin" cx="180" cy="180" r={r} fill="none" stroke="#F2DAB7" strokeWidth="1" strokeDasharray={`${4+i*2} ${10+i*4}`} style={{animationDuration:`${40+i*15}s`,animationDirection:i%2?'reverse':'normal'}}/>)}
+      </svg>
+      <div style={{position:'relative'}}>
+        <div style={{fontSize:10.5,fontWeight:700,letterSpacing:1.2,textTransform:'uppercase',color:'rgba(242,218,183,0.85)'}}>Sinteză CEO · {pLabel(period)}</div>
+        <div style={{display:'flex',alignItems:'baseline',gap:8,marginTop:6}}>
+          <span style={{fontFamily:"'Playfair Display',serif",fontSize:52,fontWeight:900,lineHeight:1}}>{fmt(cnt)}</span>
+          <span style={{fontSize:13,color:'rgba(255,255,255,0.65)'}}>RON vânzări rețea</span>
+        </div>
+        <div style={{display:'flex',gap:7,flexWrap:'wrap',marginTop:10}}>
+          <span style={{background:'rgba(255,255,255,0.14)',borderRadius:20,padding:'4px 10px',fontSize:11.5,fontWeight:600}}>{pct(yoy)} YoY</span>
+          <span style={{background:'rgba(255,255,255,0.14)',borderRadius:20,padding:'4px 10px',fontSize:11.5,fontWeight:600}}>organic {pct(lfl)}</span>
+          <span style={{background:vb>=0?'rgba(134,239,172,0.22)':'rgba(255,138,128,0.3)',borderRadius:20,padding:'4px 10px',fontSize:11.5,fontWeight:600}}>{kRON(n26-nb)} vs buget ({pct(vb)})</span>
+        </div>
+      </div>
+      <div style={{position:'relative',textAlign:'center'}}>
+        <SxRing pctDone={ytd26/fyB} elapsed={ACT_MO/12}/>
+        <div style={{fontSize:9.5,color:'rgba(255,255,255,0.65)',marginTop:-2}}>linia albă = timp scurs {ACT_MO}/12 luni</div>
+      </div>
+      <div style={{position:'relative',display:'flex',flexDirection:'column',gap:10}}>
+        <div>
+          <div style={{fontSize:9.5,textTransform:'uppercase',letterSpacing:1,color:'rgba(242,218,183,0.8)',fontWeight:700}}>Estimare an 2026</div>
+          <div style={{fontFamily:"'Playfair Display',serif",fontSize:28,fontWeight:700,lineHeight:1.1}}>{fmt(est)}</div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,0.75)'}}>buget an {fmt(fyB)} · realizat + buget pe lunile rămase</div>
+        </div>
+      </div>
+    </div>
+
+    {/* ── 2. Harta + 3. Punte de creștere ── */}
+    <div className="sx-row2" style={{display:'grid',gridTemplateColumns:'minmax(0,0.95fr) minmax(0,1.25fr)',gap:14,marginBottom:14}}>
+      <Card style={{borderRadius:14}}>
+        <Sec>Harta rețelei · vânzări și buget</Sec>
+        <SxMap cards={cards} period={period} onOpen={onOpen}/>
+      </Card>
+      <Card style={{borderRadius:14}}>
+        <Sec>Cine a adus creșterea · pe clinici</Sec>
+        <SxBridge cards={cards} period={period}/>
+        {rpp&&rpp25&&uniq25&&<div style={{marginTop:12,background:'#FAF6F2',borderRadius:10,padding:'9px 12px',fontSize:11.5,color:'#4a3830',lineHeight:1.5}}>
+          <b style={{color:P.primary}}>Volum sau valoare?</b> În {MONTHS_FULL[mi]} vs {MONTHS[mi]} 2025: pacienți unici <b>{pct(gr(uniq,uniq25))}</b> ({uniq.toLocaleString('en-US')}) × venit / pacient <b>{pct(gr(rpp,rpp25))}</b> ({Math.round(rpp).toLocaleString('en-US')} RON).
+        </div>}
+      </Card>
+    </div>
+
+    {/* ── 4. Unde intervin — singura listă de probleme / puncte forte (doar abateri mari) ── */}
+    <SxOutliers cards={cards} onOpen={onOpen}/>
+
+  </div>;
+}
 
 // ─── Network Tab ──────────────────────────────────────────────────────────────
 function NetworkTab({period}) {
@@ -3842,23 +4192,7 @@ function ClinicTab({code,period}) {
       const visits=mk>=0?med.kpi[4]?.[mk]:null, prodPac=mk>=0?med.kpi[5]?.[mk]:null;
       const fbRate=(fbN!=null&&visits)?Math.round(fbN/visits*1000)/10:null;
       // indicatori operaționali cu abatere mare vs MTD-ul clusterului (regula Puls — vezi bigDev)
-      const opsFlags=[];
-      const ops=OPS_KPI[ACT_MO], clKey=c.cluster===1?'c1':'c2';
-      const flag=(name,v,ref,isPct,invert,fmtv)=>{ const d=bigDev(v,ref,isPct); if(!d) return; opsFlags.push({name,v,ref,good:(d*(invert?-1:1))>0,fmtv}); };
-      const pctF=v=>v+'%', numF=v=>Math.round(v).toLocaleString('en-US');
-      if(ops){ const cl=ops.clinics.filter(x=>clCodes.includes(x)), ci=cl.indexOf(code), R=ops[c.cluster===1?'rowsC1':'rowsC2']||[], A=ops.agg[clKey]||[];
-        if(ci>=0&&R.length&&A.length){
-          const lost=(r)=>{ const t=r[0],an=r[2],rp=r[4]; return (t&&an!=null&&rp!=null)?Math.round((an-rp)/t*100):null; };
-          flag('Programări pierdute', lost(R.map(r=>r?.[ci])), lost(A.map(r=>r?.[2])), true, true, pctF);
-          [[15,'Conversie leads'],[12,'Retenție recall'],[18,'Retenție Birthday']].forEach(([ri,n])=>flag(n,R[ri]?.[ci],A[ri]?.[2],true,false,pctF));
-        } }
-      if(med&&mk>=0){ const A=med.aggKpi[clKey]||[], K=(r)=>med.kpi[r]?.[mk], G=(r)=>A[r]?.[2]; const rate=(num,den)=>(num!=null&&den)?Math.round(num/den*100):null;
-        flag('Ture realizate',K(2),G(2),true,false,pctF);
-        flag('Productivitate/tură',K(3),G(3),false,false,numF);
-        flag('Productivitate/pacient',K(5),G(5),false,false,numF);
-        flag('Retenție efectivă',K(10),G(10),true,false,pctF);
-        flag('RX (vs P1)',rate(K(13),K(8)),rate(G(13),G(8)),true,false,pctF);
-      }
+      const opsFlags=clinicOpsFlags(code);
       const pos=[], watch=[];
       if(yoyOk) ((yoy>=5&&!baseFx)?pos:watch).push({t:`${pct(yoy)} YoY (${kRON(v26-v25)} RON)`, d: baseFx?`Efect de bază: ${MONTHS[mi]} 25 a scăzut ${pct(dip)} față de ${MONTHS[mi-1]} 25 — nu e accelerare reală; YTD: ${pct(gr(val(c,2026,'YTD'),val(c,2025,'YTD')))}.`:`${fmt(v26)} vs ${fmt(v25)} în aceeași perioadă 2025${yoy<5?' — creștere lentă':''}.`});
       else pos.push({t:`Clinică nouă — fără bază YoY comparabilă`, d:`${fmt(v26)} RON în ${pLabel(period)} · ${shCl!=null?`${shCl.toFixed(0)}% din Cluster ${c.cluster}`:''}.`});
@@ -4006,7 +4340,7 @@ function ClinicTab({code,period}) {
 
 
 function App() {
-  const [tab,setTab]=useState('overview');
+  const [tab,setTab]=useState('summary');
   const [selMo,setSelMo]=useState(0);   // 0 = ultima luna cu date
   const [view,setView]=useState('YTD');
   const LAST_ACT = NET.actuals[2026].filter(x=>x!==null).length;
@@ -4023,6 +4357,30 @@ function App() {
         .da-link{color:#F2DAB7;text-decoration:none;border-bottom:1px solid rgba(242,218,183,0.32);transition:all .18s ease;}
         .da-link:hover{color:#FFFFFF;border-bottom-color:#FFFFFF;}
         .da-info{position:relative;}
+        /* ── Sinteză: animații (oprite la prefers-reduced-motion) ── */
+        @keyframes sxRingIn{from{stroke-dasharray:0 100}}
+        @keyframes sxGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+        @keyframes sxFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+        @keyframes sxPop{0%{transform:scale(0)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+        @keyframes sxPulse{0%{transform:scale(1);opacity:.45}100%{transform:scale(2.3);opacity:0}}
+        @keyframes sxDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+        @keyframes sxFlow{to{stroke-dashoffset:-28}}
+        @keyframes sxSpin{to{transform:rotate(360deg)}}
+        @keyframes sxGrowX{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+        .sx-growx{transform-box:fill-box;animation:sxGrowX .7s cubic-bezier(.2,.7,.2,1) both;}
+        .sx-ring{animation:sxRingIn 1.4s cubic-bezier(.2,.7,.2,1) both .2s;}
+        .sx-grow{transform-box:fill-box;transform-origin:bottom;animation:sxGrow .7s cubic-bezier(.2,.7,.2,1) both;}
+        .sx-fade{animation:sxFade .5s ease both;}
+        .sx-pop{transform-box:fill-box;transform-origin:center;animation:sxPop .55s cubic-bezier(.2,.9,.3,1.2) both;}
+        .sx-pulse{transform-box:fill-box;transform-origin:center;animation:sxPulse 2.6s ease-out infinite;}
+        .sx-draw{stroke-dasharray:1;animation:sxDraw 1.3s ease-out both .25s;}
+        .sx-flow{animation:sxFlow 2.4s linear infinite;}
+        .sx-spin{transform-box:fill-box;transform-origin:center;animation:sxSpin 60s linear infinite;}
+        .sx-card{transition:transform .18s ease, box-shadow .18s ease;}
+        .sx-card:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(94,20,15,0.12);}
+        @media(prefers-reduced-motion:reduce){.sx-ring,.sx-grow,.sx-growx,.sx-fade,.sx-pop,.sx-pulse,.sx-draw,.sx-flow,.sx-spin{animation:none !important;}.sx-pulse{display:none;}}
+        @media(max-width:1000px){.sx-hero{grid-template-columns:minmax(0,1fr) auto !important;}.sx-hero>div:last-child{grid-column:1/-1;flex-direction:row !important;flex-wrap:wrap;justify-content:space-between;}.sx-row2{grid-template-columns:minmax(0,1fr) !important;}.sx-cards{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}}
+        @media(max-width:600px){.sx-hero{grid-template-columns:minmax(0,1fr) !important;justify-items:start;}.sx-hero>div:nth-child(3){justify-self:center;}.sx-cards{grid-template-columns:minmax(0,1fr) !important;}}
         .net-head{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:12px;}
         @media(max-width:1000px){.net-head{grid-template-columns:repeat(3,minmax(0,1fr));}.net-head .net-hero{grid-column:1/-1;}}
         @media(max-width:680px){.net-head{grid-template-columns:minmax(0,1fr);}}
@@ -4093,6 +4451,7 @@ function App() {
 
       {/* Content */}
       <div style={{padding:'20px 28px',maxWidth:1280,margin:'0 auto'}}>
+        {tab==='summary'     && <SummaryTab period={period} onOpen={(c)=>{setTab(c); try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){}}}/>}
         {tab==='overview'    && <NetworkTab period={period}/>}
         {tab==='category'    && <CategoryTab period={period}/>}
         {tab==='feedback'    && <FeedbackTab/>}
