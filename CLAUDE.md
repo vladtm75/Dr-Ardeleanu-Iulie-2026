@@ -56,7 +56,27 @@ Blocul de sus din fiecare vedere a cardului mobil (Lună / YTD: card rețea cu e
 
 **Ramp-up.** Rândurile Dr. Ardeleanu se recalculează din `CD`: 2026 = estimare (realizat Ian–luna curentă + buget pentru lunile rămase, marcat „e"); o clinică fără vânzări încă (Brăila) = doar buget (marcat „b"); CA/unit = vânzări ultimele 12 luni / unituri. Rândurile concurenței rămân valori fixe din bilanțuri.
 
-**`BUDGET_FLAGS`** — obiect pentru a semnala un buget de confirmat (apare pe Buget, Rețea și pagina clinicii). E gol: bugetul TGV (Apr–Dec identic cu OLT) a fost verificat pe 2026-09-24 contra fișierului de buget (rândul Budget 2026, total 5.659.125) și e corect.
+**`BUDGET_FLAGS`** — obiect pentru a semnala un buget de confirmat (apare pe Buget, Rețea și pagina clinicii). E gol. Bugetele de vânzări 2026 OLT și TGV au fost verificate (2026-09-24/25) contra fișierelor de buget ale fiecărei clinici — raportul le reproduce la leu. **Atenție la sursă:** în modelul de buget, TGV Apr–Dec este identic la leu cu OLT Apr–Dec; bugetul OLT e confirmat ca propriu (fișierul OLT), deci TGV Apr–Dec pare copiat — întrebare deschisă la cine a construit bugetul. Dacă vin cifre corectate, se înlocuiesc în `CD.TGV.budget[2026]`.
+
+## Tab-ul „Sinteză" (CEO) — primul tab, deschis implicit
+
+Un singur ecran pentru un CEO. **Regula de bază: fiecare informație apare o singură dată** (decizie explicită cu Vlad, 2026-09-25) — nu adăuga în Sinteză ce e deja în alt bloc al ei. Patru blocuri, fiecare cu un singur rol:
+1. **Banda** (doar rețea): vânzări (contor animat), YoY, organic (LFL), vs buget, inel de progres față de bugetul anual (marcaj = timp scurs), estimare an (= realizat YTD + buget pe lunile rămase — de aceea nu i se mai afișează „vs buget", ar fi identic cu ecartul YTD).
+2. **Harta rețelei** (`SxMap`, SVG cu poziții geografice aproximative în `SX_GEO`, Dunărea în `SX_DANUBE`) — singurul loc cu vânzări + vs buget per clinică (culoare + etichetă). Click → pagina clinicii.
+3. **„Cine a adus creșterea"** (`SxBridge`, punte/waterfall 2025 → 2026 pe clinici, clinici noi separat, axă trunchiată și marcată) — singurul loc cu creșterea per clinică; dedesubt o singură linie „volum sau valoare" (pacienți unici × venit / pacient).
+4. **„Unde intervin"** (`SxOutliers` + `sxOutliers()`) — singura listă de probleme / puncte forte, **doar abateri mari**: clinici vs MTD-ul clusterului și rețea vs media Y-1 și YTD (aceeași direcție) pe Ops-Sales și Ops-Medical; pacienți noi (clinici comparabile, ≥10% YTD pe clinică / ≥5% pe total comparabile); conversie Meta vs medie; feedback (rată de răspuns sub jumătate din rețea; negative ≥2% și minim 3 review-uri). Ordonare și lungimea barei = `sxSev` (de câte ori abaterea depășește pragul Puls: pp/`DEV_PP` sau relativ/`DEV_REL`), ca indicatorii în % și în RON să fie pe aceeași scară. Top 8 pe coloană.
+
+Scorecard-ul pe clinici și lista „atenție / merge bine" au fost scoase intenționat (redundante). Animațiile (clase `sx-*`, keyframes în `<style>`-ul din `App`) se opresc la `prefers-reduced-motion`. Tab-urile se deschid din Sinteză prin `onOpen(tabId)` (cod de clinică sau `opssales` / `opsmed` / `patients` / `feedback`).
+
+## Semnale operaționale pe paginile de clinică
+
+`clinicOpsFlags(code)` (funcție globală) calculează indicatorii Ops-Sales / Ops-Medical ai clinicii cu abatere mare față de clusterul ei — folosită de Sinteză și de `ClinicOpsSignals` (cardul „Semnale operaționale" de pe fiecare clinică, rânduri `SxOutRow` comune cu Sinteza). Pe pagina clinicii acești indicatori apar DOAR în card (nu și în textul „Analiză"); fără abateri → o singură linie; fără date → nimic. Feedback negativ în analiza clinicii: doar la ≥3 review-uri și ≥2%.
+
+**Istoricul 2024–2025** din `CD` rămâne cel sincronizat din Puls (decizie Vlad, 2026-09-25), chiar dacă diferă ușor de fișierele de buget/istoric ale clinicilor (ex. OLT Sep 2024: 374K în Puls vs 350K în fișier).
+
+## Fișiere financiare sursă
+
+`.gitignore` blochează `*.xlsx`, `*.xls`, `*.jsx` — repo-ul e public, iar Excel-urile P&L conțin date financiare complete. Excel-ul `P&L IULIE 2026 V1.8.1.xlsx` stă doar local. Raportul EBITDA (`pl-desktop.html`) e un bundle React compilat; JSX-ul din Iulie nu e în repo și nici pe acest calculator (template-ul din skill-ul `dr-ardeleanu-monthly-fs` e versiunea din Martie, fără concluzii / detalii de cost / split Local Sales-Marketing) — redesign-ul EBITDA așteaptă sursa.
 
 ## De știut (neactualizat încă)
 
