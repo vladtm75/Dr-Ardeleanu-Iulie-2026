@@ -78,6 +78,31 @@ Scorecard-ul pe clinici și lista „atenție / merge bine" au fost scoase inten
 
 `.gitignore` blochează `*.xlsx`, `*.xls`, `*.jsx` — repo-ul e public, iar Excel-urile P&L conțin date financiare complete. Excel-ul `P&L IULIE 2026 V1.8.1.xlsx` stă doar local. Raportul EBITDA (`pl-desktop.html`) e un bundle React compilat; JSX-ul din Iulie nu e în repo și nici pe acest calculator (template-ul din skill-ul `dr-ardeleanu-monthly-fs` e versiunea din Martie, fără concluzii / detalii de cost / split Local Sales-Marketing) — redesign-ul EBITDA așteaptă sursa.
 
+## Pachetul CFO (în raportul de Cashflow)
+
+Destinat doar lui Vlad și Virginiei (raportul EBITDA rămâne pentru Comex și se oprește la EBITDA GROUP). Tab-uri deasupra paginii de Cashflow existente: **Sinteză CFO · Cashflow · Finanțare & datorie · Capex · Acționari**.
+
+**Fișiere**
+- `build_cfo_data.py` — extrage datele din Excel-ul lunar de P&L (foile `P&L`, `Cashflow`, `Capex`, `Shareholders`, foile de clinică) și scrie `cfo-data.js`. Rândurile se caută **după etichetă**, coloanele din antetul foii (doar primul bloc de luni). Rulare: `python3 build_cfo_data.py "P&L <LUNA> 2026 V<x>.xlsx"` (necesită `openpyxl`). Metadatele proiectelor (deschidere, unituri) sunt în lista `PROJECTS` din script — nu sunt în Excel.
+- `cfo-data.js` — **date confidențiale** (profit net, datorie, capex, dividende). Publicat în clar în repo prin decizia explicită a lui Vlad (2026-09-26), înainte de protecția site-ului — deci vizibil oricui are link-ul și oricui are parola generală. Protecția (criptarea) întregului site e programată pentru o sesiune separată; după ea, fișierul trebuie publicat criptat. Excel-urile rămân blocate în `.gitignore`.
+- `cfo-app.js` — punctul de intrare al `cashflow-report.html` (în locul `cashflow-report.js`). Încarcă `cfo-data.js` dacă există (→ tab-urile pachetului); fără el, pagina de Cashflow arată exact ca înainte.
+- `cfo-pack.js` — tab-urile noi (htm + React + Recharts din import map, fără build). `cashflow-report.js` primește doar `tabBar` / `active` / `renderOther` (și opțional `hideShareholders`, nefolosit). Secțiunea 07 (distribuții către acționari) **rămâne** în tab-ul Cashflow — decizie Vlad; tab-ul „Acționari" o detaliază.
+- La orice modificare a acestor fișiere se incrementează `?v=` din `cashflow-report.html` și din importurile din `cfo-app.js` (cache).
+
+**Reguli de conținut**
+- Toate textele sunt calculate din date; fiecare informație apare o singură dată pe tab. Soldul și structura datoriei rămân în tab-ul Cashflow (secțiunea 04) — „Finanțare & datorie" arată doar ce o schimbă (costul de finanțare, trageri, rambursări, proiecția).
+- **Ieșiri către acționari** = dividende brute − reinvestit în firmă (quasi-equity DP) + VVA. **VVA** = cheltuieli ale acționarilor puse pe firmă (nu țin de EBITDA clinicilor sau a sediului). Impozitul pe dividende se arată separat. Doar total (nu pe acționar). **Nu există buget** → referința sunt mediana lunară (24 luni), banda P25–P75, 12 luni rulante, media lunară pe ani (RON + EUR din rândul `TOTAL EUR`).
+- Costul de finanțare se proiectează pe ritmul ultimelor 3 luni (bugetul e plat); cu graficul de datorie ieșit schema de rambursări, proiecția se poate face pe rate.
+- Graficul „Credite trase vs rambursări" are **axă Y întreruptă** (două zone cu scări proprii, marcaj zig-zag) — intenționat, ca rambursările mici să fie lizibile.
+- Bugetul folosit e cel brut din Excel (raportul EBITDA neutralizează economia Brăila — diferență mică, menționată în nota tab-ului).
+
+**Probleme cunoscute în Excel-ul de P&L (de corectat la sursă)**
+- `Capex`: rândurile „Capex PROPCO / OPCO / Total" sunt cumulative în 2026 și includ și decembrie 2025 — sursa corectă e „Total Investments". Echipamente Opco Sep–Dec au semne alternante (+/−) în buget. Iunie e „Buget" în Capex, dar „Actual" în Cashflow.
+- `Cashflow`: tipul „Actiual" (greșeală de tipar) — scriptul îl tratează ca „Actual".
+- `Shareholders`: blocul de buget e stricat (#REF!, cu antet de date 2025 repetate); Dec 2024 e marcat „Budget" dar e realizat.
+- `Debt`: doar plafoane aprobate, fără solduri trase, dobânzi sau scadențe.
+- Pagina de Cashflow existentă are titluri rămase din iunie („Iunie 2026 — Cash Bridge", „Realizat Iun 2026") deși datele merg până în iulie.
+
 ## De știut (neactualizat încă)
 
 - **Copia din Puls** (`script.google.com/.../exec?page=monthlynew`) încorporează o versiune mai veche a raportului de vânzări, fără corecțiile și designul de mai sus (ex. încă afișează „OLT — presiune YoY +43.4%" și LFL greșit). Trebuie actualizată în Apps Script de cine îl întreține — nu se actualizează din acest repo.

@@ -245,7 +245,8 @@ function Waterfall({ row }) {
     ] }, i);
   }) });
 }
-function CashflowDashboard() {
+function CashflowDashboard({ tabBar = null, active = "cash", renderOther = null, hideShareholders = false } = {}) {
+  // hideShareholders: opțional (implicit false). Secțiunea 07 rămâne în tab-ul Cashflow; tab-ul „Acționari" o detaliază.
   const latest = DATA[DATA.length - 1];
   const prev = DATA[DATA.length - 2];
   const yearAgo = DATA[DATA.length - 13];
@@ -330,7 +331,7 @@ function CashflowDashboard() {
           textTransform: "uppercase",
           marginLeft: "auto"
         }, children: "Realizat Iun 2026" })
-      ] }),      /* @__PURE__ */ jsxs("div", { style: { maxWidth: 1280, margin: "0 auto", padding: "0 28px" }, children: [
+      ] }),      tabBar, active !== "cash" && renderOther ? renderOther(active) : /* @__PURE__ */ jsxs("div", { style: { maxWidth: 1280, margin: "0 auto", padding: "0 28px" }, children: [
       /* @__PURE__ */ jsxs("div", { style: { display: "flex", gap: 14, marginBottom: 18, flexWrap: "wrap" }, children: [
         /* @__PURE__ */ jsx(
           KPI,
@@ -1089,7 +1090,7 @@ function CashflowDashboard() {
           ]
         }
       ),
-      /* @__PURE__ */ jsxs(
+      hideShareholders ? null : /* @__PURE__ */ jsxs(
         Section,
         {
           kicker: "Sec\u021biunea 07 \xB7 Ac\u021bionari",
@@ -1270,8 +1271,7 @@ function AggregateBox({ label, value, sub, color = C.primary }) {
     sub && /* @__PURE__ */ jsx("div", { style: { fontSize: 11, color: C.muted, marginTop: 3 }, children: sub })
   ] });
 }
-import { createRoot } from "react-dom/client";
-createRoot(document.getElementById("root")).render(/* @__PURE__ */ jsx(CashflowDashboard, {}));
+// Randarea se face din cfo-app.js (bara de tab-uri + pachetul CFO, dacă cfo-data.js există local).
 export {
   CashflowDashboard as default
 };
